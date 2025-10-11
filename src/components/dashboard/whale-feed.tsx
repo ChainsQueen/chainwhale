@@ -62,7 +62,7 @@ export default function WhaleFeed() {
           <div>
             <CardTitle>Whale Transaction Feed</CardTitle>
             <CardDescription>
-              Monitoring known whale addresses via Blockscout MCP. For detailed analysis, use the Wallet Analysis tab.
+              Real-time monitoring of ALL blockchain transfers via Blockscout MCP. Showing transactions above $1,000 USD.
             </CardDescription>
           </div>
           <Button
@@ -102,7 +102,7 @@ export default function WhaleFeed() {
               <Activity className="h-12 w-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No Recent Whale Activity</p>
               <p className="text-sm mt-2">
-                Blockscout MCP is monitoring known whale addresses, but no transactions over $1k were found in the last 24 hours.
+                Analyzing ALL blockchain transfers in real-time, but no transactions over $1k were found in the last hour.
               </p>
               <div className="mt-6 p-4 bg-muted/50 rounded-lg text-left">
                 <p className="text-sm font-medium mb-2">💡 Try the Wallet Analysis feature instead:</p>

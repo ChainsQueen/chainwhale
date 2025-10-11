@@ -40,12 +40,16 @@ export async function GET(request: NextRequest) {
     // Sort by timestamp (newest first)
     const sorted = allTransactions.sort((a, b) => b.timestamp - a.timestamp);
 
-    // Return top 50 transactions
+    // Return top 50 transactions with informative message if empty
     return NextResponse.json({ 
       transactions: sorted.slice(0, 50),
+      message: allTransactions.length === 0 
+        ? 'No whale transactions found in the last hour above $1,000 threshold. All blockchain transfers are analyzed in real-time.'
+        : undefined,
       debug: {
         totalFound: allTransactions.length,
-        chainsChecked: chains.length
+        chainsChecked: chains.length,
+        note: 'Analyzing ALL addresses on-chain, not limited to hardcoded wallets'
       }
     });
   } catch (error) {

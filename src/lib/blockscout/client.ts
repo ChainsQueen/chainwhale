@@ -155,7 +155,15 @@ export class BlockscoutClient {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = JSON.parse((result.content as any)[0].text);
+      const responseText = (result.content as any)[0].text;
+      
+      // Check if response is an error message
+      if (responseText.startsWith('Error')) {
+        console.error(`Blockscout API error: ${responseText}`);
+        throw new Error(`Blockscout API error: ${responseText}`);
+      }
+      
+      const data = JSON.parse(responseText);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const items: TokenTransfer[] = (data.items || []).map((item: any) => ({
         hash: item.tx_hash,

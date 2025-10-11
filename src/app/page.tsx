@@ -6,10 +6,47 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Activity, TrendingUp, Wallet, Sparkles } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2"
+          >
+            <Image
+              src="/chainwhale-logo.svg"
+              alt="ChainWhale"
+              width={32}
+              height={32}
+              className="w-8 h-8"
+            />
+            <span className="text-xl font-bold">ChainWhale</span>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4"
+          >
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
+                Features
+              </a>
+              <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">
+                About
+              </a>
+            </nav>
+            <ThemeToggle />
+          </motion.div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -160,7 +197,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-16">
+      <section id="features" className="container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}

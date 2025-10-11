@@ -1,40 +1,118 @@
 # ChainWhale
 
-[![CI](https://github.com/ChainsQueen/chainwhale/actions/workflows/ci.yml/badge.svg)](https://github.com/ChainsQueen/chainwhale/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/ChainsQueen/chainwhale/actions/workflows/deploy.yml/badge.svg)](https://github.com/ChainsQueen/chainwhale/actions/workflows/deploy.yml)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A Next.js application for blockchain exploration and analysis.
 
-## Getting Started
+## 🚀 Quick Start
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- pnpm 9+
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Run development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+chainwhale/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── (routes)/          # Route groups
+│   │   ├── api/               # API routes
+│   │   └── layout.tsx         # Root layout
+│   ├── components/            # Reusable UI components
+│   │   ├── ui/               # Base UI components (buttons, cards, etc.)
+│   │   └── features/         # Feature-specific components
+│   ├── lib/                  # External integrations & clients
+│   │   ├── blockscout/      # Blockscout API client
+│   │   ├── ai/              # AI service integration
+│   │   └── shared/          # Shared utilities for lib
+│   ├── core/                # Business logic (UI-agnostic)
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── services/        # Business logic services
+│   │   ├── utils/           # Helper functions
+│   │   └── types/           # TypeScript types
+│   ├── styles/              # Global CSS and Tailwind
+│   └── config/              # Configuration files
+├── public/                  # Static assets
+└── .github/workflows/       # GitHub Actions
+```
 
-## Learn More
+### Folder Guidelines
 
-To learn more about Next.js, take a look at the following resources:
+- **`app/`** - Next.js routing, layouts, and pages only
+- **`components/`** - Reusable UI components
+  - `ui/` for base components
+  - `features/` for domain-specific components
+- **`lib/`** - External API clients and integrations
+- **`core/`** - Business logic that's UI-agnostic
+- **`styles/`** - Global styles and Tailwind configuration
+- **`config/`** - App configuration files
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Code Style
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Naming Conventions
 
-## Deploy on Vercel
+- **Files**: Use `kebab-case` (e.g., `user-profile-card.tsx`)
+- **Components**: Use `PascalCase` (e.g., `UserProfileCard`)
+- **Functions/Variables**: Use `camelCase`
+- **Constants**: Use `UPPER_SNAKE_CASE`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### File Size Limit
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Maximum **500 lines** per file
+- Split into smaller modules if approaching this limit
+
+### Module Organization
+
+- Keep files focused on a single responsibility
+- Business logic in `core/`, never in components
+- UI components should be presentational
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15.5.4
+- **React**: 19.1.0
+- **TypeScript**: 5.x
+- **Styling**: Tailwind CSS 4.x
+- **Package Manager**: pnpm 9.x
+
+## 📦 Available Scripts
+
+```bash
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+```
+
+## 🚢 Deployment
+
+This project is automatically deployed to GitHub Pages via GitHub Actions.
+
+- **Live URL**: https://chainsqueen.github.io/chainwhale/
+- **Workflow**: `.github/workflows/deploy.yml`
+
+Every push to `main` triggers a new deployment.
+
+## 📚 Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+
+## 📄 License
+
+MIT

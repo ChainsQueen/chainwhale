@@ -16,20 +16,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for API key
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
-        { status: 500 }
-      );
-    }
-
     // Initialize services
     blockscout = new BlockscoutClient();
     await blockscout.connect();
 
-    const ai = new AIEngine({ apiKey });
+    // AI is optional
+    const apiKey = process.env.OPENAI_API_KEY;
+    const ai = apiKey ? new AIEngine({ apiKey }) : null;
 
     // Fetch data for each chain
     const holdings = [];
@@ -64,14 +57,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get AI analysis
+    // Get AI analysis (or provide basic analysis if no API key)
     const walletData = {
       address,
       totalValue,
       chains: chainBalances,
     };
 
-    const analysis = await ai.analyzeWallet(walletData, holdings);
+    const analysis = ai 
+      ? await ai.analyzeWallet(walletData, holdings)
+      : {
+          address,
+          totalValue,
+          chains: chainBalances,
+          tokens: holdings,
+          summary: 'AI analysis unavailable. Add OPENAI_API_KEY to .env.local to enable AI-powered insights.',
+          riskScore: 50,
+          insights: ['Basic wallet data retrieved successfully', 'Enable AI for detailed risk assessment'],
+        };
 
     return NextResponse.json({
       holdings,

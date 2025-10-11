@@ -62,7 +62,7 @@ export default function WhaleFeed() {
           <div>
             <CardTitle>Whale Transaction Feed</CardTitle>
             <CardDescription>
-              Real-time monitoring of large transactions (&gt;$100k) across multiple chains
+              Monitoring known whale addresses via Blockscout MCP. For detailed analysis, use the Wallet Analysis tab.
             </CardDescription>
           </div>
           <Button
@@ -98,12 +98,21 @@ export default function WhaleFeed() {
               ))}
             </div>
           ) : transactions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[400px] text-center text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-[400px] text-center text-muted-foreground max-w-2xl mx-auto">
               <Activity className="h-12 w-12 mb-4 opacity-50" />
-              <p className="text-lg font-medium">No whale transactions found</p>
+              <p className="text-lg font-medium">No Recent Whale Activity</p>
               <p className="text-sm mt-2">
-                Transactions over $100k will appear here
+                Blockscout MCP is monitoring known whale addresses, but no transactions over $1k were found in the last 24 hours.
               </p>
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg text-left">
+                <p className="text-sm font-medium mb-2">💡 Try the Wallet Analysis feature instead:</p>
+                <ul className="text-xs space-y-1 list-disc list-inside">
+                  <li>Analyze any wallet address across multiple chains</li>
+                  <li>View token holdings and balances</li>
+                  <li>Get AI-powered risk assessment (with API key)</li>
+                  <li>Real-time data from Blockscout MCP</li>
+                </ul>
+              </div>
               <Button onClick={fetchTransactions} className="mt-4" variant="outline">
                 Try Again
               </Button>

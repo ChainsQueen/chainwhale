@@ -20,8 +20,10 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
-        { status: 500 }
+        { 
+          answer: '⚠️ OpenAI API key not configured. To enable AI chat:\n\n1. Get an API key from https://platform.openai.com/api-keys\n2. Create a .env.local file in the project root\n3. Add: OPENAI_API_KEY=your_key_here\n4. Restart the dev server\n\nYou can still use the Whale Feed and Wallet Analysis features without AI!' 
+        },
+        { status: 200 }
       );
     }
 

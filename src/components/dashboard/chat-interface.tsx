@@ -151,7 +151,7 @@ export default function ChatInterface() {
           </ScrollArea>
 
           {/* Input Form */}
-          <form onSubmit={handleSubmit} className="flex gap-2">
+          <form onSubmit={handleSubmit} className="flex gap-2" suppressHydrationWarning>
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}

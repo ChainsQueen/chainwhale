@@ -15,6 +15,7 @@ export class BlockscoutClient {
 
   /**
    * Connect to the Blockscout MCP server
+   * Uses Docker with the official cloud-hosted MCP server
    */
   async connect(): Promise<void> {
     if (this.connected) {
@@ -22,10 +23,19 @@ export class BlockscoutClient {
     }
 
     try {
-      // Use npx to run the Blockscout MCP server
+      // Use Docker to connect to the official Blockscout MCP server
+      // This requires Docker to be installed and running
       this.transport = new StdioClientTransport({
-        command: 'npx',
-        args: ['-y', '@blockscout/mcp-server'],
+        command: 'docker',
+        args: [
+          'run',
+          '--rm',
+          '-i',
+          'sparfenyuk/mcp-proxy:latest',
+          '--transport',
+          'streamablehttp',
+          'https://mcp.blockscout.com/mcp'
+        ],
       });
 
       this.client = new Client(
@@ -43,7 +53,7 @@ export class BlockscoutClient {
       console.log('✅ Connected to Blockscout MCP server');
     } catch (error) {
       console.error('❌ Failed to connect to Blockscout MCP:', error);
-      throw new Error('Failed to connect to Blockscout MCP server');
+      throw new Error('Failed to connect to Blockscout MCP server. Make sure Docker is installed and running.');
     }
   }
 

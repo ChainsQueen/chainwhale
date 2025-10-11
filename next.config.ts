@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === 'production';
-const isGitHubPages = process.env.GITHUB_ACTIONS === 'true';
+// Only use static export when explicitly building for GitHub Pages
+const isStaticExport = process.env.STATIC_EXPORT === 'true';
 
 const nextConfig: NextConfig = {
-  // Only use static export for GitHub Pages deployment
-  // For development and Vercel, we need API routes
-  ...(isGitHubPages ? { output: 'export' } : {}),
-  basePath: isProd && isGitHubPages ? '/chainwhale' : '',
+  // Only use static export when explicitly requested
+  // This allows API routes to work in development and standard deployments
+  ...(isStaticExport ? { output: 'export' } : {}),
+  basePath: isProd && isStaticExport ? '/chainwhale' : '',
   images: {
     unoptimized: true,
   },

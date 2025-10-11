@@ -31,8 +31,8 @@ async function testBlockscoutData() {
       const addressInfo = await client.getAddressInfo('1', testAddress);
       console.log('✅ Address Info Retrieved:');
       console.log(JSON.stringify(addressInfo, null, 2));
-    } catch (error: any) {
-      console.log('❌ Error:', error.message);
+    } catch (error) {
+      console.log('❌ Error:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 2: Get Token Transfers (with specific address)
@@ -72,8 +72,8 @@ async function testBlockscoutData() {
         console.log('ℹ️  No transfers found in the last 24 hours');
         console.log('   This is normal for some addresses');
       }
-    } catch (error: any) {
-      console.log('❌ Error:', error.message);
+    } catch (error) {
+      console.log('❌ Error:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 3: Get Chains List
@@ -94,8 +94,8 @@ async function testBlockscoutData() {
         console.log('ℹ️  Chain list returned empty');
         console.log('   Using default chains: Ethereum, Base, Arbitrum');
       }
-    } catch (error: any) {
-      console.log('❌ Error:', error.message);
+    } catch (error) {
+      console.log('❌ Error:', error instanceof Error ? error.message : String(error));
     }
 
     // Test 4: Get Transaction Summary
@@ -113,8 +113,8 @@ async function testBlockscoutData() {
       const summary = await client.transactionSummary('1', txHash);
       console.log('✅ Transaction Summary:');
       console.log(summary);
-    } catch (error: any) {
-      console.log('❌ Error:', error.message);
+    } catch (error) {
+      console.log('❌ Error:', error instanceof Error ? error.message : String(error));
       console.log('ℹ️  This is expected if the transaction hash is invalid');
     }
 
@@ -132,14 +132,15 @@ async function testBlockscoutData() {
       
       if (tokens.length > 0) {
         console.log('\n💰 Token Holdings:');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         tokens.slice(0, 5).forEach((token: any, i: number) => {
           console.log(`\n${i + 1}. ${token.token?.symbol || 'Unknown'}`);
           console.log(`   Balance: ${token.value || 'N/A'}`);
           console.log(`   Token Address: ${token.token?.address?.substring(0, 20)}...`);
         });
       }
-    } catch (error: any) {
-      console.log('❌ Error:', error.message);
+    } catch (error) {
+      console.log('❌ Error:', error instanceof Error ? error.message : String(error));
     }
 
     // Summary
@@ -159,8 +160,8 @@ async function testBlockscoutData() {
     console.log('   • Feed transaction data to AI for analysis');
     console.log('');
 
-  } catch (error: any) {
-    console.error('\n❌ Fatal Error:', error.message);
+  } catch (error) {
+    console.error('\n❌ Fatal Error:', error instanceof Error ? error.message : String(error));
     console.error('\n🔧 Troubleshooting:');
     console.error('   1. Make sure Docker Desktop is running');
     console.error('   2. Check your internet connection');

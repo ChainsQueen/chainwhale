@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
         totalValue += chainValue;
 
         // Add holdings
-        for (const token of tokens) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const token of tokens as any[]) {
           holdings.push({
             symbol: token.token?.symbol || 'UNKNOWN',
             balance: token.value || '0',

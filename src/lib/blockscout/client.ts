@@ -181,14 +181,6 @@ export class BlockscoutClient {
     }
   }
 
-  /**
-   * Classify transaction type based on addresses and patterns
-   * @param _transfer - Token transfer to classify (unused for now)
-   */
-  private classifyTransaction(_transfer: TokenTransfer): 'buy' | 'sell' | 'transfer' {
-    // TO DO: implement transaction classification logic
-    return 'transfer';
-  }
 
   /**
    * Get transaction summary in human-readable format

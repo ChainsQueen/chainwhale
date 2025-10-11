@@ -1,0 +1,16 @@
+{
+  "name": "ChainWhale",
+  "short_name": "ChainWhale",
+  "description": "Blockchain exploration and analysis platform",
+  "icons": [
+    {
+      "src": "/chainwhale/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#2563EB",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/chainwhale/"
+}

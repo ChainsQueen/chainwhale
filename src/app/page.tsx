@@ -93,11 +93,11 @@ export default function Home() {
               transition={{ delay: 0.5 }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Button size="lg" className="text-lg">
-                Get Started
+              <Button size="lg" className="text-lg" asChild>
+                <a href="/dashboard">Get Started</a>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg">
-                View Demo
+              <Button size="lg" variant="outline" className="text-lg" asChild>
+                <a href="/dashboard">View Dashboard</a>
               </Button>
             </motion.div>
 

@@ -201,7 +201,7 @@ export class BlockscoutClient {
         name: 'transaction_summary',
         arguments: {
           chain_id: chainId,
-          hash: hash,
+          transaction_hash: hash,
         },
       });
 

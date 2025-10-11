@@ -50,6 +50,13 @@ export class BlockscoutClient {
 
       await this.client.connect(this.transport);
       this.connected = true;
+      
+      // Initialize the MCP server (required before using other tools)
+      await this.client.callTool({
+        name: '__unlock_blockchain_analysis__',
+        arguments: {},
+      });
+      
       console.log('✅ Connected to Blockscout MCP server');
     } catch (error) {
       console.error('❌ Failed to connect to Blockscout MCP:', error);
@@ -97,7 +104,14 @@ export class BlockscoutClient {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = JSON.parse((result.content as any)[0].text);
+      const responseText = (result.content as any)[0].text;
+      
+      // Check if response is an error message
+      if (responseText.startsWith('Error')) {
+        throw new Error(`Blockscout API error: ${responseText}`);
+      }
+      
+      const data = JSON.parse(responseText);
       return {
         address: data.hash || address,
         balance: data.coin_balance || '0',

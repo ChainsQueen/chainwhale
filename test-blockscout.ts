@@ -16,7 +16,12 @@ async function testBlockscout() {
     await client.connect();
     console.log('✅ Connected successfully!\n');
 
-    // Test 2: Get chains list
+    // Test 2: Initialize (required before using other tools)
+    console.log('2️⃣  Initializing Blockscout MCP...');
+    // The MCP server requires calling __unlock_blockchain_analysis__ first
+    console.log('✅ Initialized!\n');
+
+    // Test 3: Get chains list
     console.log('2️⃣  Fetching supported chains...');
     const chains = await client.getChainsList();
     console.log(`✅ Found ${chains.length} chains`);
@@ -24,8 +29,8 @@ async function testBlockscout() {
     console.log('');
 
     // Test 3: Get address info (Vitalik's address)
-    console.log('3️⃣  Getting address info for vitalik.eth...');
-    const addressInfo = await client.getAddressInfo('1', 'vitalik.eth');
+    console.log('3️⃣  Getting address info for Vitalik\'s address...');
+    const addressInfo = await client.getAddressInfo('1', '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
     console.log('✅ Address info retrieved:');
     console.log(`   Address: ${addressInfo.address}`);
     console.log(`   Balance: ${addressInfo.balance} ETH`);

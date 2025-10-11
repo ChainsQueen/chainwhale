@@ -1,38 +1,43 @@
 <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Whale body -->
-  <path d="M40 100C40 80 50 65 70 60C90 55 120 55 140 60C160 65 170 80 170 100C170 120 160 135 140 140C120 145 90 145 70 140C50 135 40 120 40 100Z" fill="#2563EB" stroke="#1E40AF" stroke-width="2"/>
+  <!-- Water spray (spout) -->
+  <path d="M85 45C85 45 87 30 88 25C88.5 22 90 20 91 22C92 24 92 28 91 32C90 36 88 42 85 45Z" fill="#60A5FA"/>
+  <path d="M95 40C95 40 96 28 97 24C97.5 21 99 19 100 21C101 23 101 26 100 30C99 34 97 38 95 40Z" fill="#60A5FA"/>
+  <path d="M105 45C105 45 106 32 107 28C107.5 25 109 23 110 25C111 27 111 30 110 34C109 38 107 42 105 45Z" fill="#60A5FA"/>
   
-  <!-- Whale tail -->
-  <path d="M165 100C165 100 175 90 185 85C190 82 195 85 195 90C195 95 190 100 185 100C180 100 170 98 165 100Z" fill="#2563EB" stroke="#1E40AF" stroke-width="2"/>
-  <path d="M165 105C165 105 175 115 185 120C190 123 195 120 195 115C195 110 190 105 185 105C180 105 170 107 165 105Z" fill="#2563EB" stroke="#1E40AF" stroke-width="2"/>
+  <!-- Main whale body -->
+  <ellipse cx="100" cy="100" rx="70" ry="45" fill="#2563EB"/>
   
-  <!-- Whale fin -->
-  <path d="M100 60C100 60 95 45 95 35C95 30 100 28 103 32C106 36 108 50 100 60Z" fill="#2563EB" stroke="#1E40AF" stroke-width="2"/>
+  <!-- Belly (lighter blue) -->
+  <ellipse cx="100" cy="115" rx="55" ry="30" fill="#3B82F6"/>
   
-  <!-- Whale head/mouth -->
-  <path d="M40 100C40 100 30 95 25 95C20 95 15 98 15 102C15 106 20 110 25 110C30 110 35 105 40 100Z" fill="#2563EB" stroke="#1E40AF" stroke-width="2"/>
+  <!-- Tail -->
+  <path d="M165 95C165 95 180 75 190 65C195 60 200 62 198 70C196 78 188 88 180 95C185 95 195 100 200 110C203 118 200 122 195 120C185 115 170 105 165 105Z" fill="#2563EB"/>
+  
+  <!-- Dorsal fin -->
+  <path d="M90 60C90 60 85 50 85 45C85 40 88 38 92 42C96 46 98 55 90 60Z" fill="#1E40AF"/>
+  
+  <!-- Pectoral fin -->
+  <ellipse cx="70" cy="110" rx="18" ry="8" fill="#1E40AF" transform="rotate(-30 70 110)"/>
   
   <!-- Eye -->
-  <circle cx="55" cy="90" r="4" fill="#1E293B"/>
-  <circle cx="56" cy="89" r="1.5" fill="white"/>
+  <circle cx="55" cy="85" r="5" fill="white"/>
+  <circle cx="57" cy="85" r="3" fill="#1E293B"/>
   
-  <!-- Blockchain links overlay -->
-  <g opacity="0.7">
-    <!-- Chain link 1 -->
-    <rect x="60" y="95" width="15" height="15" rx="3" fill="none" stroke="#60A5FA" stroke-width="2"/>
-    <rect x="80" y="95" width="15" height="15" rx="3" fill="none" stroke="#60A5FA" stroke-width="2"/>
-    <line x1="75" y1="102.5" x2="80" y2="102.5" stroke="#60A5FA" stroke-width="2"/>
+  <!-- Mouth curve -->
+  <path d="M35 95C35 95 40 100 50 102" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" fill="none"/>
+  
+  <!-- Blockchain elements -->
+  <g opacity="0.8">
+    <!-- Chain link on body -->
+    <circle cx="100" cy="95" r="8" fill="none" stroke="#60A5FA" stroke-width="2.5"/>
+    <circle cx="120" cy="95" r="8" fill="none" stroke="#60A5FA" stroke-width="2.5"/>
+    <line x1="108" y1="95" x2="112" y2="95" stroke="#60A5FA" stroke-width="2.5"/>
     
-    <!-- Chain link 2 -->
-    <rect x="100" y="95" width="15" height="15" rx="3" fill="none" stroke="#60A5FA" stroke-width="2"/>
-    <line x1="95" y1="102.5" x2="100" y2="102.5" stroke="#60A5FA" stroke-width="2"/>
-    
-    <!-- Chain link 3 -->
-    <rect x="120" y="95" width="15" height="15" rx="3" fill="none" stroke="#60A5FA" stroke-width="2"/>
-    <line x1="115" y1="102.5" x2="120" y2="102.5" stroke="#60A5FA" stroke-width="2"/>
+    <circle cx="140" cy="95" r="8" fill="none" stroke="#60A5FA" stroke-width="2.5"/>
+    <line x1="128" y1="95" x2="132" y2="95" stroke="#60A5FA" stroke-width="2.5"/>
   </g>
   
-  <!-- Water waves -->
-  <path d="M10 150C20 145 30 155 40 150C50 145 60 155 70 150C80 145 90 155 100 150C110 145 120 155 130 150C140 145 150 155 160 150C170 145 180 155 190 150" stroke="#3B82F6" stroke-width="2" fill="none" opacity="0.5"/>
-  <path d="M10 160C20 155 30 165 40 160C50 155 60 165 70 160C80 155 90 165 100 160C110 155 120 165 130 160C140 155 150 165 160 160C170 155 180 165 190 160" stroke="#3B82F6" stroke-width="2" fill="none" opacity="0.3"/>
+  <!-- Water waves at bottom -->
+  <path d="M20 160C30 155 40 165 50 160C60 155 70 165 80 160C90 155 100 165 110 160C120 155 130 165 140 160C150 155 160 165 170 160C180 155 190 165 200 160" stroke="#60A5FA" stroke-width="3" fill="none" opacity="0.4" stroke-linecap="round"/>
+  <path d="M10 170C25 165 35 175 50 170C65 165 75 175 90 170C105 165 115 175 130 170C145 165 155 175 170 170C185 165 195 175 210 170" stroke="#60A5FA" stroke-width="3" fill="none" opacity="0.3" stroke-linecap="round"/>
 </svg>

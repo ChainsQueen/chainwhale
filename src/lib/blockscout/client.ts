@@ -159,8 +159,9 @@ export class BlockscoutClient {
 
   /**
    * Classify transaction type based on addresses and patterns
+   * @param _transfer - Token transfer to classify (unused for now)
    */
-  private classifyTransaction(transfer: TokenTransfer): 'buy' | 'sell' | 'transfer' {
+  private classifyTransaction(_transfer: TokenTransfer): 'buy' | 'sell' | 'transfer' {
     // TO DO: implement transaction classification logic
     return 'transfer';
   }
@@ -202,6 +203,7 @@ export class BlockscoutClient {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = JSON.parse((result.content as any)[0].text);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (data.items || []).map((item: any) => ({
         id: item.id,
         name: item.name,

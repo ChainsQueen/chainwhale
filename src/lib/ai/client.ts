@@ -21,7 +21,7 @@ export class AIEngine {
    * Analyze a blockchain transaction and provide plain English explanation
    */
   async analyzeTransaction(
-    transactionData: any,
+    transactionData: Record<string, unknown>,
     context?: string
   ): Promise<string> {
     try {
@@ -63,7 +63,7 @@ Provide a concise, plain English explanation of what happened in this transactio
   /**
    * Answer user queries about whale activity using blockchain data
    */
-  async answerQuery(query: string, blockchainData: any[]): Promise<string> {
+  async answerQuery(query: string, blockchainData: Record<string, unknown>[]): Promise<string> {
     try {
       const prompt = `User Question: ${query}
 
@@ -100,8 +100,8 @@ Focus on actionable insights and patterns. If you notice any significant whale m
    * Analyze a wallet's holdings and activity across chains
    */
   async analyzeWallet(
-    walletData: any,
-    holdings: any[]
+    walletData: Record<string, unknown>,
+    holdings: Record<string, unknown>[]
   ): Promise<WalletAnalysis> {
     try {
       const prompt = `Analyze this wallet's holdings and activity:
@@ -154,10 +154,10 @@ Return your response as a JSON object with this structure:
       const validated = WalletAnalysisSchema.parse(parsed);
 
       return {
-        address: walletData.address || '',
-        totalValue: walletData.totalValue || 0,
-        chains: walletData.chains || {},
-        tokens: holdings,
+        address: (walletData.address as string) || '',
+        totalValue: (walletData.totalValue as number) || 0,
+        chains: (walletData.chains as Record<string, number>) || {},
+        tokens: holdings as Array<{ symbol: string; balance: string; value: number; chain: string }>,
         summary: validated.summary,
         riskScore: validated.riskScore,
         insights: validated.insights,
@@ -166,10 +166,10 @@ Return your response as a JSON object with this structure:
       console.error('Error analyzing wallet:', error);
       // Return default analysis on error
       return {
-        address: walletData.address || '',
-        totalValue: walletData.totalValue || 0,
-        chains: walletData.chains || {},
-        tokens: holdings,
+        address: (walletData.address as string) || '',
+        totalValue: (walletData.totalValue as number) || 0,
+        chains: (walletData.chains as Record<string, number>) || {},
+        tokens: holdings as Array<{ symbol: string; balance: string; value: number; chain: string }>,
         summary: 'Unable to analyze wallet at this time',
         riskScore: 50,
         insights: ['Analysis unavailable'],

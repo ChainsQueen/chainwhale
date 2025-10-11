@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import type { AddressInfo, TokenTransfer, Transaction, Chain } from '../shared/types';
+import type { AddressInfo, TokenTransfer, Chain } from '../shared/types';
 
 /**
  * Blockscout MCP Client
@@ -86,7 +86,8 @@ export class BlockscoutClient {
         },
       });
 
-      const data = JSON.parse(result.content[0].text);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = JSON.parse((result.content as any)[0].text);
       return {
         address: data.hash || address,
         balance: data.coin_balance || '0',
@@ -129,7 +130,9 @@ export class BlockscoutClient {
         arguments: args,
       });
 
-      const data = JSON.parse(result.content[0].text);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = JSON.parse((result.content as any)[0].text);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const items: TokenTransfer[] = (data.items || []).map((item: any) => ({
         hash: item.tx_hash,
         from: item.from?.hash || '',
@@ -140,7 +143,7 @@ export class BlockscoutClient {
           address: item.token?.address || '',
           name: item.token?.name,
         },
-        timestamp: item.timestamp ? new Date(item.timestamp).getTime() : Date.now(),
+        timestamp: item.timestamp ? new Date(item.timestamp as string).getTime() : Date.now(),
         valueUsd: item.total?.usd ? parseFloat(item.total.usd) : undefined,
       }));
 
@@ -152,6 +155,14 @@ export class BlockscoutClient {
       console.error('Error getting token transfers:', error);
       throw error;
     }
+  }
+
+  /**
+   * Classify transaction type based on addresses and patterns
+   */
+  private classifyTransaction(transfer: TokenTransfer): 'buy' | 'sell' | 'transfer' {
+    // TO DO: implement transaction classification logic
+    return 'transfer';
   }
 
   /**
@@ -169,7 +180,8 @@ export class BlockscoutClient {
         },
       });
 
-      return result.content[0].text;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (result.content as any)[0].text;
     } catch (error) {
       console.error('Error getting transaction summary:', error);
       return 'Unable to generate transaction summary';
@@ -188,7 +200,8 @@ export class BlockscoutClient {
         arguments: {},
       });
 
-      const data = JSON.parse(result.content[0].text);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = JSON.parse((result.content as any)[0].text);
       return (data.items || []).map((item: any) => ({
         id: item.id,
         name: item.name,
@@ -208,7 +221,7 @@ export class BlockscoutClient {
   /**
    * Get tokens held by an address
    */
-  async getTokensByAddress(chainId: string, address: string): Promise<any[]> {
+  async getTokensByAddress(chainId: string, address: string): Promise<Record<string, unknown>[]> {
     this.ensureConnected();
 
     try {
@@ -220,7 +233,8 @@ export class BlockscoutClient {
         },
       });
 
-      const data = JSON.parse(result.content[0].text);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = JSON.parse((result.content as any)[0].text);
       return data.items || [];
     } catch (error) {
       console.error('Error getting tokens by address:', error);

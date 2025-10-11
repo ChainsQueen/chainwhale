@@ -106,7 +106,7 @@ export class WhaleDetector {
   /**
    * Classify transaction type based on addresses and patterns
    */
-  private classifyTransaction(transfer: any): 'buy' | 'sell' | 'transfer' {
+  private classifyTransaction(transfer: { from: string; to: string }): 'buy' | 'sell' | 'transfer' {
     // Simple classification logic
     // In a real implementation, you would check against known DEX addresses,
     // CEX addresses, etc.

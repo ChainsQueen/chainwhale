@@ -112,10 +112,18 @@ export class BlockscoutClient {
       }
       
       const data = JSON.parse(responseText);
+      
+      // Calculate USD value: convert Wei to ETH, then multiply by exchange rate
+      let balanceUsd: number | undefined;
+      if (data.coin_balance && data.exchange_rate) {
+        const balanceInEth = parseFloat(data.coin_balance) / 1e18; // Wei to ETH
+        balanceUsd = balanceInEth * parseFloat(data.exchange_rate);
+      }
+      
       return {
         address: data.hash || address,
         balance: data.coin_balance || '0',
-        balanceUsd: data.exchange_rate ? parseFloat(data.coin_balance) * data.exchange_rate : undefined,
+        balanceUsd,
         isContract: data.is_contract || false,
         ensName: data.ens_domain_name,
       };
@@ -228,6 +236,7 @@ export class BlockscoutClient {
             symbol: item.token?.symbol || 'UNKNOWN',
             address: item.token?.address_hash || item.token?.address || '',
             name: item.token?.name,
+            decimals: item.token?.decimals || '18',
           },
           timestamp: item.timestamp ? new Date(item.timestamp as string).getTime() : Date.now(),
           valueUsd,
@@ -385,6 +394,46 @@ export class BlockscoutClient {
     } catch (error) {
       console.error('Error getting whale activity:', error);
       return { transfers: [], totalVolume: 0 };
+    }
+  }
+
+  /**
+   * Get transactions for an address (native currency transfers and contract interactions)
+   */
+  async getTransactionsByAddress(
+    chainId: string,
+    address: string,
+    ageFrom: string,
+    ageTo: string
+  ): Promise<Array<Record<string, unknown>>> {
+    this.ensureConnected();
+
+    try {
+      const args: Record<string, string> = {
+        chain_id: chainId,
+        address: address,
+        age_from: this.convertToISOTimestamp(ageFrom),
+        age_to: this.convertToISOTimestamp(ageTo),
+      };
+
+      const result = await this.client!.callTool({
+        name: 'get_transactions_by_address',
+        arguments: args,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const responseText = (result.content as any)[0].text;
+      
+      if (responseText.startsWith('Error')) {
+        console.error(`Blockscout API error: ${responseText}`);
+        return [];
+      }
+      
+      const data = JSON.parse(responseText);
+      return data.data || data.items || [];
+    } catch (error) {
+      console.error('Error getting transactions by address:', error);
+      return [];
     }
   }
 }

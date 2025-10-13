@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BlockscoutClient } from '@/lib/blockscout/client';
 import { WhaleService } from '@/core/services/whale-service';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   let blockscout: BlockscoutClient | null = null;
 

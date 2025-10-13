@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BlockscoutClient } from '@/lib/blockscout';
 import { AIEngine } from '@/lib/ai';
+import { BlockscoutClient } from '@/lib/blockscout/client';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   let blockscout: BlockscoutClient | null = null;

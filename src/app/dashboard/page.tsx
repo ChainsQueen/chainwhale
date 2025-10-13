@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Activity, Wallet } from 'lucide-react';
+import { MessageSquare, Activity, Wallet, Settings } from 'lucide-react';
 import ChatInterface from '@/components/dashboard/chat-interface';
 import WhaleFeed from '@/components/dashboard/whale-feed';
 import WalletAnalysis from '@/components/dashboard/wallet-analysis';
+import ApiSettings from '@/components/dashboard/api-settings';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('chat');
@@ -24,7 +25,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[800px]">
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Chat</span>
@@ -36,6 +37,10 @@ export default function DashboardPage() {
             <TabsTrigger value="wallet" className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
               <span className="hidden sm:inline">Wallet Analysis</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -49,6 +54,12 @@ export default function DashboardPage() {
 
           <TabsContent value="wallet" className="mt-6">
             <WalletAnalysis />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            <div className="max-w-3xl mx-auto">
+              <ApiSettings />
+            </div>
           </TabsContent>
         </Tabs>
       </main>

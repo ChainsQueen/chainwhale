@@ -1,21 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Wallet, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Search, Wallet, AlertTriangle, CheckCircle, TrendingUp, Copy, Check, ExternalLink, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { WalletAnalysis as WalletAnalysisType } from '@/lib/shared/types';
 
 export default function WalletAnalysis() {
   const [address, setAddress] = useState('');
   const [analysis, setAnalysis] = useState<WalletAnalysisType | null>(null);
-  const [holdings, setHoldings] = useState<Array<{ symbol: string; balance: string; value: number; chain: string }>>([]);
+  const [holdings, setHoldings] = useState<Array<{ symbol: string; balance: string; value: number; chain: string; address: string }>>([]);
+  const [ensName, setEnsName] = useState<string | undefined>();
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const [isValidAddress, setIsValidAddress] = useState(true);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiInsights, setAiInsights] = useState<string | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  // Check for API key on mount and when returning to this component
+  useEffect(() => {
+    const checkApiKey = () => {
+      const key = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+      setHasApiKey(!!key);
+    };
+    
+    checkApiKey();
+    // Check again when storage changes (user added/removed key)
+    window.addEventListener('storage', checkApiKey);
+    window.addEventListener('focus', checkApiKey);
+    
+    return () => {
+      window.removeEventListener('storage', checkApiKey);
+      window.removeEventListener('focus', checkApiKey);
+    };
+  }, []);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +55,7 @@ export default function WalletAnalysis() {
     setIsLoading(true);
     setError('');
     setAnalysis(null);
+    setAiInsights(null);
 
     try {
       const response = await fetch('/api/analyze-wallet', {
@@ -31,7 +63,7 @@ export default function WalletAnalysis() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           address: address.trim(),
-          chains: ['1', '8453', '42161'], // Ethereum, Base, Arbitrum
+          chains: ['1', '8453', '42161', '10', '137'], // Ethereum, Base, Arbitrum, Optimism, Polygon
         }),
       });
 
@@ -42,12 +74,108 @@ export default function WalletAnalysis() {
       const data = await response.json();
       setAnalysis(data.analysis);
       setHoldings(data.holdings || []);
+      setEnsName(data.ensName);
+      setRecentTransactions(data.recentTransactions || []);
     } catch (err) {
       setError('Failed to analyze wallet. Please check the address and try again.');
       console.error('Wallet analysis error:', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGenerateAI = async () => {
+    if (!analysis || isGeneratingAI) return;
+
+    setIsGeneratingAI(true);
+    setError('');
+
+    // Get user's API key from localStorage
+    const userApiKey = localStorage.getItem('openai_api_key');
+
+    try {
+      const response = await fetch('/api/analyze-wallet-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: analysis.address,
+          holdings,
+          recentTransactions,
+          totalValue: analysis.totalValue,
+          chains: analysis.chains,
+          apiKey: userApiKey, // Pass user's API key
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate AI insights');
+      }
+
+      const data = await response.json();
+      setAiInsights(data.insights);
+      
+      // Update analysis with AI data
+      if (data.riskScore) {
+        setAnalysis({ ...analysis, riskScore: data.riskScore, summary: data.summary || analysis.summary });
+      }
+    } catch (err) {
+      setError('Failed to generate AI insights. Make sure OpenAI API key is configured.');
+      console.error('AI generation error:', err);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  const validateAddress = (addr: string): boolean => {
+    // Check if it's a valid Ethereum address (0x followed by 40 hex characters)
+    const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
+    // Also allow ENS names (alphanumeric with dots, ending in .eth)
+    const ensNameRegex = /^[a-zA-Z0-9-]+\.eth$/;
+    
+    return ethAddressRegex.test(addr) || ensNameRegex.test(addr);
+  };
+
+  const handleAddressChange = (value: string) => {
+    setAddress(value);
+    
+    // Only validate if there's input
+    if (value.trim()) {
+      setIsValidAddress(validateAddress(value.trim()));
+    } else {
+      setIsValidAddress(true); // Don't show error for empty input
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopiedAddress(text);
+      setTimeout(() => setCopiedAddress(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const getChainName = (chainId: string): string => {
+    const chains: Record<string, string> = {
+      '1': 'Ethereum',
+      '8453': 'Base',
+      '42161': 'Arbitrum',
+      '10': 'Optimism',
+      '137': 'Polygon',
+    };
+    return chains[chainId] || `Chain ${chainId}`;
   };
 
   const getRiskColor = (score: number) => {
@@ -73,18 +201,27 @@ export default function WalletAnalysis() {
       <CardContent>
         <div className="space-y-6">
           {/* Search Form */}
-          <form onSubmit={handleAnalyze} className="flex gap-2">
-            <Input
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Enter wallet address (0x...)"
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={isLoading || !address.trim()}>
-              <Search className="h-4 w-4 mr-2" />
-              Analyze
-            </Button>
+          <form onSubmit={handleAnalyze} className="space-y-2">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  value={address}
+                  onChange={(e) => handleAddressChange(e.target.value)}
+                  placeholder="Enter wallet address (0x...) or ENS name (.eth)"
+                  disabled={isLoading}
+                />
+                {!isValidAddress && address.trim() && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Invalid address format. Use 0x... format or .eth ENS name
+                  </p>
+                )}
+              </div>
+              <Button type="submit" disabled={isLoading || !address.trim() || !isValidAddress}>
+                <Search className="h-4 w-4 mr-2" />
+                Analyze
+              </Button>
+            </div>
           </form>
 
           {error && (
@@ -128,75 +265,234 @@ export default function WalletAnalysis() {
                   {/* Address */}
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Address</p>
-                    <code className="text-xs bg-muted px-3 py-2 rounded block break-all">
-                      {analysis.address}
-                    </code>
+                    {ensName && (
+                      <p className="text-lg font-semibold mb-2 text-primary">{ensName}</p>
+                    )}
+                    <TooltipProvider>
+                      <div className="inline-flex items-center gap-2 bg-muted rounded px-3 py-2">
+                        <code className="text-xs font-mono break-all">
+                          {analysis.address}
+                        </code>
+                        <Tooltip open={copiedAddress === analysis.address}>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => copyToClipboard(analysis.address)}
+                              className="flex-shrink-0 hover:scale-110 active:scale-95 transition-transform"
+                            >
+                              {copiedAddress === analysis.address ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Copy className="h-3 w-3 opacity-50 hover:opacity-100 transition-opacity" />
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs font-medium">Copied!</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TooltipProvider>
                   </div>
 
-                  {/* Total Value */}
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Total Value</p>
-                    <p className="text-3xl font-bold text-primary">
-                      ${analysis.totalValue.toLocaleString()}
-                    </p>
-                  </div>
+                  {/* Portfolio Breakdown - Only show if there's data */}
+                  {holdings.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {(() => {
+                        const ethHoldings = holdings.filter(h => h.symbol === 'ETH' && h.address === 'native');
+                        const ethBalance = ethHoldings.reduce((sum, h) => sum + parseFloat(h.balance), 0);
+                        const ethValue = ethHoldings.reduce((sum, h) => sum + h.value, 0);
+                        const tokenValue = holdings
+                          .filter(h => h.address !== 'native')
+                          .reduce((sum, h) => sum + h.value, 0);
+                        const tokenCount = holdings.filter(h => h.address !== 'native').length;
+                        
+                        return (
+                          <>
+                            {ethBalance > 0 && (
+                              <>
+                                <div className="p-4 bg-muted/30 rounded-lg">
+                                  <p className="text-xs text-muted-foreground mb-1">ETH BALANCE</p>
+                                  <p className="text-lg font-bold">
+                                    {ethBalance.toFixed(4)} ETH
+                                  </p>
+                                </div>
+                                <div className="p-4 bg-muted/30 rounded-lg">
+                                  <p className="text-xs text-muted-foreground mb-1">ETH VALUE</p>
+                                  <p className="text-lg font-bold text-primary">
+                                    {ethBalance.toFixed(4)} ETH
+                                  </p>
+                                  {ethValue > 0 && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      ≈ ${ethValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </p>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                            {tokenCount > 0 && (
+                              <div className="p-4 bg-muted/30 rounded-lg">
+                                <p className="text-xs text-muted-foreground mb-1">TOKEN HOLDINGS</p>
+                                <p className="text-lg font-bold text-primary">
+                                  ${tokenValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  ({tokenCount} {tokenCount === 1 ? 'Token' : 'Tokens'})
+                                </p>
+                              </div>
+                            )}
+                            {analysis.totalValue > 0 && (
+                              <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                                <p className="text-xs text-muted-foreground mb-1">MULTICHAIN INFO</p>
+                                <p className="text-lg font-bold text-primary">
+                                  ${analysis.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {Object.keys(analysis.chains).length} {Object.keys(analysis.chains).length === 1 ? 'chain' : 'chains'} scanned
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
 
-                  {/* Risk Score */}
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Risk Assessment</p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all ${
-                              analysis.riskScore < 30
-                                ? 'bg-green-500'
-                                : analysis.riskScore < 70
-                                ? 'bg-yellow-500'
-                                : 'bg-red-500'
-                            }`}
-                            style={{ width: `${analysis.riskScore}%` }}
-                          />
+                  {/* Whale Detection */}
+                  {analysis.insights && analysis.insights[0]?.includes('Whale Category') && (
+                    <div className="p-6 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-blue-500/10 rounded-full">
+                            <Wallet className="h-6 w-6 text-blue-500" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Whale Detection</p>
+                            <p className="font-semibold text-xl">
+                              {analysis.insights[0].split(':')[1]?.split('(')[0]?.trim() || 'Unknown'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground mb-1">Score</p>
+                          <p className="text-2xl font-bold text-blue-500">
+                            {analysis.insights[0].match(/Score: (\d+)/)?.[1] || '0'}/100
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Risk Assessment - Full Width */}
+                  <div className="p-6 bg-muted/30 rounded-lg border border-muted">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-3 bg-primary/10 rounded-full">
+                          <AlertTriangle className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Risk Assessment</p>
+                          <p className="font-semibold text-xl">{getRiskLabel(analysis.riskScore)}</p>
                         </div>
                       </div>
                       <Badge
                         variant="outline"
-                        className={getRiskColor(analysis.riskScore)}
+                        className={`${getRiskColor(analysis.riskScore)} text-lg px-4 py-2`}
                       >
-                        {getRiskLabel(analysis.riskScore)} ({analysis.riskScore}/100)
+                        {analysis.riskScore}/100
                       </Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
+                            analysis.riskScore < 30
+                              ? 'bg-green-500'
+                              : analysis.riskScore < 70
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                          }`}
+                          style={{ width: `${analysis.riskScore}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Low Risk</span>
+                        <span>Medium Risk</span>
+                        <span>High Risk</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Summary */}
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">AI Summary</p>
-                    <p className="text-sm leading-relaxed">{analysis.summary}</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-muted-foreground">Summary</p>
+                      {!aiInsights && (
+                        <Button
+                          onClick={() => {
+                            if (!hasApiKey) {
+                              // Redirect to Settings tab
+                              const settingsTab = document.querySelector('[value="settings"]') as HTMLElement;
+                              if (settingsTab) {
+                                settingsTab.click();
+                              }
+                              return;
+                            }
+                            handleGenerateAI();
+                          }}
+                          disabled={isGeneratingAI}
+                          size="sm"
+                          variant={hasApiKey ? "default" : "outline"}
+                          className="gap-2"
+                        >
+                          {isGeneratingAI ? (
+                            <>
+                              <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                              Generating...
+                            </>
+                          ) : hasApiKey ? (
+                            <>
+                              <TrendingUp className="h-3 w-3" />
+                              Generate AI Insights
+                              <span className="ml-1 h-2 w-2 rounded-full bg-green-500" title="API Key configured" />
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="h-3 w-3" />
+                              Setup AI in Settings
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-sm leading-relaxed whitespace-pre-line">{aiInsights || analysis.summary}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Chain Distribution */}
-              {Object.keys(analysis.chains).length > 0 && (
+              {/* Chain Distribution - Only show if there's value */}
+              {Object.keys(analysis.chains).length > 0 && 
+               Object.values(analysis.chains).some(v => (v as number) > 0) && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Chain Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {Object.entries(analysis.chains).map(([chainId, value]) => (
-                        <div
-                          key={chainId}
-                          className="p-4 bg-muted/50 rounded-lg"
-                        >
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Chain {chainId}
-                          </p>
-                          <p className="text-xl font-bold">
-                            ${(value as number).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
+                      {Object.entries(analysis.chains)
+                        .filter(([, value]) => (value as number) > 0)
+                        .map(([chainId, value]) => (
+                          <div
+                            key={chainId}
+                            className="p-4 bg-muted/50 rounded-lg"
+                          >
+                            <p className="text-sm text-muted-foreground mb-1">
+                              {getChainName(chainId)}
+                            </p>
+                            <p className="text-xl font-bold">
+                              ${(value as number).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -206,14 +502,15 @@ export default function WalletAnalysis() {
               {holdings.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Token Holdings</CardTitle>
+                    <CardTitle>Token Holdings ({holdings.length})</CardTitle>
+                    <CardDescription>Top tokens by value</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {holdings.slice(0, 10).map((holding, index) => (
+                      {holdings.slice(0, 15).map((holding, index) => (
                         <div
-                          key={index}
-                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                          key={`${holding.address}-${index}`}
+                          className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -222,18 +519,116 @@ export default function WalletAnalysis() {
                             <div>
                               <p className="font-medium">{holding.symbol}</p>
                               <p className="text-xs text-muted-foreground">
-                                Chain {holding.chain}
+                                {getChainName(holding.chain)}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium">${holding.value.toLocaleString()}</p>
+                            <p className="font-medium">${holding.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                             <p className="text-xs text-muted-foreground">
-                              {holding.balance}
+                              {holding.balance} {holding.symbol}
                             </p>
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recent Transactions */}
+              {recentTransactions.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Recent Activity (24h)
+                    </CardTitle>
+                    <CardDescription>{recentTransactions.length} token transfers in the last 24 hours</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {recentTransactions.slice(0, 15).map((tx: any, index) => {
+                        const isIncoming = tx.to?.toLowerCase() === analysis.address.toLowerCase();
+                        const decimals = parseInt(tx.token?.decimals || '18');
+                        const tokenAmount = tx.value ? (parseFloat(tx.value) / Math.pow(10, decimals)).toFixed(4) : '0';
+                        
+                        return (
+                          <div
+                            key={`${tx.hash}-${index}`}
+                            className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${isIncoming ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}
+                                >
+                                  {isIncoming ? '↓ IN' : '↑ OUT'}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {getChainName(tx.chainId)}
+                                </Badge>
+                                <span className="font-medium text-sm">
+                                  {tokenAmount} {tx.token?.symbol || 'tokens'}
+                                  {tx.valueUsd && tx.valueUsd > 0 && (
+                                    <span className="text-primary ml-1">
+                                      (${tx.valueUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="text-muted-foreground">{isIncoming ? 'From' : 'To'}:</span>
+                                <TooltipProvider>
+                                  <div className="inline-flex items-center gap-1 bg-muted rounded px-2 py-1">
+                                    <code className="text-xs font-mono">
+                                      {isIncoming ? tx.from : tx.to}
+                                    </code>
+                                    <Tooltip open={copiedAddress === (isIncoming ? tx.from : tx.to)}>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          onClick={() => copyToClipboard(isIncoming ? tx.from : tx.to)}
+                                          className="flex-shrink-0 hover:scale-110 active:scale-95 transition-transform"
+                                        >
+                                          {copiedAddress === (isIncoming ? tx.from : tx.to) ? (
+                                            <Check className="h-3 w-3 text-green-500" />
+                                          ) : (
+                                            <Copy className="h-3 w-3 opacity-50 hover:opacity-100 transition-opacity" />
+                                          )}
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="text-xs font-medium">Copied!</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </TooltipProvider>
+                              </div>
+                              
+                              <p className="text-xs text-muted-foreground">
+                                {tx.timestamp ? new Date(tx.timestamp).toLocaleString() : 'Unknown time'}
+                              </p>
+                            </div>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                              className="h-8 w-8 p-0 flex-shrink-0"
+                            >
+                              <a
+                                href={`https://etherscan.io/tx/${tx.hash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>

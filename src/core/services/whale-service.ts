@@ -21,6 +21,19 @@ export class WhaleService {
   private client: BlockscoutClient;
   private minWhaleValue: number;
 
+  // Known whale addresses (same as WhaleDetector)
+  private readonly WHALE_ADDRESSES = [
+    '0x28C6c06298d514Db089934071355E5743bf21d60', // Binance
+    '0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549', // Binance 2
+    '0xDFd5293D8e347dFe59E90eFd55b2956a1343963d', // Binance 3
+    '0xF977814e90dA44bFA03b6295A0616a897441aceC', // Binance 8
+    '0x001866Ae5B3de6cAa5a51543FD9fB64f524F5478', // Coinbase
+    '0x71660c4005BA85c37ccec55d0C4493E66Fe775d3', // Coinbase 2
+    '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // Vitalik
+    '0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf', // Polygon Bridge
+    '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503', // Large holder
+  ];
+
   constructor(minWhaleValue: number = 100000) {
     this.client = new BlockscoutClient();
     this.minWhaleValue = minWhaleValue;
@@ -32,28 +45,42 @@ export class WhaleService {
   async getWhaleFeed(
     chainId: string,
     chainName: string,
-    timeRange: string = '1h'
+    timeRange: string = '24h'
   ): Promise<WhaleTransfer[]> {
     try {
       await this.client.connect();
       
-      const whaleTransfers = await this.client.getWhaleTransfers(
-        chainId,
-        this.minWhaleValue,
-        timeRange,
-        'now'
-      );
+      const allTransfers: WhaleTransfer[] = [];
 
-      // Add chain info to each transfer
-      const enrichedTransfers: WhaleTransfer[] = whaleTransfers.map(transfer => ({
-        ...transfer,
-        chainId,
-        chainName
-      }));
+      // Monitor each whale address
+      for (const whaleAddress of this.WHALE_ADDRESSES) {
+        try {
+          const { items: transfers } = await this.client.getTokenTransfers(
+            chainId,
+            whaleAddress,
+            timeRange,
+            'now'
+          );
+
+          // Filter by minimum value and add chain info
+          const filtered = transfers
+            .filter(t => (t.valueUsd || 0) >= this.minWhaleValue)
+            .map(transfer => ({
+              ...transfer,
+              chainId,
+              chainName
+            }));
+
+          allTransfers.push(...filtered);
+        } catch {
+          // Skip addresses with no transfers
+          continue;
+        }
+      }
 
       await this.client.disconnect();
       
-      return enrichedTransfers.sort((a, b) => 
+      return allTransfers.sort((a, b) => 
         (b.valueUsd || 0) - (a.valueUsd || 0)
       );
     } catch (error) {

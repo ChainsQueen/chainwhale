@@ -5,14 +5,20 @@ Reusable UI components for the application.
 ## Structure
 
 - **`ui/`** - Base UI components (buttons, cards, inputs, etc.)
-  - Shared, low-level components
+  - Shared, low-level components from shadcn/ui
   - Design system primitives
   - Should be framework-agnostic where possible
 
-- **`features/`** - Feature-specific components
-  - Domain-specific UI modules
+- **`dashboard/`** - Dashboard-specific components
+  - Chat interface, whale feed, wallet analysis
+  - API settings and configuration
   - Composed from `ui/` components
-  - Contains business logic specific to features
+
+- **Root components** - Shared across multiple pages
+  - `app-header.tsx` - Unified navigation header
+  - `whale-tracker-card.tsx` - Whale transfer display
+  - `whale-stats.tsx` - Statistics dashboard
+  - `theme-provider.tsx` & `theme-toggle.tsx` - Theme management
 
 ## Guidelines
 

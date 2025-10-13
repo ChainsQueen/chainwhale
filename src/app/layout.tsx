@@ -16,13 +16,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ChainWhale - Blockchain Explorer",
   description: "Blockchain exploration and analysis platform powered by AI",
-  keywords: ["blockchain", "crypto", "explorer", "analysis", "web3"],
+  keywords: ["blockchain", "crypto", "explorer", "analysis", "web3", "whale", "tracking"],
   authors: [{ name: "ChainsQueen" }],
   creator: "ChainsQueen",
   publisher: "ChainsQueen",
   icons: {
-    icon: "/chainwhale/favicon.svg",
-    apple: "/chainwhale/favicon.svg",
+    icon: [
+      {
+        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🐋</text></svg>",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🐋</text></svg>",
   },
   manifest: "/chainwhale/site.webmanifest",
   metadataBase: new URL("https://chainsqueen.github.io/chainwhale"),

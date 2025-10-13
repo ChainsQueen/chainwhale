@@ -82,32 +82,28 @@ export default function WhalesPage() {
       {/* Header with Navigation */}
       <AppHeader />
 
-      {/* Page Title */}
-      <div className="border-b bg-background/50">
-        <div className="container mx-auto px-4 py-4 sm:py-6">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-2">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Whale Tracker</h1>
-              <Button
-                onClick={fetchWhaleFeed}
-                disabled={loading}
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''} sm:mr-2`} />
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-            </div>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              Real-time monitoring of large blockchain transfers across multiple chains
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
         <div className="space-y-4 sm:space-y-6">
+        {/* Page Title */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Whale Tracker</h1>
+            <Button
+              onClick={fetchWhaleFeed}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''} sm:mr-2`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+          </div>
+          <p className="text-muted-foreground text-xs sm:text-sm">
+            Real-time monitoring of large blockchain transfers across multiple chains
+          </p>
+        </div>
+
         {/* Filters */}
         <div className="space-y-3 sm:space-y-4">
           {/* Chain Filter */}

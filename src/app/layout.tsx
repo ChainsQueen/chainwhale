@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChainWhale - Blockchain Explorer",
-  description: "Blockchain exploration and analysis platform powered by AI",
-  keywords: ["blockchain", "crypto", "explorer", "analysis", "web3", "whale", "tracking"],
+  title: "ChainWhale - AI-Powered Blockchain Analytics",
+  description: "Intelligent wallet analysis, whale tracking, and multi-chain portfolio monitoring powered by AI",
+  keywords: ["blockchain", "crypto", "explorer", "analysis", "web3", "whale", "tracking", "wallet", "portfolio"],
   authors: [{ name: "ChainsQueen" }],
   creator: "ChainsQueen",
   publisher: "ChainsQueen",

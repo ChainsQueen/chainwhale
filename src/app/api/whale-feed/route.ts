@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BlockscoutClient } from '@/lib/blockscout';
-import { WhaleDetector } from '@/core/services/whale-detector';
+import { BlockscoutClient } from '@/lib/blockscout/client';
+import { WhaleService } from '@/core/services/whale-service';
 
 export async function GET(request: NextRequest) {
   let blockscout: BlockscoutClient | null = null;
@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
     blockscout = new BlockscoutClient();
     await blockscout.connect();
 
-    // Use WhaleDetector (works with known addresses)
-    const detector = new WhaleDetector(blockscout, null as any, minValue);
+    // Use WhaleService (works with known addresses)
+    const whaleService = new WhaleService(minValue);
 
     // Fetch whale transactions from each chain
     const allTransactions = [];
@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
     for (const chainId of chainIds) {
       try {
         console.log(`Fetching whale transactions for chain ${chainId}...`);
-        const transactions = await detector.detectWhaleTransactions(chainId, 50);
+        const chainName = getChainName(chainId);
+        const transactions = await whaleService.getWhaleFeed(chainId, chainName, '24h');
         console.log(`Found ${transactions.length} whale transactions on chain ${chainId}`);
         allTransactions.push(...transactions);
       } catch (error) {
@@ -54,8 +55,8 @@ export async function GET(request: NextRequest) {
     // Calculate stats
     const stats = {
       totalTransfers: sorted.length,
-      totalVolume: sorted.reduce((sum, t) => sum + t.valueUsd, 0),
-      largestTransfer: Math.max(...sorted.map(t => t.valueUsd), 0),
+      totalVolume: sorted.reduce((sum, t) => sum + (t.valueUsd || 0), 0),
+      largestTransfer: Math.max(...sorted.map(t => t.valueUsd || 0), 0),
       uniqueWhales: new Set([...sorted.map(t => t.from), ...sorted.map(t => t.to)]).size
     };
 
@@ -63,12 +64,12 @@ export async function GET(request: NextRequest) {
     const whaleMap = new Map<string, { volume: number; count: number }>();
     sorted.forEach(t => {
       const fromData = whaleMap.get(t.from) || { volume: 0, count: 0 };
-      fromData.volume += t.valueUsd;
+      fromData.volume += (t.valueUsd || 0);
       fromData.count += 1;
       whaleMap.set(t.from, fromData);
 
       const toData = whaleMap.get(t.to) || { volume: 0, count: 0 };
-      toData.volume += t.valueUsd;
+      toData.volume += (t.valueUsd || 0);
       toData.count += 1;
       whaleMap.set(t.to, toData);
     });
@@ -77,7 +78,8 @@ export async function GET(request: NextRequest) {
       .map(([address, data]) => ({
         address,
         volume: data.volume,
-        transferCount: data.count
+        count: data.count,
+        chain: sorted.find(t => t.from === address || t.to === address)?.chainId || 'Unknown'
       }))
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 10);
@@ -88,7 +90,7 @@ export async function GET(request: NextRequest) {
     const transfers = sorted.slice(0, 50).map(t => ({
       hash: t.hash,
       chainId: t.chainId,
-      chainName: t.chain,
+      chainName: t.chainName,
       from: t.from,
       to: t.to,
       value: t.value,

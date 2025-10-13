@@ -104,7 +104,7 @@ export default function ApiSettings() {
 
       const data = await response.json();
       setKeyStatus(data.valid ? 'valid' : 'invalid');
-    } catch (error) {
+    } catch {
       setKeyStatus('invalid');
     } finally {
       setIsTestingKey(false);

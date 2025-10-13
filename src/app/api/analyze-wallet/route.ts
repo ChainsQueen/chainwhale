@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BlockscoutClient } from '@/lib/blockscout';
-import { AIEngine } from '@/lib/ai';
+import { BlockscoutClient } from '@/lib/blockscout/client';
 
 export async function POST(request: NextRequest) {
   let blockscout: BlockscoutClient | null = null;
@@ -21,21 +20,20 @@ export async function POST(request: NextRequest) {
     await blockscout.connect();
 
     // Don't initialize AI here - it will be called on-demand via separate endpoint
-    const apiKey = process.env.OPENAI_API_KEY;
 
     // Get ENS name (only on Ethereum mainnet)
     let ensName: string | undefined;
     try {
       const addressInfo = await blockscout.getAddressInfo('1', address);
       ensName = addressInfo.ensName;
-    } catch (error) {
-      console.log('ENS lookup failed:', error);
+    } catch {
+      console.log('ENS lookup failed');
     }
 
     // Fetch data for each chain
-    const holdings = [];
+    const holdings: Array<{ symbol: string; balance: string; value: number; chain: string; address: string }> = [];
     const chainBalances: Record<string, number> = {};
-    const recentTransactions: any[] = [];
+    const recentTransactions: Array<{ hash: string; from: string; to: string; value: string; valueUsd: number; timestamp: number; token?: { symbol: string; address: string; decimals: number }; chainId: string }> = [];
     let totalValue = 0;
 
     for (const chainId of chains) {
@@ -115,17 +113,17 @@ export async function POST(request: NextRequest) {
           );
           
           // Add chain info and format transfers
-          recentTransactions.push(...transfers.slice(0, 15).map((transfer: any) => ({
+          recentTransactions.push(...transfers.slice(0, 15).map((transfer) => ({
             hash: transfer.hash,
             from: transfer.from,
             to: transfer.to,
-            token: transfer.token,
+            token: transfer.token ? { ...transfer.token, decimals: (transfer.token as { decimals?: number }).decimals || 18 } : undefined,
             value: transfer.value,
-            valueUsd: transfer.valueUsd,
+            valueUsd: transfer.valueUsd || 0,
             timestamp: transfer.timestamp,
-            chainId,
+            chainId: chainId as string,
           })));
-        } catch (error) {
+        } catch {
           console.log(`No recent token transfers on chain ${chainId}`);
         }
       } catch (error) {
@@ -133,12 +131,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get AI analysis (or provide basic analysis if no API key)
-    const walletData = {
-      address,
-      totalValue,
-      chains: chainBalances,
-    };
+    // Prepare basic analysis without AI (for future use)
+    // const walletData = {
+    //   address,
+    //   totalValue,
+    //   chains: chainBalances,
+    // };
 
     // Sort holdings by value
     holdings.sort((a, b) => b.value - a.value);
@@ -150,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate risk score based on activity patterns
     let riskScore = 50; // Start with medium risk
-    let riskFactors: string[] = [];
+    const riskFactors: string[] = [];
     
     // Lower risk for high activity (established wallet)
     if (transferCount > 20) {
@@ -205,29 +203,29 @@ export async function POST(request: NextRequest) {
       insights: [],
     };
     
-    // Whale scoring (0-100)
-    const volumeScore = Math.min(totalVolume24h / 10_000_000, 1) * 40; // 40% weight
-    const tokenScore = Math.min(uniqueTokens / 50, 1) * 20; // 20% weight
-    const activityScore = Math.min(transferCount / 100, 1) * 20; // 20% weight
-    const holdingsScore = Math.min(totalValue / 1_000_000, 1) * 20; // 20% weight
+    // Whale scoring (0-100) - for future use
+    // const volumeScore = Math.min(totalVolume24h / 10_000_000, 1) * 40; // 40% weight
+    // const tokenScore = Math.min(uniqueTokens / 50, 1) * 20; // 20% weight
+    // const activityScore = Math.min(transferCount / 100, 1) * 20; // 20% weight
+    // const holdingsScore = Math.min(totalValue / 1_000_000, 1) * 20; // 20% weight
     
-    const whaleScore = Math.round(volumeScore + tokenScore + activityScore + holdingsScore);
+    // const whaleScore = Math.round(volumeScore + tokenScore + activityScore + holdingsScore);
     
-    // Determine whale category
-    let whaleCategory = 'Unknown';
-    if (whaleScore >= 80) whaleCategory = 'Mega Whale';
-    else if (whaleScore >= 60) whaleCategory = 'Large Whale';
-    else if (whaleScore >= 40) whaleCategory = 'Medium Whale';
-    else if (whaleScore >= 20) whaleCategory = 'Small Whale';
-    else whaleCategory = 'Regular User';
+    // Determine whale category (for future use)
+    // let whaleCategory = 'Unknown';
+    // if (whaleScore >= 80) whaleCategory = 'Mega Whale';
+    // else if (whaleScore >= 60) whaleCategory = 'Large Whale';
+    // else if (whaleScore >= 40) whaleCategory = 'Medium Whale';
+    // else if (whaleScore >= 20) whaleCategory = 'Small Whale';
+    // else whaleCategory = 'Regular User';
     
-    // Update insights with whale category
-    const insights = [
-      `Whale Category: ${whaleCategory} (Score: ${whaleScore}/100)`,
-      `24h Transfer Volume: $${totalVolume24h.toLocaleString()}`,
-      `Active with ${transferCount} transfers in last 24h`,
-      uniqueTokens > 0 ? `Holds ${uniqueTokens} different tokens` : 'No token diversity detected',
-    ];
+    // Update insights with whale category (for future use)
+    // const insights = [
+    //   `Whale Category: ${whaleCategory} (Score: ${whaleScore}/100)`,
+    //   `24h Transfer Volume: $${totalVolume24h.toLocaleString()}`,
+    //   `Active with ${transferCount} transfers in last 24h`,
+    //   uniqueTokens > 0 ? `Holds ${uniqueTokens} different tokens` : 'No token diversity detected',
+    // ];
 
     return NextResponse.json({
       holdings,

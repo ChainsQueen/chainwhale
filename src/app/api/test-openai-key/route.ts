@@ -21,11 +21,11 @@ export async function POST(request: NextRequest) {
       await openai.models.list();
       
       return NextResponse.json({ valid: true });
-    } catch (error: any) {
-      console.error('OpenAI key validation error:', error);
+    } catch (err: unknown) {
+      console.error('OpenAI key validation error:', err);
       return NextResponse.json({ 
         valid: false, 
-        error: error.message || 'Invalid API key' 
+        error: err instanceof Error ? err.message : 'Invalid API key' 
       });
     }
   } catch (error) {

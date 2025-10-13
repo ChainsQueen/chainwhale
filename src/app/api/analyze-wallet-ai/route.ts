@@ -3,8 +3,13 @@ import { AIEngine } from '@/lib/ai';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { address, holdings, recentTransactions, totalValue, chains, apiKey: userApiKey } = body;
+    const body = await request.json() as Record<string, unknown>;
+    const address = body.address as string;
+    const holdings = body.holdings;
+    const recentTransactions = body.recentTransactions as Array<Record<string, unknown>>;
+    const totalValue = body.totalValue as number;
+    const chains = body.chains as Record<string, number>;
+    const userApiKey = body.apiKey as string | undefined;
 
     if (!address) {
       return NextResponse.json(
@@ -32,12 +37,12 @@ export async function POST(request: NextRequest) {
       totalValue,
       chains,
       transferCount: recentTransactions.length,
-      uniqueTokens: new Set(recentTransactions.map((tx: any) => tx.token?.address).filter(Boolean)).size,
-      totalVolume24h: recentTransactions.reduce((sum: number, tx: any) => sum + (tx.valueUsd || 0), 0),
+      uniqueTokens: new Set(recentTransactions.map((tx) => (tx.token as Record<string, unknown>)?.address).filter(Boolean)).size,
+      totalVolume24h: recentTransactions.reduce((sum: number, tx) => sum + ((tx.valueUsd as number) || 0), 0),
     };
 
     // Generate AI analysis
-    const analysis = await ai.analyzeWallet(walletData, holdings);
+    const analysis = await ai.analyzeWallet(walletData, holdings as Record<string, unknown>[]);
 
     return NextResponse.json({
       insights: analysis.summary,

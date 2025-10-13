@@ -21,7 +21,7 @@ export default function WalletAnalysis() {
   const [analysis, setAnalysis] = useState<WalletAnalysisType | null>(null);
   const [holdings, setHoldings] = useState<Array<{ symbol: string; balance: string; value: number; chain: string; address: string }>>([]);
   const [ensName, setEnsName] = useState<string | undefined>();
-  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Array<Record<string, unknown>>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
@@ -191,7 +191,7 @@ export default function WalletAnalysis() {
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>Wallet Analysis</CardTitle>
         <CardDescription>
@@ -548,14 +548,22 @@ export default function WalletAnalysis() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {recentTransactions.slice(0, 15).map((tx: any, index) => {
-                        const isIncoming = tx.to?.toLowerCase() === analysis.address.toLowerCase();
-                        const decimals = parseInt(tx.token?.decimals || '18');
-                        const tokenAmount = tx.value ? (parseFloat(tx.value) / Math.pow(10, decimals)).toFixed(4) : '0';
+                      {recentTransactions.slice(0, 15).map((tx, index) => {
+                        const txData = tx as Record<string, unknown>;
+                        const isIncoming = (txData.to as string)?.toLowerCase() === analysis.address.toLowerCase();
+                        const decimals = parseInt(((txData.token as Record<string, unknown>)?.decimals as string) || '18');
+                        const tokenAmount = txData.value ? (parseFloat(txData.value as string) / Math.pow(10, decimals)).toFixed(4) : '0';
+                        
+                        const tokenData = txData.token as Record<string, unknown>;
+                        const fromAddr = txData.from as string;
+                        const toAddr = txData.to as string;
+                        const chainId = txData.chainId as string;
+                        const valueUsd = txData.valueUsd as number;
+                        const timestamp = txData.timestamp as number;
                         
                         return (
                           <div
-                            key={`${tx.hash}-${index}`}
+                            key={`${txData.hash}-${index}`}
                             className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                           >
                             <div className="flex-1 space-y-1">
@@ -567,13 +575,13 @@ export default function WalletAnalysis() {
                                   {isIncoming ? '↓ IN' : '↑ OUT'}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
-                                  {getChainName(tx.chainId)}
+                                  {getChainName(chainId)}
                                 </Badge>
                                 <span className="font-medium text-sm">
-                                  {tokenAmount} {tx.token?.symbol || 'tokens'}
-                                  {tx.valueUsd && tx.valueUsd > 0 && (
+                                  {tokenAmount} {(tokenData?.symbol as string) || 'tokens'}
+                                  {valueUsd && valueUsd > 0 && (
                                     <span className="text-primary ml-1">
-                                      (${tx.valueUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                                      (${valueUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                                     </span>
                                   )}
                                 </span>
@@ -584,15 +592,15 @@ export default function WalletAnalysis() {
                                 <TooltipProvider>
                                   <div className="inline-flex items-center gap-1 bg-muted rounded px-2 py-1">
                                     <code className="text-xs font-mono">
-                                      {isIncoming ? tx.from : tx.to}
+                                      {isIncoming ? fromAddr : toAddr}
                                     </code>
-                                    <Tooltip open={copiedAddress === (isIncoming ? tx.from : tx.to)}>
+                                    <Tooltip open={copiedAddress === (isIncoming ? fromAddr : toAddr)}>
                                       <TooltipTrigger asChild>
                                         <button
-                                          onClick={() => copyToClipboard(isIncoming ? tx.from : tx.to)}
+                                          onClick={() => copyToClipboard(isIncoming ? fromAddr : toAddr)}
                                           className="flex-shrink-0 hover:scale-110 active:scale-95 transition-transform"
                                         >
-                                          {copiedAddress === (isIncoming ? tx.from : tx.to) ? (
+                                          {copiedAddress === (isIncoming ? fromAddr : toAddr) ? (
                                             <Check className="h-3 w-3 text-green-500" />
                                           ) : (
                                             <Copy className="h-3 w-3 opacity-50 hover:opacity-100 transition-opacity" />
@@ -608,7 +616,7 @@ export default function WalletAnalysis() {
                               </div>
                               
                               <p className="text-xs text-muted-foreground">
-                                {tx.timestamp ? new Date(tx.timestamp).toLocaleString() : 'Unknown time'}
+                                {timestamp ? new Date(timestamp).toLocaleString() : 'Unknown time'}
                               </p>
                             </div>
                             

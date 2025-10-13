@@ -30,7 +30,7 @@ export default function WhaleFeed() {
       
       // Convert new format to old format for compatibility
       const transfers = data.transfers || [];
-      const transactions = transfers.map((t: any) => ({
+      const transactions = transfers.map((t: Record<string, unknown>) => ({
         hash: t.hash,
         chain: t.chainName,
         chainId: t.chainId,
@@ -101,7 +101,7 @@ export default function WhaleFeed() {
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

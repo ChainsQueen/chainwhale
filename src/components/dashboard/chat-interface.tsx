@@ -53,7 +53,7 @@ export default function ChatInterface() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch {
       const errorMessage: Message = {
         role: 'assistant',
         content: 'Sorry, there was an error processing your request. Please make sure you have set up your OpenAI API key in .env.local',

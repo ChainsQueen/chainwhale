@@ -94,10 +94,10 @@ export default function Home() {
               className="flex flex-col sm:flex-row gap-4"
             >
               <Button size="lg" className="text-lg" asChild>
-                <a href="/dashboard">Get Started</a>
+                <a href="/dashboard">🚀 Dashboard</a>
               </Button>
               <Button size="lg" variant="outline" className="text-lg" asChild>
-                <a href="/dashboard">View Dashboard</a>
+                <a href="/whales">🐋 Whale Tracker</a>
               </Button>
             </motion.div>
 

@@ -54,53 +54,53 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
           {/* Left: Transfer Info */}
           <div className="flex-1 space-y-2">
             {/* Header */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               {getTransferIcon()}
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                 {transfer.chainName}
               </Badge>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                 {transfer.token.symbol}
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[10px] sm:text-xs text-muted-foreground">
                 {formatTime(transfer.timestamp)}
               </span>
             </div>
 
             {/* Addresses */}
-            <div className="flex items-center gap-2 text-sm">
-              <code className="px-2 py-1 bg-muted rounded text-xs font-mono">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-sm">
+              <code className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-muted rounded text-[10px] sm:text-xs font-mono">
                 {formatAddress(transfer.from)}
               </code>
-              <ArrowRight className="w-4 h-4 text-muted-foreground" />
-              <code className="px-2 py-1 bg-muted rounded text-xs font-mono">
+              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
+              <code className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-muted rounded text-[10px] sm:text-xs font-mono">
                 {formatAddress(transfer.to)}
               </code>
             </div>
 
             {/* Token Name */}
             {transfer.token.name && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 {transfer.token.name}
               </p>
             )}
           </div>
 
           {/* Right: Value */}
-          <div className="text-right">
-            <p className={`text-lg font-bold ${getValueColor()}`}>
+          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:text-right">
+            <p className={`text-base sm:text-lg font-bold ${getValueColor()}`}>
               {transfer.valueUsd ? formatValue(transfer.valueUsd) : 'N/A'}
             </p>
             <a
               href={`https://etherscan.io/tx/${transfer.hash}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-primary hover:underline"
+              className="text-[10px] sm:text-xs text-primary hover:underline whitespace-nowrap"
             >
               View TX
             </a>

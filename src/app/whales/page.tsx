@@ -66,6 +66,7 @@ export default function WhalesPage() {
     // Auto-refresh every 5 minutes
     const interval = setInterval(fetchWhaleFeed, 5 * 60 * 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChains, timeRange, minValue]);
 
   const toggleChain = (chainId: string) => {
@@ -83,42 +84,44 @@ export default function WhalesPage() {
 
       {/* Page Title */}
       <div className="border-b bg-background/50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Whale Tracker</h1>
-              <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-                Real-time monitoring of large blockchain transfers across multiple chains
-              </p>
+        <div className="container mx-auto px-4 py-4 sm:py-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Whale Tracker</h1>
+              <Button
+                onClick={fetchWhaleFeed}
+                disabled={loading}
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''} sm:mr-2`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
             </div>
-            <Button
-              onClick={fetchWhaleFeed}
-              disabled={loading}
-              variant="outline"
-              size="sm"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              Real-time monitoring of large blockchain transfers across multiple chains
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
+        <div className="space-y-4 sm:space-y-6">
         {/* Filters */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Chain Filter */}
           <div>
-            <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-              <Filter className="w-4 h-4" />
+            <h3 className="text-xs sm:text-sm font-medium mb-2 flex items-center gap-2">
+              <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
               Chains
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {availableChains.map(chain => (
                 <Badge
                   key={chain.id}
                   variant={selectedChains.includes(chain.id) ? 'default' : 'outline'}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs sm:text-sm px-2 py-1 sm:px-2.5"
                   onClick={() => toggleChain(chain.id)}
                 >
                   {chain.name}
@@ -129,13 +132,13 @@ export default function WhalesPage() {
 
           {/* Time Range Filter */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Time Range</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-xs sm:text-sm font-medium mb-2">Time Range</h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {timeRanges.map(range => (
                 <Badge
                   key={range.value}
                   variant={timeRange === range.value ? 'default' : 'outline'}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs sm:text-sm px-2 py-1 sm:px-2.5"
                   onClick={() => setTimeRange(range.value)}
                 >
                   {range.label}
@@ -146,13 +149,13 @@ export default function WhalesPage() {
 
           {/* Min Value Filter */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Minimum Value</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-xs sm:text-sm font-medium mb-2">Minimum Value</h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {[10000, 50000, 100000, 500000, 1000000].map(value => (
                 <Badge
                   key={value}
                   variant={minValue === value ? 'default' : 'outline'}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs sm:text-sm px-2 py-1 sm:px-2.5"
                   onClick={() => setMinValue(value)}
                 >
                   ${(value / 1000).toLocaleString()}K+
@@ -175,9 +178,17 @@ export default function WhalesPage() {
 
         {/* Loading State */}
         {loading && !transfers.length && (
-          <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Loading whale transfers...</p>
+          <div className="flex flex-col items-center justify-center py-16 sm:py-24">
+            <div className="relative">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl sm:text-3xl">🐋</span>
+              </div>
+            </div>
+            <p className="text-base sm:text-lg font-medium mt-6">Loading whale transfers...</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+              Scanning {selectedChains.length} {selectedChains.length === 1 ? 'chain' : 'chains'} for large transfers
+            </p>
           </div>
         )}
 
@@ -204,6 +215,7 @@ export default function WhalesPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

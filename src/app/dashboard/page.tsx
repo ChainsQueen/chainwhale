@@ -52,7 +52,7 @@ export default function DashboardPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-4xl mx-auto">
               <ApiSettings />
             </div>
           </TabsContent>

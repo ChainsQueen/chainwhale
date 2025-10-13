@@ -27,7 +27,39 @@ export class WhaleDetector {
    * This is the industry-standard approach used in production implementations
    */
   private readonly WHALE_ADDRESSES = [
-    '0xEC947dFaf23A930dda54335Eb371aB4FD5ab99A2', // Active wallet - has recent swaps on Metamask
+    // Major Exchanges (Hot Wallets)
+    '0x28C6c06298d514Db089934071355E5743bf21d60', // Binance Hot Wallet
+    '0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549', // Binance Hot Wallet 2
+    '0xDFd5293D8e347dFe59E90eFd55b2956a1343963d', // Binance Hot Wallet 3
+    '0x56Eddb7aa87536c09CCc2793473599fD21A8b17F', // Binance Hot Wallet 4
+    '0x9696f59E4d72E237BE84fFD425DCaD154Bf96976', // Binance Hot Wallet 5
+    '0x4E9ce36E442e55EcD9025B9a6E0D88485d628A67', // Binance Hot Wallet 6
+    '0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8', // Binance Hot Wallet 7
+    '0xF977814e90dA44bFA03b6295A0616a897441aceC', // Binance Hot Wallet 8
+    '0x001866Ae5B3de6cAa5a51543FD9fB64f524F5478', // Coinbase Hot Wallet
+    '0x71660c4005BA85c37ccec55d0C4493E66Fe775d3', // Coinbase Hot Wallet 2
+    '0x503828976D22510aad0201ac7EC88293211D23Da', // Coinbase Hot Wallet 3
+    '0xddfAbCdc4D8FfC6d5beaf154f18B778f892A0740', // Coinbase Hot Wallet 4
+    '0x3cD751E6b0078Be393132286c442345e5DC49699', // Coinbase Hot Wallet 5
+    '0xb5d85CBf7cB3EE0D56b3bB207D5Fc4B82f43F511', // Coinbase Hot Wallet 6
+    '0xeB2629a2734e272Bcc07BDA959863f316F4bD4Cf', // Coinbase Hot Wallet 7
+    
+    // Notable Holders
+    '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // Vitalik Buterin
+    '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B', // Vitalik (old)
+    '0x220866B1A2219f40e72f5c628B65D54268cA3A9D', // Vitalik (old)
+    
+    // DeFi Protocols & Bridges
+    '0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf', // Polygon Bridge
+    '0xA0c68C638235ee32657e8f720a23ceC1bFc77C77', // Polygon Bridge 2
+    '0x5fdcca53617f4d2b9134b29090c87d01058e27e9', // Immutable X
+    '0x6B175474E89094C44Da98b954EedeAC495271d0F', // MakerDAO DAI
+    '0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643', // Compound cDAI
+    
+    // Whale Wallets
+    '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503', // Large holder
+    '0x8103683202aa8DA10536036EDef04CDd865C225E', // Large holder
+    '0x189B9cBd4AfF470aF2C0102f365FC1823d857965', // Large holder
   ];
 
   /**
@@ -49,7 +81,7 @@ export class WhaleDetector {
           const { items: transfers } = await this.blockscout.getTokenTransfers(
             chainId,
             whaleAddress,
-            '1h',
+            '24h',
             'now'
           );
           
@@ -79,7 +111,7 @@ export class WhaleDetector {
 
       // Log if no whale transactions found
       if (whaleTransfers.length === 0) {
-        console.log(`ℹ️  No whale transactions found on chain ${chainId} in the last hour above $${this.thresholdUsd} threshold`);
+        console.log(`ℹ️  No whale transactions found on chain ${chainId} in the last 24 hours above $${this.thresholdUsd} threshold`);
       } else {
         console.log(`✅ Found ${whaleTransfers.length} whale transactions from ${this.WHALE_ADDRESSES.length} monitored addresses`);
       }

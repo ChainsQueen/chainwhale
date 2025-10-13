@@ -6,7 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RefreshCw, TrendingUp, TrendingDown, ArrowRightLeft, ExternalLink, Activity } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { RefreshCw, TrendingUp, TrendingDown, ArrowRightLeft, ExternalLink, Activity, Copy, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { WhaleTransaction } from '@/lib/shared/types';
 
@@ -14,13 +20,30 @@ export default function WhaleFeed() {
   const [transactions, setTransactions] = useState<WhaleTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/whale-feed?chains=1,8453,42161');
+      const response = await fetch('/api/whale-feed?chains=1,8453,42161&minValue=100000');
       const data = await response.json();
-      setTransactions(data.transactions || []);
+      
+      // Convert new format to old format for compatibility
+      const transfers = data.transfers || [];
+      const transactions = transfers.map((t: any) => ({
+        hash: t.hash,
+        chain: t.chainName,
+        chainId: t.chainId,
+        from: t.from,
+        to: t.to,
+        value: t.value,
+        valueUsd: t.valueUsd,
+        timestamp: t.timestamp,
+        type: 'transfer' as const,
+        token: t.token
+      }));
+      
+      setTransactions(transactions);
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching whale transactions:', error);
@@ -32,6 +55,28 @@ export default function WhaleFeed() {
   useEffect(() => {
     fetchTransactions();
   }, []);
+
+  const copyToClipboard = async (address: string) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(address);
+      } else {
+        // Fallback for environments where clipboard API is not available
+        const textArea = document.createElement('textarea');
+        textArea.value = address;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopiedAddress(address);
+      setTimeout(() => setCopiedAddress(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -62,7 +107,7 @@ export default function WhaleFeed() {
           <div>
             <CardTitle>Whale Transaction Feed</CardTitle>
             <CardDescription>
-              Real-time monitoring of ALL blockchain transfers via Blockscout MCP. Showing transactions above $1,000 USD.
+              Monitoring 27 known whale addresses (exchanges, large holders) over the last 24 hours. Showing transactions above $100,000 USD.
             </CardDescription>
           </div>
           <Button
@@ -102,7 +147,7 @@ export default function WhaleFeed() {
               <Activity className="h-12 w-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No Recent Whale Activity</p>
               <p className="text-sm mt-2">
-                Analyzing ALL blockchain transfers in real-time, but no transactions over $1k were found in the last hour.
+                Monitoring 27 whale addresses across Ethereum, Base, and Arbitrum, but no transactions over $100,000 were found in the last 24 hours.
               </p>
               <div className="mt-6 p-4 bg-muted/50 rounded-lg text-left">
                 <p className="text-sm font-medium mb-2">💡 Try the Wallet Analysis feature instead:</p>
@@ -121,7 +166,7 @@ export default function WhaleFeed() {
             <div className="space-y-4">
               {transactions.map((tx, index) => (
                 <motion.div
-                  key={tx.hash}
+                  key={`${tx.hash}-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -155,20 +200,60 @@ export default function WhaleFeed() {
                           </div>
 
                           {/* Addresses */}
-                          <div className="space-y-1 text-sm">
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground">From:</span>
-                              <code className="text-xs bg-muted px-2 py-1 rounded">
-                                {tx.from.substring(0, 10)}...{tx.from.substring(tx.from.length - 8)}
-                              </code>
+                          <TooltipProvider>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground min-w-[40px]">From:</span>
+                                <div className="inline-flex items-center gap-2 bg-muted rounded px-2 py-1 group">
+                                  <code className="text-xs font-mono">
+                                    {tx.from}
+                                  </code>
+                                  <Tooltip open={copiedAddress === tx.from}>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        onClick={() => copyToClipboard(tx.from)}
+                                        className="flex-shrink-0 hover:scale-110 active:scale-95 transition-transform"
+                                      >
+                                        {copiedAddress === tx.from ? (
+                                          <Check className="h-3 w-3 text-green-500" />
+                                        ) : (
+                                          <Copy className="h-3 w-3 opacity-50 hover:opacity-100 transition-opacity" />
+                                        )}
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="text-xs font-medium">Copied!</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground min-w-[40px]">To:</span>
+                                <div className="inline-flex items-center gap-2 bg-muted rounded px-2 py-1 group">
+                                  <code className="text-xs font-mono">
+                                    {tx.to}
+                                  </code>
+                                  <Tooltip open={copiedAddress === tx.to}>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        onClick={() => copyToClipboard(tx.to)}
+                                        className="flex-shrink-0 hover:scale-110 active:scale-95 transition-transform"
+                                      >
+                                        {copiedAddress === tx.to ? (
+                                          <Check className="h-3 w-3 text-green-500" />
+                                        ) : (
+                                          <Copy className="h-3 w-3 opacity-50 hover:opacity-100 transition-opacity" />
+                                        )}
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="text-xs font-medium">Copied!</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground">To:</span>
-                              <code className="text-xs bg-muted px-2 py-1 rounded">
-                                {tx.to.substring(0, 10)}...{tx.to.substring(tx.to.length - 8)}
-                              </code>
-                            </div>
-                          </div>
+                          </TooltipProvider>
 
                           {/* Timestamp */}
                           <p className="text-xs text-muted-foreground">

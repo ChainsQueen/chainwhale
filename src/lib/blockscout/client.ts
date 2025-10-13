@@ -126,6 +126,44 @@ export class BlockscoutClient {
   }
 
   /**
+   * Convert relative time strings (e.g., '1h', '24h', 'now') to ISO 8601 timestamps
+   */
+  private convertToISOTimestamp(timeStr: string): string {
+    if (timeStr === 'now') {
+      return new Date().toISOString();
+    }
+
+    // Check if already ISO format
+    if (timeStr.includes('T') || timeStr.includes('-')) {
+      return timeStr;
+    }
+
+    // Parse relative time (e.g., '1h', '24h', '7d')
+    const match = timeStr.match(/^(\d+)(h|d|m)$/);
+    if (!match) {
+      return timeStr; // Return as-is if not recognized
+    }
+
+    const [, amount, unit] = match;
+    const now = new Date();
+    const value = parseInt(amount);
+
+    switch (unit) {
+      case 'h': // hours
+        now.setHours(now.getHours() - value);
+        break;
+      case 'd': // days
+        now.setDate(now.getDate() - value);
+        break;
+      case 'm': // minutes
+        now.setMinutes(now.getMinutes() - value);
+        break;
+    }
+
+    return now.toISOString();
+  }
+
+  /**
    * Get token transfers for an address within a time range
    */
   async getTokenTransfers(
@@ -141,8 +179,8 @@ export class BlockscoutClient {
     try {
       const args: Record<string, string> = {
         chain_id: chainId,
-        age_from: ageFrom,
-        age_to: ageTo,
+        age_from: this.convertToISOTimestamp(ageFrom),
+        age_to: this.convertToISOTimestamp(ageTo),
       };
 
       if (address) args.address = address;
@@ -164,20 +202,37 @@ export class BlockscoutClient {
       }
       
       const data = JSON.parse(responseText);
+      
+      // The MCP returns data in { data: [...] } format, not { items: [...] }
+      const rawItems = data.data || data.items || [];
+      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const items: TokenTransfer[] = (data.items || []).map((item: any) => ({
-        hash: item.tx_hash,
-        from: item.from?.hash || '',
-        to: item.to?.hash || '',
-        value: item.total?.value || '0',
-        token: {
-          symbol: item.token?.symbol || 'UNKNOWN',
-          address: item.token?.address || '',
-          name: item.token?.name,
-        },
-        timestamp: item.timestamp ? new Date(item.timestamp as string).getTime() : Date.now(),
-        valueUsd: item.total?.usd ? parseFloat(item.total.usd) : undefined,
-      }));
+      const items: TokenTransfer[] = rawItems.map((item: any) => {
+        // Calculate USD value
+        let valueUsd: number | undefined;
+        
+        if (item.total?.usd) {
+          valueUsd = parseFloat(item.total.usd);
+        } else if (item.total?.value && item.token?.exchange_rate && item.token?.decimals) {
+          // Calculate from token value * exchange rate
+          const tokenValue = parseFloat(item.total.value) / Math.pow(10, parseInt(item.token.decimals));
+          valueUsd = tokenValue * parseFloat(item.token.exchange_rate);
+        }
+        
+        return {
+          hash: item.hash || item.tx_hash,
+          from: item.from?.hash || item.from || '',
+          to: item.to?.hash || item.to || '',
+          value: item.total?.value || '0',
+          token: {
+            symbol: item.token?.symbol || 'UNKNOWN',
+            address: item.token?.address_hash || item.token?.address || '',
+            name: item.token?.name,
+          },
+          timestamp: item.timestamp ? new Date(item.timestamp as string).getTime() : Date.now(),
+          valueUsd,
+        };
+      });
 
       return {
         items,
@@ -265,6 +320,71 @@ export class BlockscoutClient {
     } catch (error) {
       console.error('Error getting tokens by address:', error);
       return [];
+    }
+  }
+
+  /**
+   * Get whale transfers (large value transfers) for a specific time range
+   * This is optimized for whale detection
+   */
+  async getWhaleTransfers(
+    chainId: string,
+    minValueUsd: number = 100000,
+    ageFrom: string = '1h',
+    ageTo: string = 'now'
+  ): Promise<TokenTransfer[]> {
+    this.ensureConnected();
+
+    try {
+      // Get all transfers in the time range
+      const { items } = await this.getTokenTransfers(
+        chainId,
+        null, // all addresses
+        ageFrom,
+        ageTo
+      );
+
+      // Filter for whale-sized transfers
+      return items.filter(transfer => 
+        transfer.valueUsd && transfer.valueUsd >= minValueUsd
+      );
+    } catch (error) {
+      console.error('Error getting whale transfers:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get activity for a specific whale address
+   */
+  async getWhaleActivity(
+    chainId: string,
+    address: string,
+    ageFrom: string = '24h',
+    ageTo: string = 'now'
+  ): Promise<{ transfers: TokenTransfer[]; totalVolume: number }> {
+    this.ensureConnected();
+
+    try {
+      const { items } = await this.getTokenTransfers(
+        chainId,
+        address,
+        ageFrom,
+        ageTo
+      );
+
+      const totalVolume = items.reduce(
+        (sum, transfer) => sum + (transfer.valueUsd || 0),
+        0
+      );
+
+      return {
+        transfers: items,
+        totalVolume
+      };
+    } catch (error) {
+      console.error('Error getting whale activity:', error);
+      return { transfers: [], totalVolume: 0 };
     }
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Activity, Wallet, Settings } from 'lucide-react';
+import { AppHeader } from '@/components/app-header';
 import ChatInterface from '@/components/dashboard/chat-interface';
 import WhaleFeed from '@/components/dashboard/whale-feed';
 import WalletAnalysis from '@/components/dashboard/wallet-analysis';
@@ -13,14 +14,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold">ChainWhale Dashboard</span>
-          </div>
-        </div>
-      </header>
+      {/* Header with Navigation */}
+      <AppHeader />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

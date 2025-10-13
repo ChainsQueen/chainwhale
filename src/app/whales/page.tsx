@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AppHeader } from '@/components/app-header';
 import { WhaleTrackerCard } from '@/components/whale-tracker-card';
 import { WhaleStatsComponent } from '@/components/whale-stats';
 import { RefreshCw, Filter } from 'lucide-react';
@@ -77,13 +78,16 @@ export default function WhalesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Header with Navigation */}
+      <AppHeader />
+
+      {/* Page Title */}
+      <div className="border-b bg-background/50">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">🐋 Whale Tracker</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="text-2xl sm:text-3xl font-bold">🐋 Whale Tracker</h1>
+              <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                 Real-time monitoring of large blockchain transfers across multiple chains
               </p>
             </div>

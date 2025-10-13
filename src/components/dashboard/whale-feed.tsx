@@ -107,7 +107,7 @@ export default function WhaleFeed() {
           <div>
             <CardTitle>Whale Transaction Feed</CardTitle>
             <CardDescription>
-              Monitoring 27 known whale addresses (exchanges, large holders) over the last 24 hours. Showing transactions above $100,000 USD.
+              Monitoring 9 known whale addresses (Binance, Coinbase, Vitalik, Polygon Bridge, and large holders) across Ethereum, Base, and Arbitrum. Showing transfers above $100,000 USD.
             </CardDescription>
           </div>
           <Button
@@ -147,7 +147,7 @@ export default function WhaleFeed() {
               <Activity className="h-12 w-12 mb-4 opacity-50" />
               <p className="text-lg font-medium">No Recent Whale Activity</p>
               <p className="text-sm mt-2">
-                Monitoring 27 whale addresses across Ethereum, Base, and Arbitrum, but no transactions over $100,000 were found in the last 24 hours.
+                Monitoring 9 whale addresses (Binance, Coinbase, Vitalik, Polygon Bridge, and large holders) across Ethereum, Base, and Arbitrum, but no transfers over $100,000 were found in the last 24 hours.
               </p>
               <div className="mt-6 p-4 bg-muted/50 rounded-lg text-left">
                 <p className="text-sm font-medium mb-2">💡 Try the Wallet Analysis feature instead:</p>

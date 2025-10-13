@@ -110,8 +110,8 @@ export async function GET(request: NextRequest) {
         chains: chainIds.map(id => getChainName(id)),
         tokenFilter: tokenSymbol || null,
         timestamp: new Date().toISOString(),
-        monitoredAddresses: 27,
-        description: `Monitoring 27 known whale addresses (major exchanges like Binance & Coinbase, large holders, DeFi protocols) over the last 24 hours. Showing transfers above $${minValue.toLocaleString()} USD.`
+        monitoredAddresses: 9,
+        description: `Monitoring 9 known whale addresses (Binance, Coinbase, Vitalik, Polygon Bridge, and large holders) across selected chains. Showing transfers above $${minValue.toLocaleString()} USD.`
       }
     });
   } catch (error) {

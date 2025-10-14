@@ -49,7 +49,7 @@ export class BlockscoutHttpClient {
       try {
         // Create abort controller for timeout (compatible with older Node.js)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // Reduced to 10s for faster failures
 
         const response = await fetch(url.toString(), {
           headers: {
@@ -198,7 +198,7 @@ export class BlockscoutHttpClient {
         address: address,
         sort: 'desc',
         page: '1',
-        offset: '100', // Get up to 100 transfers
+        offset: '50', // Reduced to 50 for faster response
       };
 
       if (token) params.contractaddress = token;

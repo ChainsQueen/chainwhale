@@ -51,12 +51,8 @@ export class WhaleService {
     try {
       await this.client.connect();
       
-      const allTransfers: WhaleTransfer[] = [];
-
-      // Monitor each whale address with rate limiting
-      for (let i = 0; i < this.WHALE_ADDRESSES.length; i++) {
-        const whaleAddress = this.WHALE_ADDRESSES[i];
-        
+      // Fetch all whale addresses in parallel for better performance
+      const transferPromises = this.WHALE_ADDRESSES.map(async (whaleAddress) => {
         try {
           const { items: transfers } = await this.client.getTokenTransfers(
             chainId,
@@ -66,26 +62,23 @@ export class WhaleService {
           );
 
           // Filter by minimum value and add chain info
-          const filtered = transfers
+          return transfers
             .filter(t => (t.valueUsd || 0) >= this.minWhaleValue)
             .map(transfer => ({
               ...transfer,
               chainId,
               chainName
             }));
-
-          allTransfers.push(...filtered);
-          
-          // Add small delay between requests to avoid rate limiting (except for last request)
-          if (i < this.WHALE_ADDRESSES.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
         } catch (error) {
           // Log error but continue with other addresses
           console.warn(`⚠️ Skipping ${whaleAddress} on ${chainName}:`, error instanceof Error ? error.message : 'Unknown error');
-          continue;
+          return [];
         }
-      }
+      });
+
+      // Wait for all requests to complete
+      const results = await Promise.all(transferPromises);
+      const allTransfers: WhaleTransfer[] = results.flat();
 
       await this.client.disconnect();
       

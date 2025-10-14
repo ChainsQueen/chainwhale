@@ -1,4 +1,4 @@
-import { BlockscoutClient } from '@/lib/blockscout/client';
+import type { IBlockscoutClient } from '@/lib/blockscout/factory';
 import type { TokenTransfer, Chain } from '@/lib/shared/types';
 
 export interface WhaleTransfer extends TokenTransfer {
@@ -18,7 +18,7 @@ export interface WhaleStats {
  * Handles whale tracking and analysis without database
  */
 export class WhaleService {
-  private client: BlockscoutClient;
+  private client: IBlockscoutClient;
   private minWhaleValue: number;
 
   // Known whale addresses (same as WhaleDetector)
@@ -34,8 +34,9 @@ export class WhaleService {
     '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503', // Large holder
   ];
 
-  constructor(minWhaleValue: number = 100000) {
-    this.client = new BlockscoutClient();
+  constructor(minWhaleValue: number = 100000, client?: IBlockscoutClient) {
+    // Client will be injected from API routes
+    this.client = client as IBlockscoutClient;
     this.minWhaleValue = minWhaleValue;
   }
 
@@ -52,8 +53,10 @@ export class WhaleService {
       
       const allTransfers: WhaleTransfer[] = [];
 
-      // Monitor each whale address
-      for (const whaleAddress of this.WHALE_ADDRESSES) {
+      // Monitor each whale address with rate limiting
+      for (let i = 0; i < this.WHALE_ADDRESSES.length; i++) {
+        const whaleAddress = this.WHALE_ADDRESSES[i];
+        
         try {
           const { items: transfers } = await this.client.getTokenTransfers(
             chainId,
@@ -72,8 +75,14 @@ export class WhaleService {
             }));
 
           allTransfers.push(...filtered);
-        } catch {
-          // Skip addresses with no transfers
+          
+          // Add small delay between requests to avoid rate limiting (except for last request)
+          if (i < this.WHALE_ADDRESSES.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        } catch (error) {
+          // Log error but continue with other addresses
+          console.warn(`⚠️ Skipping ${whaleAddress} on ${chainName}:`, error instanceof Error ? error.message : 'Unknown error');
           continue;
         }
       }
@@ -168,11 +177,16 @@ export class WhaleService {
     try {
       await this.client.connect();
       
-      const { transfers, totalVolume } = await this.client.getWhaleActivity(
+      const { items: transfers } = await this.client.getTokenTransfers(
         chainId,
         address,
         `${days * 24}h`,
         'now'
+      );
+
+      const totalVolume = transfers.reduce(
+        (sum, transfer) => sum + (transfer.valueUsd || 0),
+        0
       );
 
       await this.client.disconnect();

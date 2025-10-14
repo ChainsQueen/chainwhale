@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BlockscoutClient } from '@/lib/blockscout/client';
+import { createBlockscoutClient, type IBlockscoutClient } from '@/lib/blockscout/factory';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  let blockscout: BlockscoutClient | null = null;
+  let blockscout: IBlockscoutClient | null = null;
 
   try {
     const body = await request.json();
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize services
-    blockscout = new BlockscoutClient();
+    blockscout = createBlockscoutClient();
     await blockscout.connect();
 
     // Don't initialize AI here - it will be called on-demand via separate endpoint

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BlockscoutClient } from '@/lib/blockscout/client';
+import { createBlockscoutClient, type IBlockscoutClient } from '@/lib/blockscout/factory';
 import { WhaleService } from '@/core/services/whale-service';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  let blockscout: BlockscoutClient | null = null;
+  let blockscout: IBlockscoutClient | null = null;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -23,11 +23,11 @@ export async function GET(request: NextRequest) {
     console.log(`Min value: $${minValue.toLocaleString()}`);
 
     // Initialize services
-    blockscout = new BlockscoutClient();
+    blockscout = createBlockscoutClient();
     await blockscout.connect();
 
     // Use WhaleService (works with known addresses)
-    const whaleService = new WhaleService(minValue);
+    const whaleService = new WhaleService(minValue, blockscout);
 
     // Fetch whale transactions from each chain
     const allTransactions = [];

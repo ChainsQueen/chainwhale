@@ -187,6 +187,21 @@ export default function WalletAnalysis() {
     return 'High Risk';
   };
 
+  // Format numbers like Etherscan
+  const formatEthBalance = (balance: number): string => {
+    return balance.toLocaleString('en-US', {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    });
+  };
+
+  const formatUsdValue = (value: number): string => {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -329,17 +344,17 @@ export default function WalletAnalysis() {
                                 <div className="p-4 bg-muted/30 rounded-lg">
                                   <p className="text-xs text-muted-foreground mb-1">ETH BALANCE</p>
                                   <p className="text-lg font-bold">
-                                    {ethBalance.toFixed(4)} ETH
+                                    {formatEthBalance(ethBalance)} ETH
                                   </p>
                                 </div>
                                 <div className="p-4 bg-muted/30 rounded-lg">
                                   <p className="text-xs text-muted-foreground mb-1">ETH VALUE</p>
                                   <p className="text-lg font-bold text-primary">
-                                    {ethBalance.toFixed(4)} ETH
+                                    {formatEthBalance(ethBalance)} ETH
                                   </p>
                                   {ethValue > 0 && (
                                     <p className="text-xs text-muted-foreground mt-1">
-                                      ≈ ${ethValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      ≈ ${formatUsdValue(ethValue)}
                                     </p>
                                   )}
                                 </div>
@@ -349,7 +364,7 @@ export default function WalletAnalysis() {
                               <div className="p-4 bg-muted/30 rounded-lg">
                                 <p className="text-xs text-muted-foreground mb-1">TOKEN HOLDINGS</p>
                                 <p className="text-lg font-bold text-primary">
-                                  ${tokenValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  ${formatUsdValue(tokenValue)}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1">
                                   ({tokenCount} {tokenCount === 1 ? 'Token' : 'Tokens'})
@@ -360,7 +375,7 @@ export default function WalletAnalysis() {
                               <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                                 <p className="text-xs text-muted-foreground mb-1">MULTICHAIN INFO</p>
                                 <p className="text-lg font-bold text-primary">
-                                  ${analysis.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  ${formatUsdValue(analysis.totalValue)}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1">
                                   {Object.keys(analysis.chains).length} {Object.keys(analysis.chains).length === 1 ? 'chain' : 'chains'} scanned
@@ -597,7 +612,7 @@ export default function WalletAnalysis() {
                                   {tokenAmount} {(tokenData?.symbol as string) || 'tokens'}
                                   {valueUsd && valueUsd > 0 && (
                                     <span className="text-primary ml-1">
-                                      (${valueUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                                      (${formatUsdValue(valueUsd)})
                                     </span>
                                   )}
                                 </span>

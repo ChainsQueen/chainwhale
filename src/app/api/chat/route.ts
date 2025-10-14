@@ -67,8 +67,17 @@ export async function POST(request: NextRequest) {
         
         console.log(`[Chat API] Found ${transfers.length} whale transfers on ${chainName}`);
 
-        // Get top 10 transfers
-        const topTransfers = transfers.slice(0, 10);
+        // Get top 10 transfers and remove misleading USD values
+        const topTransfers = transfers.slice(0, 10).map(t => ({
+          from: t.from,
+          to: t.to,
+          hash: t.hash,
+          token: t.token,
+          timestamp: t.timestamp,
+          chainName: t.chainName,
+          // Remove valueUsd as it's inaccurate (raw token amounts, not real USD)
+          note: 'USD values not available - showing token amounts only'
+        }));
 
         blockchainData.push({
           chain: chainName,

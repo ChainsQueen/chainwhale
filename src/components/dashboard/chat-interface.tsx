@@ -193,7 +193,10 @@ export default function ChatInterface() {
             <p className="text-sm text-muted-foreground w-full">Try asking:</p>
             {[
               'What are the largest transactions today?',
+              'Show me the biggest USDT transfers',
+              'Which addresses are most active?',
               'Show me recent whale activity on Base',
+              'What tokens are being transferred the most?',
               'Are there any notable patterns in recent transfers?',
             ].map((question) => (
               <Button

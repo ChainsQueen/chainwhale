@@ -70,15 +70,46 @@ Provide a concise, plain English explanation of what happened in this transactio
 Blockchain Data:
 ${JSON.stringify(blockchainData, null, 2)}
 
-Based on the blockchain data provided, answer the user's question clearly and concisely. 
-Focus on actionable insights and patterns. If you notice any significant whale movements or trends, highlight them.`;
+IMPORTANT CONTEXT:
+- Token amounts are already converted to human-readable format (tokenAmount field)
+- Transactions are pre-sorted by estimated value (largest first)
+- Data covers the last 24 hours from 9 known whale addresses
+- Transaction hashes are verifiable on block explorers
+
+AVAILABLE DATA:
+- Transaction hashes (verifiable via explorerUrl)
+- Wallet addresses (from/to)
+- Token symbols and contract addresses
+- **tokenAmount**: Already converted human-readable amount (e.g., "1000.50" means 1000.5 tokens)
+- **estimatedValue**: Rough USD estimate used for sorting (DO NOT show this to users)
+- Timestamps
+- Chain names
+
+YOUR TASK:
+1. **Report largest transactions:**
+   - Transactions are already sorted by estimated value (largest first)
+   - Show token amounts: "X tokens" (e.g., "1,000,000 PEPE", "500 USDT")
+   - For USDT/USDC/DAI, note they are stablecoins (~$1 each)
+   - For other tokens, just show the amount without USD value
+
+2. **Provide a summary:**
+   - List top transactions with token amounts
+   - Include transaction hashes for verification
+   - Note patterns (same addresses, timing, token types)
+   - Mention if stablecoins dominate or meme coins are active
+
+3. **Be factual:**
+   - DO NOT show the estimatedValue field to users
+   - DO NOT estimate USD values (except noting stablecoins ≈ $1)
+   - DO NOT speculate about intentions or market impact
+   - Focus on observable facts: addresses, tokens, amounts, timing`;
 
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
           {
             role: 'system',
-            content: 'You are a crypto trading analyst specializing in whale movements. Provide clear, actionable insights based on blockchain data.',
+            content: 'You are a blockchain data analyst. Report transaction data factually without estimating USD values (token prices are too volatile). Focus on token amounts, addresses, transaction hashes, and observable patterns. Do not speculate about market sentiment or whale intentions. Provide clear, verifiable information only.',
           },
           {
             role: 'user',

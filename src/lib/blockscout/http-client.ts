@@ -301,6 +301,30 @@ export class BlockscoutHttpClient {
   }
 
   /**
+   * Get token info including price (exchange_rate)
+   */
+  async getTokenInfo(chainId: string, tokenAddress: string): Promise<{ symbol: string; decimals: number; exchange_rate?: number } | null> {
+    try {
+      const response = await this.request<{
+        symbol?: string;
+        decimals?: string;
+        exchange_rate?: string;
+      }>(chainId, `/api/v2/tokens/${tokenAddress}`);
+      
+      if (!response.symbol) return null;
+      
+      return {
+        symbol: response.symbol,
+        decimals: parseInt(response.decimals || '18'),
+        exchange_rate: response.exchange_rate ? parseFloat(response.exchange_rate) : undefined,
+      };
+    } catch (error) {
+      console.error(`[Blockscout] Error fetching token info for ${tokenAddress}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Get tokens held by an address
    */
   async getTokensByAddress(chainId: string, address: string): Promise<Record<string, unknown>[]> {

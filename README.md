@@ -330,20 +330,28 @@ pnpm lint         # Run ESLint
    - **Install Command**: `pnpm install` (auto-detected)
    - **Output Directory**: `.next` (auto-detected)
 
-3. **Set Environment Variables:**
+3. **Set Environment Variables (Optional):**
    
-   Required for AI features to work:
+   Your app has a **Settings tab** where users can add their own API keys (stored client-side).
    
+   **Option A - No Server-Side API Key (Recommended):**
+   - Skip adding `OPENAI_API_KEY`
+   - Users add their own keys via Settings tab
+   - More secure and cost-effective
+   - Each user manages their own API usage
+   
+   **Option B - Shared Server-Side API Key:**
    ```
    OPENAI_API_KEY=your_openai_api_key_here
    ```
+   - All users share this key
+   - You pay for all API usage
+   - Convenient for private/internal deployments
    
-   Optional (for custom Blockscout MCP):
+   **Optional (for custom Blockscout MCP):**
    ```
    BLOCKSCOUT_MCP_URL=http://localhost:3001
    ```
-   
-   **Note:** The `OPENAI_API_KEY` is only needed for server-side AI features. Users can also provide their own API keys via the Settings tab (stored client-side).
 
 4. **Deploy:**
    - Click "Deploy"

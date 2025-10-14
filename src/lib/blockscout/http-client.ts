@@ -47,19 +47,25 @@ export class BlockscoutHttpClient {
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
+        // Create abort controller for timeout (compatible with older Node.js)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
         const response = await fetch(url.toString(), {
           headers: {
             'Accept': 'application/json',
           },
-          signal: AbortSignal.timeout(30000), // 30 second timeout
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           // Handle rate limiting and timeouts
           if (response.status === 429 || response.status === 524) {
             if (attempt < retries) {
               const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
-              console.log(`⏳ Rate limited/timeout on ${chainId}, retrying in ${delay}ms...`);
+              console.log(`⏳ Rate limited/timeout on chain ${chainId}, retrying in ${delay}ms...`);
               await new Promise(resolve => setTimeout(resolve, delay));
               continue;
             }
@@ -69,12 +75,15 @@ export class BlockscoutHttpClient {
 
         return response.json();
       } catch (error) {
-        if (attempt < retries && (error instanceof Error && error.name === 'TimeoutError')) {
+        if (attempt < retries && (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError'))) {
           const delay = Math.pow(2, attempt) * 1000;
-          console.log(`⏳ Request timeout on ${chainId}, retrying in ${delay}ms...`);
+          console.log(`⏳ Request timeout on chain ${chainId}, retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
+        
+        // Log error for debugging
+        console.error(`❌ Request failed for chain ${chainId}:`, error instanceof Error ? error.message : 'Unknown error');
         throw error;
       }
     }

@@ -19,8 +19,11 @@ export async function GET(request: NextRequest) {
     // Parse chains
     const chainIds = chainsParam ? chainsParam.split(',') : ['1', '8453', '42161'];
 
-    console.log(`Fetching whale feed for ${chainIds.length} chains...`);
-    console.log(`Min value: $${minValue.toLocaleString()}`);
+    console.log(`[Whale Feed API] Starting request`);
+    console.log(`[Whale Feed API] Chains: ${chainIds.join(', ')}`);
+    console.log(`[Whale Feed API] Min value: $${minValue.toLocaleString()}`);
+    console.log(`[Whale Feed API] Environment: ${process.env.NODE_ENV}`);
+    console.log(`[Whale Feed API] Vercel: ${process.env.VERCEL}`);
 
     // Initialize services
     blockscout = createBlockscoutClient();

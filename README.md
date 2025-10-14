@@ -1,6 +1,4 @@
-# ChainWhale 🐋
-
-[![Deploy to GitHub Pages](https://github.com/ChainsQueen/chainwhale/actions/workflows/deploy.yml/badge.svg)](https://github.com/ChainsQueen/chainwhale/actions/workflows/deploy.yml)
+# 🐋 ChainWhale 
 
 **AI-powered blockchain analytics platform** for intelligent wallet analysis, whale tracking, and multi-chain portfolio monitoring.
 
@@ -151,11 +149,16 @@
 # Install dependencies
 pnpm install
 
+# Create .env.local file (required for local development)
+echo "BLOCKSCOUT_USE_HTTP=true" > .env.local
+
 # Run development server
 pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+**Note:** The `BLOCKSCOUT_USE_HTTP=true` setting uses the HTTP client instead of Docker. If you have Docker installed and want to use the MCP client, remove this line from `.env.local`.
 
 ### Explore the App
 

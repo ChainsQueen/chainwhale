@@ -110,7 +110,13 @@ export class BlockscoutHttpClient {
    */
   async getAddressInfo(chainId: string, address: string): Promise<AddressInfo> {
     try {
-      const data = await this.request<any>(chainId, `/addresses/${address}`);
+      const data = await this.request<{
+        hash?: string;
+        coin_balance?: string;
+        exchange_rate?: string;
+        is_contract?: boolean;
+        ens_domain_name?: string;
+      }>(chainId, `/addresses/${address}`);
       
       // Calculate USD value
       let balanceUsd: number | undefined;

@@ -146,25 +146,22 @@ export default function WalletAnalysis() {
     }
   };
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      }
-      setCopiedAddress(text);
-      setTimeout(() => setCopiedAddress(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedAddress(text);
+    setTimeout(() => setCopiedAddress(null), 2000);
+  };
+
+  const getExplorerUrl = (address: string, chainId?: string) => {
+    const explorers: Record<string, string> = {
+      '1': 'https://etherscan.io',
+      '8453': 'https://basescan.org',
+      '42161': 'https://arbiscan.io',
+      '10': 'https://optimistic.etherscan.io',
+      '137': 'https://polygonscan.com',
+    };
+    const baseUrl = chainId ? explorers[chainId] : explorers['1']; // Default to Ethereum
+    return `${baseUrl}/address/${address}`;
   };
 
   const getChainName = (chainId: string): string => {
@@ -268,30 +265,49 @@ export default function WalletAnalysis() {
                     {ensName && (
                       <p className="text-lg font-semibold mb-2 text-primary">{ensName}</p>
                     )}
-                    <TooltipProvider>
-                      <div className="inline-flex items-center gap-2 bg-muted rounded px-3 py-2">
-                        <code className="text-xs font-mono break-all">
-                          {analysis.address}
-                        </code>
-                        <Tooltip open={copiedAddress === analysis.address}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TooltipProvider>
+                        <div className="inline-flex items-center gap-2 bg-muted rounded px-3 py-2">
+                          <code className="text-xs font-mono break-all">
+                            {analysis.address}
+                          </code>
+                          <Tooltip open={copiedAddress === analysis.address}>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => copyToClipboard(analysis.address)}
+                                className="flex-shrink-0 hover:scale-110 active:scale-95 transition-transform"
+                              >
+                                {copiedAddress === analysis.address ? (
+                                  <Check className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Copy className="h-3 w-3 opacity-50 hover:opacity-100 transition-opacity" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs font-medium">Copied!</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
                           <TooltipTrigger asChild>
-                            <button
-                              onClick={() => copyToClipboard(analysis.address)}
-                              className="flex-shrink-0 hover:scale-110 active:scale-95 transition-transform"
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(getExplorerUrl(analysis.address), '_blank')}
+                              className="h-8 w-8 p-0"
                             >
-                              {copiedAddress === analysis.address ? (
-                                <Check className="h-3 w-3 text-green-500" />
-                              ) : (
-                                <Copy className="h-3 w-3 opacity-50 hover:opacity-100 transition-opacity" />
-                              )}
-                            </button>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="text-xs font-medium">Copied!</p>
+                            <p className="text-xs">View on Etherscan</p>
                           </TooltipContent>
                         </Tooltip>
-                      </div>
-                    </TooltipProvider>
+                      </TooltipProvider>
+                    </div>
                   </div>
 
                   {/* Portfolio Breakdown - Only show if there's data */}

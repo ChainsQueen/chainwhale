@@ -41,6 +41,13 @@ export async function GET(request: NextRequest) {
         const chainName = getChainName(chainId);
         const transactions = await whaleService.getWhaleFeed(chainId, chainName, '24h');
         console.log(`Found ${transactions.length} whale transactions on chain ${chainId}`);
+        
+        // Debug: Check if hashes are present
+        const withoutHash = transactions.filter(t => !t.hash || t.hash === '');
+        if (withoutHash.length > 0) {
+          console.warn(`⚠️ ${withoutHash.length} transactions without hash on chain ${chainId}`);
+        }
+        
         allTransactions.push(...transactions);
       } catch (error) {
         console.error(`Error detecting whales on chain ${chainId}:`, error);

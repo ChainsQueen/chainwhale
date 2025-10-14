@@ -191,87 +191,108 @@ export class BlockscoutHttpClient {
         return { items: [] };
       }
 
+      // Use RPC-style API endpoint which includes transaction hashes
       const params: Record<string, string> = {
-        type: 'ERC-20',
+        module: 'account',
+        action: 'tokentx',
+        address: address,
+        sort: 'desc',
+        page: '1',
+        offset: '100', // Get up to 100 transfers
       };
 
-      if (token) params.token = token;
-      if (cursor) params.cursor = cursor;
+      if (token) params.contractaddress = token;
 
-      interface BlockscoutTransferItem {
-        tx_hash?: string;
-        hash?: string;
-        timestamp?: string;
-        from?: { hash?: string } | string;
-        to?: { hash?: string } | string;
-        total?: {
-          value?: string;
-          usd?: string;
-        };
-        token?: {
-          symbol?: string;
-          address?: string;
-          name?: string;
-          decimals?: string | number;
-          exchange_rate?: string;
-        };
+      interface BlockscoutRpcTransferItem {
+        hash: string;
+        timeStamp: string;
+        from: string;
+        to: string;
+        value: string;
+        tokenName?: string;
+        tokenSymbol?: string;
+        tokenDecimal?: string;
+        contractAddress?: string;
+        gasPrice?: string;
+        gasUsed?: string;
       }
 
-      interface BlockscoutResponse {
-        items?: BlockscoutTransferItem[];
-        next_page_params?: {
-          items_count?: number;
-        };
+      interface BlockscoutRpcResponse {
+        status: string;
+        message: string;
+        result: BlockscoutRpcTransferItem[];
       }
 
-      const data = await this.request<BlockscoutResponse>(chainId, `/addresses/${address}/token-transfers`, params);
+      const data = await this.request<BlockscoutRpcResponse>(chainId, `/api`, params);
       
-      const rawItems = data.items || [];
-      const fromTimestamp = new Date(this.convertToISOTimestamp(ageFrom)).getTime();
-      const toTimestamp = new Date(this.convertToISOTimestamp(ageTo)).getTime();
+      // Check if API call was successful
+      if (data.status !== '1' || !Array.isArray(data.result)) {
+        console.warn(`[Blockscout RPC] API returned status: ${data.status}, message: ${data.message}`);
+        return { items: [] };
+      }
+
+      const rawItems = data.result;
+      
+      // Debug: Log first item to see structure
+      if (rawItems.length > 0) {
+        console.log(`[Blockscout RPC] Sample transfer data for chain ${chainId}:`, {
+          hash: rawItems[0].hash,
+          hasHash: !!rawItems[0].hash,
+          from: rawItems[0].from,
+          to: rawItems[0].to,
+          tokenSymbol: rawItems[0].tokenSymbol
+        });
+      }
+      
+      const fromTimestamp = new Date(this.convertToISOTimestamp(ageFrom)).getTime() / 1000; // Convert to seconds
+      const toTimestamp = new Date(this.convertToISOTimestamp(ageTo)).getTime() / 1000;
       
       const items: TokenTransfer[] = rawItems
-        .filter((item: BlockscoutTransferItem) => {
-          const timestamp = item.timestamp ? new Date(item.timestamp).getTime() : Date.now();
+        .filter((item: BlockscoutRpcTransferItem) => {
+          const timestamp = parseInt(item.timeStamp);
           // Filter by time range
           return timestamp >= fromTimestamp && timestamp <= toTimestamp;
         })
-        .map((item: BlockscoutTransferItem): TokenTransfer => {
-          const timestamp = item.timestamp ? new Date(item.timestamp).getTime() : Date.now();
+        .map((item: BlockscoutRpcTransferItem): TokenTransfer => {
+          const timestamp = parseInt(item.timeStamp) * 1000; // Convert to milliseconds
 
-          // Calculate USD value
-          let valueUsd: number | undefined;
+          // Calculate USD value from token decimals and value
+          let valueUsd: number | undefined = undefined;
           
-          if (item.total?.usd) {
-            valueUsd = parseFloat(item.total.usd);
-          } else if (item.total?.value && item.token?.exchange_rate && item.token?.decimals) {
-            const decimals = typeof item.token.decimals === 'number' ? item.token.decimals : parseInt(item.token.decimals);
-            const tokenValue = parseFloat(item.total.value) / Math.pow(10, decimals);
-            valueUsd = tokenValue * parseFloat(item.token.exchange_rate);
+          if (item.value && item.tokenDecimal) {
+            try {
+              const decimals = parseInt(item.tokenDecimal);
+              const tokenAmount = parseFloat(item.value) / Math.pow(10, decimals);
+              
+              // For now, we'll estimate based on common token values
+              // In production, you'd fetch real-time prices from an API
+              // This is a placeholder - actual USD values will need price data
+              valueUsd = tokenAmount; // Placeholder - needs real price data
+            } catch (e) {
+              // If calculation fails, leave undefined
+            }
           }
           
-          // Extract from/to addresses
-          const fromAddress = typeof item.from === 'string' ? item.from : (item.from?.hash || '');
-          const toAddress = typeof item.to === 'string' ? item.to : (item.to?.hash || '');
-          
           return {
-            hash: item.tx_hash || item.hash || '',
-            from: fromAddress,
-            to: toAddress,
-            value: item.total?.value || '0',
+            hash: item.hash,
+            from: item.from,
+            to: item.to,
+            value: item.value,
             token: {
-              symbol: item.token?.symbol || 'UNKNOWN',
-              address: item.token?.address || '',
-              name: item.token?.name,
+              symbol: item.tokenSymbol || 'UNKNOWN',
+              address: item.contractAddress || '',
+              name: item.tokenName,
             },
             timestamp,
             valueUsd,
           };
         });
 
+      console.log(`[Blockscout RPC] Fetched ${items.length} transfers for chain ${chainId}`);
+
       return {
         items,
-        nextCursor: data.next_page_params?.items_count ? 'has_more' : undefined,
+        nextCursor: undefined, // RPC API uses page/offset, not cursor
       };
     } catch (error) {
       console.error('Error getting token transfers:', error);

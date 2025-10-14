@@ -52,6 +52,18 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
     return 'text-blue-600 dark:text-blue-400';
   };
 
+  const getExplorerUrl = (chainId: string, txHash: string) => {
+    const explorers: Record<string, string> = {
+      '1': 'https://etherscan.io',
+      '8453': 'https://basescan.org',
+      '42161': 'https://arbiscan.io',
+      '10': 'https://optimistic.etherscan.io',
+      '137': 'https://polygonscan.com',
+    };
+    const baseUrl = explorers[chainId] || explorers['1'];
+    return `${baseUrl}/tx/${txHash}`;
+  };
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-3 sm:p-4">
@@ -97,7 +109,7 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
               {transfer.valueUsd ? formatValue(transfer.valueUsd) : 'N/A'}
             </p>
             <a
-              href={`https://etherscan.io/tx/${transfer.hash}`}
+              href={getExplorerUrl(transfer.chainId, transfer.hash)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[10px] sm:text-xs text-primary hover:underline whitespace-nowrap"

@@ -309,12 +309,69 @@ pnpm lint         # Run ESLint
 
 ## 🚢 Deployment
 
-This project is automatically deployed to GitHub Pages via GitHub Actions.
+### Vercel (Recommended for Production)
+
+**Quick Deploy:**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ChainsQueen/chainwhale)
+
+**Manual Setup:**
+
+1. **Import Project to Vercel:**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Add New Project"
+   - Import your GitHub repository: `ChainsQueen/chainwhale`
+   - Select the `main` branch
+
+2. **Configure Build Settings:**
+   - **Framework Preset**: Next.js
+   - **Root Directory**: `./` (leave as default)
+   - **Build Command**: `pnpm build` (auto-detected)
+   - **Install Command**: `pnpm install` (auto-detected)
+   - **Output Directory**: `.next` (auto-detected)
+
+3. **Set Environment Variables:**
+   
+   Required for AI features to work:
+   
+   ```
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+   
+   Optional (for custom Blockscout MCP):
+   ```
+   BLOCKSCOUT_MCP_URL=http://localhost:3001
+   ```
+   
+   **Note:** The `OPENAI_API_KEY` is only needed for server-side AI features. Users can also provide their own API keys via the Settings tab (stored client-side).
+
+4. **Deploy:**
+   - Click "Deploy"
+   - Wait for build to complete (~2-3 minutes)
+   - Your app will be live at `https://your-project.vercel.app`
+
+**Post-Deployment:**
+
+- **Custom Domain**: Add your domain in Vercel project settings
+- **Environment Variables**: Update via Vercel dashboard → Settings → Environment Variables
+- **Auto-Deploy**: Every push to `main` triggers automatic redeployment
+
+**Troubleshooting:**
+
+- If build fails, check that `pnpm` is available (it should be auto-detected)
+- Ensure all environment variables are set correctly
+- Check build logs in Vercel dashboard for specific errors
+
+### GitHub Pages (Static Export)
+
+This project is also configured for GitHub Pages deployment.
 
 - **Live URL**: https://chainsqueen.github.io/chainwhale/
 - **Workflow**: `.github/workflows/deploy.yml`
 
 Every push to `main` triggers a new deployment.
+
+**Note:** GitHub Pages uses static export, which means API routes won't work. For full functionality (including AI chat and whale feed), use Vercel deployment.
 
 ## 📚 Documentation
 

@@ -192,20 +192,46 @@ export class BlockscoutHttpClient {
       if (token) params.token = token;
       if (cursor) params.cursor = cursor;
 
-      const data = await this.request<any>(chainId, `/addresses/${address}/token-transfers`, params);
+      interface BlockscoutTransferItem {
+        tx_hash?: string;
+        hash?: string;
+        timestamp?: string;
+        from?: { hash?: string } | string;
+        to?: { hash?: string } | string;
+        total?: {
+          value?: string;
+          usd?: string;
+        };
+        token?: {
+          symbol?: string;
+          address?: string;
+          name?: string;
+          decimals?: string | number;
+          exchange_rate?: string;
+        };
+      }
+
+      interface BlockscoutResponse {
+        items?: BlockscoutTransferItem[];
+        next_page_params?: {
+          items_count?: number;
+        };
+      }
+
+      const data = await this.request<BlockscoutResponse>(chainId, `/addresses/${address}/token-transfers`, params);
       
       const rawItems = data.items || [];
       const fromTimestamp = new Date(this.convertToISOTimestamp(ageFrom)).getTime();
       const toTimestamp = new Date(this.convertToISOTimestamp(ageTo)).getTime();
       
       const items: TokenTransfer[] = rawItems
-        .map((item: any) => {
+        .filter((item: BlockscoutTransferItem) => {
           const timestamp = item.timestamp ? new Date(item.timestamp).getTime() : Date.now();
-          
           // Filter by time range
-          if (timestamp < fromTimestamp || timestamp > toTimestamp) {
-            return null;
-          }
+          return timestamp >= fromTimestamp && timestamp <= toTimestamp;
+        })
+        .map((item: BlockscoutTransferItem): TokenTransfer => {
+          const timestamp = item.timestamp ? new Date(item.timestamp).getTime() : Date.now();
 
           // Calculate USD value
           let valueUsd: number | undefined;
@@ -213,26 +239,29 @@ export class BlockscoutHttpClient {
           if (item.total?.usd) {
             valueUsd = parseFloat(item.total.usd);
           } else if (item.total?.value && item.token?.exchange_rate && item.token?.decimals) {
-            const tokenValue = parseFloat(item.total.value) / Math.pow(10, parseInt(item.token.decimals));
+            const decimals = typeof item.token.decimals === 'number' ? item.token.decimals : parseInt(item.token.decimals);
+            const tokenValue = parseFloat(item.total.value) / Math.pow(10, decimals);
             valueUsd = tokenValue * parseFloat(item.token.exchange_rate);
           }
           
+          // Extract from/to addresses
+          const fromAddress = typeof item.from === 'string' ? item.from : (item.from?.hash || '');
+          const toAddress = typeof item.to === 'string' ? item.to : (item.to?.hash || '');
+          
           return {
-            hash: item.tx_hash || item.hash,
-            from: item.from?.hash || item.from || '',
-            to: item.to?.hash || item.to || '',
+            hash: item.tx_hash || item.hash || '',
+            from: fromAddress,
+            to: toAddress,
             value: item.total?.value || '0',
             token: {
               symbol: item.token?.symbol || 'UNKNOWN',
               address: item.token?.address || '',
               name: item.token?.name,
-              decimals: item.token?.decimals?.toString() || '18',
             },
             timestamp,
             valueUsd,
           };
-        })
-        .filter((item: TokenTransfer | null): item is TokenTransfer => item !== null);
+        });
 
       return {
         items,
@@ -249,7 +278,7 @@ export class BlockscoutHttpClient {
    */
   async getTokensByAddress(chainId: string, address: string): Promise<Record<string, unknown>[]> {
     try {
-      const data = await this.request<any>(chainId, `/addresses/${address}/tokens`, {
+      const data = await this.request<{ items?: Record<string, unknown>[] }>(chainId, `/addresses/${address}/tokens`, {
         type: 'ERC-20',
       });
       return data.items || [];

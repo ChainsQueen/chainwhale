@@ -35,28 +35,48 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
+      // Get API key from localStorage
+      const apiKey = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+      
+      console.log('[Chat Interface] Sending request with API key:', {
+        hasApiKey: !!apiKey,
+        apiKeyLength: apiKey?.length || 0,
+        apiKeyPrefix: apiKey?.substring(0, 7) || 'none'
+      });
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: input,
           chains: ['1', '8453', '42161'], // Ethereum, Base, Arbitrum
+          apiKey, // Send API key from localStorage
         }),
       });
 
       const data = await response.json();
 
+      // Check if response contains an error or API key message
+      const content = data.answer || data.error || 'Sorry, I could not process your request.';
+
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.answer || 'Sorry, I could not process your request.',
+        content,
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch {
+    } catch (error) {
+      console.error('[Chat Interface] Error:', error);
+      
+      // Get API key to provide helpful error message
+      const apiKey = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+      
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Sorry, there was an error processing your request. Please make sure you have set up your OpenAI API key in .env.local',
+        content: !apiKey 
+          ? '⚠️ AI API key not configured.\n\nTo enable AI chat:\n1. Click on "Settings" tab above\n2. Select your AI provider (OpenAI, Anthropic, Google AI, etc.)\n3. Enter your API key\n4. Click "Save"\n\nYou can still use the Whale Feed and Wallet Analysis features without AI!'
+          : 'Sorry, there was an error processing your request. Please check your API key in Settings or try again.',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -130,23 +150,27 @@ export default function ChatInterface() {
                     </div>
                   </motion.div>
                 ))}
-              </AnimatePresence>
-            )}
-
-            {isLoading && (
-              <div className="mb-4 flex justify-start">
-                <div className="flex gap-3 max-w-[80%]">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                    <Bot className="h-4 w-4" />
-                  </div>
-                  <div className="rounded-lg px-4 py-2 bg-muted">
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-[250px]" />
-                      <Skeleton className="h-4 w-[200px]" />
+                
+                {/* Loading indicator */}
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 flex justify-start"
+                  >
+                    <div className="flex gap-3 max-w-[80%]">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted animate-pulse">
+                        <Bot className="h-4 w-4" />
+                      </div>
+                      <div className="rounded-lg px-4 py-2 bg-muted">
+                        <p className="text-sm text-muted-foreground">
+                          🔍 Analyzing whale activity across chains...
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             )}
           </ScrollArea>
 

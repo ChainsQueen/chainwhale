@@ -182,8 +182,7 @@ export class BlockscoutHttpClient {
     address: string | null,
     ageFrom: string,
     ageTo: string,
-    token?: string,
-    cursor?: string
+    token?: string
   ): Promise<{ items: TokenTransfer[]; nextCursor?: string }> {
     try {
       if (!address) {
@@ -268,7 +267,7 @@ export class BlockscoutHttpClient {
               // In production, you'd fetch real-time prices from an API
               // This is a placeholder - actual USD values will need price data
               valueUsd = tokenAmount; // Placeholder - needs real price data
-            } catch (e) {
+            } catch {
               // If calculation fails, leave undefined
             }
           }

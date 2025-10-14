@@ -28,42 +28,42 @@ function getExplorerBaseUrl(chainId: string): string {
 }
 
 // Fetch token prices from Blockscout API
-async function getTokenPricesFromBlockscout(
-  blockscout: IBlockscoutClient,
-  chainId: string,
-  tokenAddresses: string[]
-): Promise<Record<string, { price: number; decimals: number }>> {
-  const prices: Record<string, { price: number; decimals: number }> = {};
-  
-  // Fetch token info in parallel (limit to 10 at a time to avoid rate limits)
-  const chunks = [];
-  for (let i = 0; i < tokenAddresses.length; i += 10) {
-    chunks.push(tokenAddresses.slice(i, i + 10));
-  }
-  
-  for (const chunk of chunks) {
-    const promises = chunk.map(async (address) => {
-      try {
-        // Use HTTP client's getTokenInfo method
-        if ('getTokenInfo' in blockscout) {
-          const info = await (blockscout as any).getTokenInfo(chainId, address);
-          if (info?.exchange_rate) {
-            prices[address] = {
-              price: info.exchange_rate,
-              decimals: info.decimals || 18,
-            };
-          }
-        }
-      } catch (error) {
-        // Silently fail for individual tokens
-      }
-    });
-    
-    await Promise.all(promises);
-  }
-  
-  return prices;
-}
+// async function getTokenPricesFromBlockscout(
+//   blockscout: IBlockscoutClient,
+//   chainId: string,
+//   tokenAddresses: string[]
+// ): Promise<Record<string, { price: number; decimals: number }>> {
+//   const prices: Record<string, { price: number; decimals: number }> = {};
+//   
+//   // Fetch token info in parallel (limit to 10 at a time to avoid rate limits)
+//   const chunks = [];
+//   for (let i = 0; i < tokenAddresses.length; i += 10) {
+//     chunks.push(tokenAddresses.slice(i, i + 10));
+//   }
+//   
+//   for (const chunk of chunks) {
+//     const promises = chunk.map(async (address) => {
+//       try {
+//         // Use HTTP client's getTokenInfo method
+//         if ('getTokenInfo' in blockscout) {
+//           const info = await (blockscout as { getTokenInfo: (chainId: string, address: string) => Promise<{ exchange_rate?: number; decimals?: number }> }).getTokenInfo(chainId, address);
+//           if (info?.exchange_rate) {
+//             prices[address] = {
+//               price: info.exchange_rate,
+//               decimals: info.decimals || 18,
+//             };
+//           }
+//         }
+//       } catch {
+//         // Silently fail for individual tokens
+//       }
+//     });
+//     
+//     await Promise.all(promises);
+//   }
+//   
+//   return prices;
+// }
 
 export async function POST(request: NextRequest) {
   let blockscout: IBlockscoutClient | null = null;
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    blockchainData.push(...chainGroups.filter((g: any) => g.count > 0));
+    blockchainData.push(...chainGroups.filter((g: { count: number }) => g.count > 0));
     
     console.log('[Chat API] Total blockchain data collected:', {
       chains: blockchainData.length,

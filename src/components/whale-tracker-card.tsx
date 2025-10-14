@@ -33,9 +33,9 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
     });
   }
 
-  const formatAddress = (address: string) => {
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
+  // const formatAddress = (address: string) => {
+  //   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  // };
 
   const formatValue = (value: number) => {
     if (value >= 1000000) {

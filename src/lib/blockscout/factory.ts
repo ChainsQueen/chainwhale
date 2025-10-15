@@ -1,5 +1,6 @@
 import { BlockscoutClient } from './client';
 import { BlockscoutHttpClient } from './http-client';
+import { HybridBlockscoutClient } from './hybrid-client';
 import type { AddressInfo, TokenTransfer, Chain } from '../shared/types';
 
 /**
@@ -31,14 +32,26 @@ export function createBlockscoutClient(): IBlockscoutClient {
   const isProduction = process.env.NODE_ENV === 'production';
   const isVercel = process.env.VERCEL === '1';
   const forceHttp = process.env.BLOCKSCOUT_USE_HTTP === 'true';
+  const mcpFirst = process.env.BLOCKSCOUT_MCP_FIRST !== 'false';
   
-  // Use HTTP client in production, on Vercel, or when explicitly requested
-  if (isProduction || isVercel || forceHttp) {
+  // Force HTTP when explicitly requested
+  if (forceHttp) {
     console.log('🌐 Using Blockscout HTTP client (REST API mode)');
     return new BlockscoutHttpClient() as unknown as IBlockscoutClient;
   }
   
-  // Use MCP client in development (requires Docker)
+  // Prefer MCP-first hybrid client for prize qualification
+  if (mcpFirst) {
+    console.log('🤝 Using Blockscout Hybrid client (MCP-first with HTTP fallback)');
+    return new HybridBlockscoutClient() as unknown as IBlockscoutClient;
+  }
+
+  // Legacy behavior: use HTTP in prod/Vercel, MCP in dev
+  if (isProduction || isVercel) {
+    console.log('🌐 Using Blockscout HTTP client (REST API mode)');
+    return new BlockscoutHttpClient() as unknown as IBlockscoutClient;
+  }
+
   console.log('🐳 Using Blockscout MCP client (requires Docker)');
   return new BlockscoutClient() as unknown as IBlockscoutClient;
 }

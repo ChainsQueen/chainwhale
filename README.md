@@ -23,8 +23,9 @@ AI-powered blockchain analytics platform for intelligent wallet analysis, whale 
 # Install dependencies
 pnpm install
 
-# Create .env.local file (required for local development)
-echo "BLOCKSCOUT_USE_HTTP=true" > .env.local
+# (Optional) Create .env.local to override defaults
+# By default, the app runs MCP-first with HTTP/RPC fallback.
+# To force HTTP-only, set: BLOCKSCOUT_USE_HTTP=true
 
 # Run development server
 pnpm dev
@@ -46,10 +47,12 @@ Open [http://localhost:3000](http://localhost:3000) and navigate to:
 ChainWhale leverages multiple Blockscout APIs and tools across different features:
 
 ### **🐋 Whale Tracker**
-- **API Used**: Blockscout RPC API (`/api?module=account&action=tokentx`)
+- **API Used**: MCP-first Hybrid
+  - Primary: Blockscout MCP tools (`get_token_transfers_by_address`)
+  - Fallback: RPC API (`/api?module=account&action=tokentx`) only when MCP results lack `hash`
 - **Purpose**: Fetch ERC-20 token transfers from known whale addresses
 - **Data Retrieved**: Transaction hashes, token transfers, timestamps, addresses
-- **Why RPC**: Includes `hash` field for transaction links (REST API doesn't)
+- **Why Hybrid**: Demonstrates Blockscout MCP usage for prize eligibility while preserving explorer links via guaranteed hashes
 - **Chains**: Ethereum, Base, Arbitrum, Optimism, Polygon
 - **Features**: 
   - Real-time whale monitoring (Binance, Coinbase, Vitalik, etc.)
@@ -98,34 +101,42 @@ ChainWhale leverages multiple Blockscout APIs and tools across different feature
 │                     ChainWhale App                       │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │ Whale Tracker│  │   AI Chat    │  │Wallet Analysis│ │
-│  │              │  │              │  │               │ │
-│  │  RPC API     │  │  RPC API     │  │  MCP Server   │ │
-│  │  (Direct)    │  │  (via HTTP)  │  │  (Docker)     │ │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬────────┘ │
-│         │                 │                  │          │
-│         └─────────────────┴──────────────────┘          │
-│                           │                             │
-└───────────────────────────┼─────────────────────────────┘
-                            │
-                ┌───────────┴───────────┐
-                │                       │
-        ┌───────▼────────┐     ┌───────▼────────┐
-        │ Blockscout RPC │     │ Blockscout MCP │
-        │      API       │     │     Server     │
-        │                │     │                │
-        │ • tokentx      │     │ • get_address  │
-        │ • account      │     │ • get_tokens   │
-        │ • tx details   │     │ • get_transfers│
-        └────────────────┘     └────────────────┘
+│  ┌────────────────────┐  ┌──────────────┐  ┌───────────┐ │
+│  │   Whale Tracker    │  │   AI Chat    │  │Analysis   │ │
+│  │  MCP-first Hybrid  │  │ MCP + RPC    │  │   (MCP)   │ │
+│  └─────────┬──────────┘  └──────┬───────┘  └─────┬─────┘ │
+│            │                    │                  │       │
+│            └──────────┬─────────┴──────────────────┘       │
+│                       │                                    │
+└───────────────────────┼────────────────────────────────────┘
+                        │
+            ┌───────────┴───────────┐
+            │                       │
+    ┌───────▼────────┐     ┌───────▼────────┐
+    │ Blockscout MCP │     │ Blockscout RPC │
+    │     Server     │     │      API       │
+    │                │     │                │
+    │ • get_address  │     │ • tokentx      │
+    │ • get_tokens   │     │ • account      │
+    │ • get_transfers│     │ • tx details   │
+    └───────┬────────┘     └────────┬───────┘
+            │  primary               │  fallback (hash guarantee)
+            └────────────────────────┴───────────────────────
 ```
 
-### **Why Multiple APIs?**
+### **Why Hybrid (MCP-first)?**
 
-1. **RPC API** - Fast, includes transaction hashes, works everywhere (no Docker)
-2. **MCP Server** - Rich AI context, deep wallet insights, requires Docker locally
-3. **Factory Pattern** - Automatically selects best client based on environment
+1. **MCP Server first** - Rich AI context and multi-chain coverage; preferred path for prize alignment.
+2. **HTTP/RPC fallback** - Ensures `hash` is present for explorer links when MCP responses omit it.
+3. **Factory/Hybrid Pattern** - Automatically selects the best source per-request.
+
+### **MCP-first Runtime & Env Flags**
+
+- **Default behavior**: MCP-first with automatic HTTP/RPC fallback for transfers without hashes.
+- **Env overrides**:
+  - `BLOCKSCOUT_USE_HTTP=true` → Force HTTP/RPC-only mode.
+  - `BLOCKSCOUT_MCP_FIRST=false` → Disable hybrid preference and use legacy selection.
+    - See `src/lib/blockscout/factory.ts` and `src/lib/blockscout/hybrid-client.ts`.
 
 ## 🚢 Deployment
 

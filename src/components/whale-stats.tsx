@@ -10,13 +10,12 @@ interface WhaleStatsProps {
 
 export function WhaleStatsComponent({ stats }: WhaleStatsProps) {
   const formatValue = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(2)}M`;
-    }
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}K`;
-    }
-    return `$${value.toLocaleString()}`;
+    // Compact notation keeps long values readable in small cards
+    const compact = Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      maximumFractionDigits: 2,
+    }).format(value);
+    return `$${compact}`;
   };
 
   const statCards = [
@@ -57,8 +56,12 @@ export function WhaleStatsComponent({ stats }: WhaleStatsProps) {
             <stat.icon className={`h-4 w-4 ${stat.color}`} />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${stat.color}`}>
-              {stat.value}
+            <div
+              className={`font-bold ${stat.color} leading-tight break-words break-all overflow-hidden`}
+            >
+              <span className="block text-xl sm:text-2xl md:text-3xl truncate">
+                {stat.value}
+              </span>
             </div>
           </CardContent>
         </Card>

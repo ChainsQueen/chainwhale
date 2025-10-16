@@ -1,6 +1,45 @@
 import type { AddressInfo, TokenTransfer, Chain } from '../shared/types';
 
 /**
+ * Blockscout REST API v2 token transfer item
+ */
+interface BlockscoutTokenTransfer {
+  transaction_hash: string;
+  token_type: string;
+  block_hash: string;
+  log_index: number;
+  method?: string;
+  timestamp: string;
+  type: string;
+  from: {
+    hash: string;
+    name?: string;
+    is_contract?: boolean;
+    is_verified?: boolean;
+  };
+  to: {
+    hash: string;
+    name?: string;
+    is_contract?: boolean;
+    is_verified?: boolean;
+  };
+  total: {
+    value: string;
+    decimals: string;
+  };
+  token: {
+    address_hash: string;
+    symbol: string;
+    name: string;
+    decimals: string;
+    type: string;
+    exchange_rate?: string;
+    icon_url?: string;
+  };
+  [key: string]: unknown;
+}
+
+/**
  * Blockscout HTTP Client
  * Direct REST API client for production environments (Vercel, etc.)
  * This replaces the MCP client which requires Docker
@@ -49,7 +88,7 @@ export class BlockscoutHttpClient {
       try {
         // Create abort controller for timeout (compatible with older Node.js)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // Reduced to 10s for faster failures
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(url.toString(), {
           headers: {
@@ -64,7 +103,7 @@ export class BlockscoutHttpClient {
           // Handle rate limiting and timeouts
           if (response.status === 429 || response.status === 524) {
             if (attempt < retries) {
-              const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+              const delay = Math.pow(2, attempt) * 1000;
               console.log(`⏳ Rate limited/timeout on chain ${chainId}, retrying in ${delay}ms...`);
               await new Promise(resolve => setTimeout(resolve, delay));
               continue;
@@ -82,7 +121,6 @@ export class BlockscoutHttpClient {
           continue;
         }
         
-        // Log error for debugging
         console.error(`❌ Request failed for chain ${chainId}:`, error instanceof Error ? error.message : 'Unknown error');
         throw error;
       }
@@ -186,112 +224,68 @@ export class BlockscoutHttpClient {
   ): Promise<{ items: TokenTransfer[]; nextCursor?: string }> {
     try {
       if (!address) {
-        // Blockscout API requires an address
         return { items: [] };
       }
 
-      // Use RPC-style API endpoint which includes transaction hashes
+      // Use REST API v2 endpoint
       const params: Record<string, string> = {
-        module: 'account',
-        action: 'tokentx',
-        address: address,
-        sort: 'desc',
-        page: '1',
-        offset: '50', // Reduced to 50 for faster response
+        type: 'ERC-20',
       };
 
-      if (token) params.contractaddress = token;
-
-      interface BlockscoutRpcTransferItem {
-        hash: string;
-        timeStamp: string;
-        from: string;
-        to: string;
-        value: string;
-        tokenName?: string;
-        tokenSymbol?: string;
-        tokenDecimal?: string;
-        contractAddress?: string;
-        gasPrice?: string;
-        gasUsed?: string;
+      if (token) {
+        params.filter = 'address';
+        params.token = token;
       }
 
-      interface BlockscoutRpcResponse {
-        status: string;
-        message: string;
-        result: BlockscoutRpcTransferItem[];
-      }
-
-      const data = await this.request<BlockscoutRpcResponse>(chainId, `/api`, params);
+      const data = await this.request<{ items: BlockscoutTokenTransfer[]; next_page_params?: unknown }>(
+        chainId,
+        `/addresses/${address}/token-transfers`,
+        params
+      );
       
-      // Check if API call was successful
-      if (data.status !== '1' || !Array.isArray(data.result)) {
-        console.warn(`[Blockscout RPC] API returned status: ${data.status}, message: ${data.message}`);
+      if (!Array.isArray(data.items)) {
+        console.warn(`[Blockscout] API returned invalid items`);
         return { items: [] };
       }
 
-      const rawItems = data.result;
+      const rawItems = data.items;
       
-      // Debug: Log first item to see structure
-      if (rawItems.length > 0) {
-        console.log(`[Blockscout RPC] Sample transfer data for chain ${chainId}:`, {
-          hash: rawItems[0].hash,
-          hasHash: !!rawItems[0].hash,
-          from: rawItems[0].from,
-          to: rawItems[0].to,
-          tokenSymbol: rawItems[0].tokenSymbol
-        });
-      }
-      
-      const fromTimestamp = new Date(this.convertToISOTimestamp(ageFrom)).getTime() / 1000; // Convert to seconds
-      const toTimestamp = new Date(this.convertToISOTimestamp(ageTo)).getTime() / 1000;
+      // Convert timestamps for filtering
+      const fromTimestamp = new Date(this.convertToISOTimestamp(ageFrom)).getTime();
+      const toTimestamp = new Date(this.convertToISOTimestamp(ageTo)).getTime();
       
       const items: TokenTransfer[] = rawItems
-        .filter((item: BlockscoutRpcTransferItem) => {
-          const timestamp = parseInt(item.timeStamp);
-          // Filter by time range
+        .filter((item) => {
+          const timestamp = new Date(item.timestamp).getTime();
           return timestamp >= fromTimestamp && timestamp <= toTimestamp;
         })
-        .map((item: BlockscoutRpcTransferItem): TokenTransfer => {
-          const timestamp = parseInt(item.timeStamp) * 1000; // Convert to milliseconds
+        .map((item): TokenTransfer => {
+          const timestamp = new Date(item.timestamp).getTime();
 
-          // Calculate USD value from token decimals and value
-          let valueUsd: number | undefined = undefined;
-          
-          if (item.value && item.tokenDecimal) {
-            try {
-              const decimals = parseInt(item.tokenDecimal);
-              const tokenAmount = parseFloat(item.value) / Math.pow(10, decimals);
-              
-              // For now, we'll estimate based on common token values
-              // In production, you'd fetch real-time prices from an API
-              // This is a placeholder - actual USD values will need price data
-              valueUsd = tokenAmount; // Placeholder - needs real price data
-            } catch {
-              // If calculation fails, leave undefined
-            }
-          }
-          
           return {
-            hash: item.hash,
-            from: item.from,
-            to: item.to,
-            value: item.value,
+            hash: item.transaction_hash || '',
+            from: item.from?.hash || '',
+            to: item.to?.hash || '',
+            value: item.total?.value || '0',
             token: {
-              symbol: item.tokenSymbol || 'UNKNOWN',
-              address: item.contractAddress || '',
-              name: item.tokenName,
+              symbol: item.token?.symbol || 'UNKNOWN',
+              address: item.token?.address_hash || '',
+              name: item.token?.name,
+              decimals: item.total?.decimals || item.token?.decimals || '18',
             },
             timestamp,
-            valueUsd,
+            valueUsd: undefined,
           };
         });
 
-      console.log(`[Blockscout RPC] Fetched ${items.length} transfers for chain ${chainId}`);
+      console.log(`[Blockscout] Fetched ${items.length} transfers for chain ${chainId}`);
+
+      // Enrich with USD values
+      const enrichedItems = await this.enrichWithUsdValues(chainId, items);
 
       return {
-        items,
-        nextCursor: undefined, // RPC API uses page/offset, not cursor
+        items: enrichedItems,
+        nextCursor: data.next_page_params ? JSON.stringify(data.next_page_params) : undefined,
       };
     } catch (error) {
       console.error('Error getting token transfers:', error);
@@ -300,27 +294,77 @@ export class BlockscoutHttpClient {
   }
 
   /**
-   * Get token info including price (exchange_rate)
+   * Get token exchange rate from Blockscout
    */
-  async getTokenInfo(chainId: string, tokenAddress: string): Promise<{ symbol: string; decimals: number; exchange_rate?: number } | null> {
+  private async getTokenExchangeRate(chainId: string, tokenAddress: string): Promise<number | null> {
     try {
       const response = await this.request<{
-        symbol?: string;
-        decimals?: string;
         exchange_rate?: string;
-      }>(chainId, `/api/v2/tokens/${tokenAddress}`);
+      }>(chainId, `/tokens/${tokenAddress}`);
       
-      if (!response.symbol) return null;
-      
-      return {
-        symbol: response.symbol,
-        decimals: parseInt(response.decimals || '18'),
-        exchange_rate: response.exchange_rate ? parseFloat(response.exchange_rate) : undefined,
-      };
-    } catch (error) {
-      console.error(`[Blockscout] Error fetching token info for ${tokenAddress}:`, error);
+      return response.exchange_rate ? parseFloat(response.exchange_rate) : null;
+    } catch (_error) {
+      // Token might not have exchange rate data
       return null;
     }
+  }
+
+  /**
+   * Enrich transfers with USD values using Blockscout exchange rates
+   */
+  private async enrichWithUsdValues(
+    chainId: string,
+    transfers: TokenTransfer[]
+  ): Promise<TokenTransfer[]> {
+    // Get unique token addresses
+    const uniqueTokens = new Map<string, { address: string; decimals: string }>();
+    
+    for (const transfer of transfers) {
+      if (transfer.token.address && !uniqueTokens.has(transfer.token.address.toLowerCase())) {
+        uniqueTokens.set(transfer.token.address.toLowerCase(), {
+          address: transfer.token.address,
+          decimals: transfer.token.decimals || '18',
+        });
+      }
+    }
+
+    // Fetch exchange rates for all unique tokens
+    const exchangeRates = new Map<string, number>();
+    
+    console.log(`[Blockscout] Fetching exchange rates for ${uniqueTokens.size} unique tokens...`);
+    
+    for (const [addressKey, tokenInfo] of uniqueTokens.entries()) {
+      const rate = await this.getTokenExchangeRate(chainId, tokenInfo.address);
+      if (rate !== null) {
+        exchangeRates.set(addressKey, rate);
+      }
+    }
+
+    console.log(`[Blockscout] Got exchange rates for ${exchangeRates.size}/${uniqueTokens.size} tokens`);
+
+    // Calculate USD values
+    return transfers.map(transfer => {
+      let valueUsd: number | undefined = undefined;
+
+      if (transfer.token.address && transfer.value) {
+        const rate = exchangeRates.get(transfer.token.address.toLowerCase());
+        
+        if (rate && rate > 0) {
+          try {
+            const decimals = parseInt(transfer.token.decimals || '18');
+            const tokenAmount = parseFloat(transfer.value) / Math.pow(10, decimals);
+            valueUsd = tokenAmount * rate;
+          } catch (error) {
+            console.error(`Error calculating USD for ${transfer.token.symbol}:`, error);
+          }
+        }
+      }
+
+      return {
+        ...transfer,
+        valueUsd,
+      };
+    });
   }
 
   /**

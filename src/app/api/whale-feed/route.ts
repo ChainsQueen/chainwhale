@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     
     // Get query parameters
     const chainsParam = searchParams.get('chains');
+    const timeRange = searchParams.get('timeRange') || '1h';
     const minValue = parseInt(searchParams.get('minValue') || '100000');
     const tokenSymbol = searchParams.get('token');
 
@@ -21,7 +22,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Whale Feed API] Starting request`);
     console.log(`[Whale Feed API] Chains: ${chainIds.join(', ')}`);
+    console.log(`[Whale Feed API] Time Range: ${timeRange}`);
     console.log(`[Whale Feed API] Min value: $${minValue.toLocaleString()}`);
+    console.log(`[Whale Feed API] Token filter: ${tokenSymbol || 'none'}`);
     console.log(`[Whale Feed API] Environment: ${process.env.NODE_ENV}`);
     console.log(`[Whale Feed API] Vercel: ${process.env.VERCEL}`);
 
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest) {
       try {
         console.log(`Fetching whale transactions for chain ${chainId}...`);
         const chainName = getChainName(chainId);
-        const transactions = await whaleService.getWhaleFeed(chainId, chainName, '24h');
+        const transactions = await whaleService.getWhaleFeed(chainId, chainName, timeRange);
         console.log(`Found ${transactions.length} whale transactions on chain ${chainId}`);
         
         // Debug: Check if hashes are present
@@ -109,7 +112,8 @@ export async function GET(request: NextRequest) {
       value: t.value,
       valueUsd: t.valueUsd,
       timestamp: t.timestamp,
-      token: t.token
+      token: t.token,
+      dataSource: t.dataSource
     }));
 
     // Return response
@@ -118,12 +122,17 @@ export async function GET(request: NextRequest) {
       stats,
       topWhales,
       metadata: {
-        timeRange: '24 hours',
+        timeRange,
         minValueUsd: `$${minValue.toLocaleString()}`,
         chains: chainIds.map(id => getChainName(id)),
         tokenFilter: tokenSymbol || null,
         timestamp: new Date().toISOString(),
         monitoredAddresses: 9,
+        dataSources: {
+          mcp: transfers.filter(t => t.dataSource === 'mcp').length,
+          http: transfers.filter(t => t.dataSource === 'http').length,
+          total: transfers.length
+        },
         description: `Monitoring 9 known whale addresses (Binance, Coinbase, Vitalik, Polygon Bridge, and large holders) across selected chains. Showing transfers above $${minValue.toLocaleString()} USD.`
       }
     });

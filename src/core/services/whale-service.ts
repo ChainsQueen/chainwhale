@@ -4,6 +4,7 @@ import type { TokenTransfer, Chain } from '@/lib/shared/types';
 export interface WhaleTransfer extends TokenTransfer {
   chainName: string;
   chainId: string;
+  dataSource?: 'mcp' | 'http';
 }
 
 export interface WhaleStats {

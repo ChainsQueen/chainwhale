@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, TrendingUp, TrendingDown, ArrowLeftRight, ExternalLink } from 'lucide-react';
+import { ArrowRight, TrendingUp, TrendingDown, ArrowLeftRight, ExternalLink, Sparkles } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -16,26 +16,6 @@ interface WhaleTrackerCardProps {
 }
 
 export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
-  // Debug: Log transfer details
-  console.log('[WhaleTrackerCard] Transfer:', {
-    hash: transfer.hash,
-    chainId: transfer.chainId,
-    chainName: transfer.chainName,
-    explorerUrl: transfer.hash ? `Chain ${transfer.chainId} explorer` : 'No hash'
-  });
-  
-  if (!transfer.hash || transfer.hash === '') {
-    console.warn('[WhaleTrackerCard] Missing transaction hash:', {
-      from: transfer.from.substring(0, 10),
-      to: transfer.to.substring(0, 10),
-      chainId: transfer.chainId,
-      value: transfer.valueUsd
-    });
-  }
-
-  // const formatAddress = (address: string) => {
-  //   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  // };
 
   const formatValue = (value: number) => {
     if (value >= 1000000) {
@@ -58,7 +38,6 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
   };
 
   const getTransferIcon = () => {
-    // Simple classification based on value
     if (transfer.valueUsd && transfer.valueUsd > 500000) {
       return {
         icon: <TrendingUp className="w-4 h-4 text-green-500" />,
@@ -96,9 +75,7 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
       '137': 'https://polygonscan.com',
     };
     const baseUrl = explorers[chainId] || explorers['1'];
-    const url = `${baseUrl}/tx/${txHash}`;
-    console.log(`[Explorer URL] Chain ${chainId} (${transfer.chainName}): ${url}`);
-    return url;
+    return `${baseUrl}/tx/${txHash}`;
   };
 
   const transferIconData = getTransferIcon();
@@ -107,9 +84,7 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-          {/* Left: Transfer Info */}
           <div className="flex-1 space-y-2">
-            {/* Header */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <TooltipProvider>
                 <Tooltip>
@@ -143,6 +118,12 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
               <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                 {transfer.chainName}
               </Badge>
+              {transfer.dataSource === 'mcp' && (
+                <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-gradient-to-r from-purple-500 to-blue-500">
+                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
+                  MCP
+                </Badge>
+              )}
               <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                 {transfer.token.symbol}
               </Badge>

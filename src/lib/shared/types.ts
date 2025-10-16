@@ -49,9 +49,11 @@ export interface TokenTransfer {
     symbol: string;
     address: string;
     name?: string;
+    decimals?: string;
   };
   timestamp: number;
   valueUsd?: number;
+  dataSource?: 'mcp' | 'http';
 }
 
 export interface AddressInfo {

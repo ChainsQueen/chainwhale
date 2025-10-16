@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Activity, DollarSign, Users } from 'lucide-react';
+import { AnimatedHover } from '@/components/animated-hover';
 import type { WhaleStats } from '@/core/services/whale-service';
 
 interface WhaleStatsProps {
@@ -48,23 +49,25 @@ export function WhaleStatsComponent({ stats }: WhaleStatsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {statCards.map((stat) => (
-        <Card key={stat.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {stat.title}
-            </CardTitle>
-            <stat.icon className={`h-4 w-4 ${stat.color}`} />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`font-bold ${stat.color} leading-tight break-words break-all overflow-hidden`}
-            >
-              <span className="block text-xl sm:text-2xl md:text-3xl truncate">
-                {stat.value}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        <AnimatedHover key={stat.title} type="stat">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div
+                className={`font-bold ${stat.color} leading-tight break-words break-all overflow-hidden`}
+              >
+                <span className="block text-xl sm:text-2xl md:text-3xl truncate">
+                  {stat.value}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </AnimatedHover>
       ))}
     </div>
   );

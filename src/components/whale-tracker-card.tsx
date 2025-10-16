@@ -118,12 +118,16 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
               <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                 {transfer.chainName}
               </Badge>
-              {transfer.dataSource === 'mcp' && (
+              {transfer.dataSource === 'mcp' ? (
                 <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-gradient-to-r from-purple-500 to-blue-500">
                   <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
                   MCP
                 </Badge>
-              )}
+              ) : transfer.dataSource === 'http' ? (
+                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-slate-600">
+                  HTTP
+                </Badge>
+              ) : null}
               <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                 {transfer.token.symbol}
               </Badge>

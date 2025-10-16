@@ -275,6 +275,7 @@ export class BlockscoutHttpClient {
             },
             timestamp,
             valueUsd: undefined,
+            dataSource: 'http' as const,
           };
         });
 
@@ -303,7 +304,7 @@ export class BlockscoutHttpClient {
       }>(chainId, `/tokens/${tokenAddress}`);
       
       return response.exchange_rate ? parseFloat(response.exchange_rate) : null;
-    } catch (_error) {
+    } catch {
       // Token might not have exchange rate data
       return null;
     }

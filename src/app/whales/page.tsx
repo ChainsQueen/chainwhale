@@ -9,7 +9,7 @@ import { AppHeader } from '@/components/app-header';
 import { WhaleTrackerCard } from '@/components/whale-tracker-card';
 import { WhaleStatsComponent } from '@/components/whale-stats';
 import { AnimatedHover } from '@/components/animated-hover';
-import { RefreshCw, Filter, Trophy, Sparkles, Copy, Check } from 'lucide-react';
+import { RefreshCw, Filter, Trophy, Sparkles, Copy, Check, TrendingUp, AlertTriangle } from 'lucide-react';
 import type { WhaleTransfer, WhaleStats } from '@/core/services/whale-service';
 
 export default function WhalesPage() {
@@ -24,11 +24,31 @@ export default function WhalesPage() {
   const [minValue, setMinValue] = useState(100000);
   const [tokenFilter, setTokenFilter] = useState<string>('');
   const [copiedAddresses, setCopiedAddresses] = useState<Set<string>>(new Set());
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiInsights, setAiInsights] = useState<string | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(false);
 
   // Debug: Log when dataSourceStats changes
   useEffect(() => {
     console.log('[Whale Tracker] dataSourceStats updated:', dataSourceStats);
   }, [dataSourceStats]);
+
+  // Check for API key
+  useEffect(() => {
+    const checkApiKey = () => {
+      const key = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+      setHasApiKey(!!key);
+    };
+    
+    checkApiKey();
+    window.addEventListener('storage', checkApiKey);
+    window.addEventListener('focus', checkApiKey);
+    
+    return () => {
+      window.removeEventListener('storage', checkApiKey);
+      window.removeEventListener('focus', checkApiKey);
+    };
+  }, []);
 
   const availableChains = [
     { id: '1', name: 'Ethereum' },
@@ -48,6 +68,7 @@ export default function WhalesPage() {
   const fetchWhaleFeed = async () => {
     setLoading(true);
     setError(null);
+    setAiInsights(null); // Clear old AI insights when fetching new data
 
     try {
       const params = new URLSearchParams({
@@ -100,6 +121,51 @@ export default function WhalesPage() {
         ? prev.filter(id => id !== chainId)
         : [...prev, chainId]
     );
+    // Clear all data when filter changes
+    setTransfers([]);
+    setStats(null);
+    setTopWhales([]);
+    setDataSourceStats(null);
+    setAiInsights(null);
+  };
+
+  const handleGenerateAI = async () => {
+    if (!transfers.length || isGeneratingAI) return;
+
+    setIsGeneratingAI(true);
+    setError(null);
+
+    const userApiKey = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+
+    try {
+      const response = await fetch('/api/whale-tracker/analyze-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transfers: transfers.slice(0, 20), // Send top 20 transfers from current filtered data
+          stats,
+          topWhales: topWhales.slice(0, 3),
+          timeRange,
+          selectedChains,
+          minValue,
+          tokenFilter,
+          dataSourceStats, // Include data source info (MCP vs HTTP)
+          apiKey: userApiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate AI insights');
+      }
+
+      const data = await response.json();
+      setAiInsights(data.insights);
+    } catch (err) {
+      setError('Failed to generate AI insights. Make sure your API key is configured.');
+      console.error('AI generation error:', err);
+    } finally {
+      setIsGeneratingAI(false);
+    }
   };
 
   return (
@@ -120,17 +186,52 @@ export default function WhalesPage() {
             <AnimatedHover type="text">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Whale Tracker</h1>
             </AnimatedHover>
-            <AnimatedHover type="button" disabled={loading}>
-              <Button
-                onClick={fetchWhaleFeed}
-                disabled={loading}
-                size="sm"
-                className="gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </AnimatedHover>
+            <div className="flex gap-2">
+              <AnimatedHover type="button" disabled={loading || isGeneratingAI}>
+                <Button
+                  onClick={() => {
+                    if (!hasApiKey) {
+                      window.location.href = '/dashboard';
+                      return;
+                    }
+                    handleGenerateAI();
+                  }}
+                  disabled={loading || isGeneratingAI || !transfers.length}
+                  size="sm"
+                  variant={hasApiKey ? "default" : "outline"}
+                  className="gap-2"
+                >
+                  {isGeneratingAI ? (
+                    <>
+                      <div className="h-3 w-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Generating...
+                    </>
+                  ) : hasApiKey ? (
+                    <>
+                      <TrendingUp className="h-4 w-4" />
+                      Generate AI Insights
+                      <span className="ml-1 h-2 w-2 rounded-full bg-green-500" title="API Key configured" />
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-4 w-4" />
+                      Setup AI
+                    </>
+                  )}
+                </Button>
+              </AnimatedHover>
+              <AnimatedHover type="button" disabled={loading}>
+                <Button
+                  onClick={fetchWhaleFeed}
+                  disabled={loading}
+                  size="sm"
+                  className="gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </AnimatedHover>
+            </div>
           </div>
           <AnimatedHover type="text">
             <p className="text-muted-foreground text-xs sm:text-sm">
@@ -180,7 +281,15 @@ export default function WhalesPage() {
                   <Badge
                     variant={timeRange === range.value ? 'default' : 'outline'}
                     className="cursor-pointer text-xs sm:text-sm px-2 py-1 sm:px-2.5"
-                    onClick={() => setTimeRange(range.value)}
+                    onClick={() => {
+                      setTimeRange(range.value);
+                      // Clear all data when filter changes
+                      setTransfers([]);
+                      setStats(null);
+                      setTopWhales([]);
+                      setDataSourceStats(null);
+                      setAiInsights(null);
+                    }}
                   >
                     {range.label}
                   </Badge>
@@ -200,7 +309,15 @@ export default function WhalesPage() {
                   <Badge
                     variant={minValue === value ? 'default' : 'outline'}
                     className="cursor-pointer text-xs sm:text-sm px-2 py-1 sm:px-2.5"
-                    onClick={() => setMinValue(value)}
+                    onClick={() => {
+                      setMinValue(value);
+                      // Clear all data when filter changes
+                      setTransfers([]);
+                      setStats(null);
+                      setTopWhales([]);
+                      setDataSourceStats(null);
+                      setAiInsights(null);
+                    }}
                   >
                     ${(value / 1000).toLocaleString()}K+
                   </Badge>
@@ -219,7 +336,15 @@ export default function WhalesPage() {
                 <Badge
                   variant={tokenFilter === '' ? 'default' : 'outline'}
                   className="cursor-pointer text-xs sm:text-sm px-2 py-1 sm:px-2.5"
-                  onClick={() => setTokenFilter('')}
+                  onClick={() => {
+                    setTokenFilter('');
+                    // Clear all data when filter changes
+                    setTransfers([]);
+                    setStats(null);
+                    setTopWhales([]);
+                    setDataSourceStats(null);
+                    setAiInsights(null);
+                  }}
                 >
                   All Tokens
                 </Badge>
@@ -229,7 +354,15 @@ export default function WhalesPage() {
                   <Badge
                     variant={tokenFilter === token ? 'default' : 'outline'}
                     className="cursor-pointer text-xs sm:text-sm px-2 py-1 sm:px-2.5"
-                    onClick={() => setTokenFilter(token)}
+                    onClick={() => {
+                      setTokenFilter(token);
+                      // Clear all data when filter changes
+                      setTransfers([]);
+                      setStats(null);
+                      setTopWhales([]);
+                      setDataSourceStats(null);
+                      setAiInsights(null);
+                    }}
                   >
                     {token}
                   </Badge>
@@ -238,6 +371,55 @@ export default function WhalesPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* AI Insights */}
+        <AnimatePresence mode="wait">
+          {aiInsights && (
+            <motion.div
+              key="ai-insights"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+            >
+              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2 flex-wrap">
+                        AI Insights
+                        <Badge variant="secondary" className="text-xs">Powered by AI</Badge>
+                        {dataSourceStats && dataSourceStats.total > 0 && (
+                          <>
+                            {dataSourceStats.mcp > 0 && dataSourceStats.http > 0 ? (
+                              <Badge className="text-xs bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+                                MCP + HTTP Data
+                              </Badge>
+                            ) : dataSourceStats.mcp > 0 ? (
+                              <Badge className="text-xs bg-purple-500 text-white">
+                                MCP Data
+                              </Badge>
+                            ) : (
+                              <Badge className="text-xs bg-blue-500 text-white">
+                                HTTP Data
+                              </Badge>
+                            )}
+                          </>
+                        )}
+                      </h3>
+                      <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                        {aiInsights}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Stats */}
         <AnimatePresence mode="wait">

@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { z } from 'zod';
 import type { WalletAnalysis } from '../shared/types';
+import { createBlockscoutClient, type IBlockscoutClient } from '@/lib/blockscout/factory';
 
 /**
  * AI Engine using OpenAI GPT-4
@@ -248,6 +249,107 @@ Return your response as a JSON object with this structure:
         .slice(0, 5)
         .map(([token, count]) => `${token} (${count} transfers)`);
 
+      // Fetch contract security info for top 3 tokens using hybrid MCP-first approach
+      const top3Tokens = Object.entries(tokenCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3);
+      
+      const contractSecurityInfo: string[] = [];
+      
+      // Use hybrid Blockscout client (MCP-first)
+      let securityClient: IBlockscoutClient | null = null;
+      
+      try {
+        securityClient = createBlockscoutClient();
+        await securityClient.connect();
+        
+        // Fetch all contract info in parallel
+        const securityPromises = top3Tokens.map(async ([tokenSymbol]) => {
+          try {
+            // Find a transfer with this token to get the contract address and chain
+            const transfer = transfers.find(t => {
+              const token = (t.token as Record<string, unknown>);
+              return token?.symbol === tokenSymbol;
+            });
+            
+            if (!transfer) return null;
+            
+            const token = (transfer.token as Record<string, unknown>);
+            const address = token?.address as string;
+            const chainId = (transfer.chainId as string);
+            
+            if (!address || !chainId || !securityClient) return null;
+            
+            // Use hybrid client (tries MCP first, falls back to HTTP)
+            const addressInfo = await securityClient.getAddressInfo(chainId, address);
+            
+            if (!addressInfo) return null;
+            
+            const isVerified = addressInfo.is_verified || false;
+            const isProxy = addressInfo.implementations && addressInfo.implementations.length > 0;
+            const isScam = addressInfo.is_scam || false;
+            const reputation = addressInfo.reputation;
+            const tokenPrice = addressInfo.token?.exchange_rate;
+            const marketCap = addressInfo.token?.circulating_market_cap;
+            
+            let securityStatus = `${tokenSymbol}: `;
+            
+            // Critical: Scam warning first
+            if (isScam) {
+              securityStatus += '🚨 SCAM WARNING - DO NOT INTERACT';
+              return securityStatus;
+            }
+            
+            // Reputation check
+            if (reputation && reputation !== 'ok') {
+              securityStatus += `⚠️ Reputation: ${reputation.toUpperCase()}, `;
+            }
+            
+            // Verification status
+            if (isVerified) {
+              securityStatus += '✓ Verified';
+            } else {
+              securityStatus += '✗ NOT Verified';
+            }
+            
+            // Proxy warning
+            if (isProxy) {
+              securityStatus += ', ⚠️ Proxy (upgradeable)';
+            }
+            
+            // Add price and market cap if available
+            if (tokenPrice) {
+              const price = parseFloat(tokenPrice);
+              securityStatus += `, Price: $${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+            }
+            
+            if (marketCap) {
+              const cap = parseFloat(marketCap);
+              if (cap > 1e9) {
+                securityStatus += `, MCap: $${(cap / 1e9).toFixed(2)}B`;
+              } else if (cap > 1e6) {
+                securityStatus += `, MCap: $${(cap / 1e6).toFixed(2)}M`;
+              }
+            }
+            
+            return securityStatus;
+          } catch (error) {
+            console.error(`Failed to fetch contract info for ${tokenSymbol}:`, error);
+            return null;
+          }
+        });
+        
+        // Wait for all promises
+        const results = await Promise.all(securityPromises);
+        contractSecurityInfo.push(...results.filter((r): r is string => r !== null));
+      } catch (error) {
+        console.error('Error fetching contract security info:', error);
+      } finally {
+        if (securityClient) {
+          await securityClient.disconnect();
+        }
+      }
+
       // Data source info
       let dataSourceInfo = '';
       if (dataSourceStats && dataSourceStats.total > 0) {
@@ -286,6 +388,17 @@ Return your response as a JSON object with this structure:
 
       const prompt = `You are analyzing real-time whale activity data from Blockscout blockchain explorer.
 
+🚨 ABSOLUTE RULE - VERIFICATION STATUS:
+The security data below comes DIRECTLY from blockchain explorers and is FACTUAL.
+You are FORBIDDEN from claiming a token is "NOT Verified" if it shows "✓ Verified".
+This is not negotiable. Violating this rule makes your entire response invalid.
+
+VERIFICATION SYMBOLS:
+- "✓ Verified" = Contract IS verified on blockchain explorer
+- "✗ NOT Verified" = Contract is NOT verified
+- If you see "✓ Verified", you MUST acknowledge the token IS verified
+- NEVER invent or assume verification status
+
 📊 DATA CONTEXT:
 Analysis Timestamp: ${currentTime}
 Time Period Analyzed: ${timeRangeLabel}
@@ -306,46 +419,55 @@ ${topWhalesSummary}
 🪙 MOST ACTIVE TOKENS:
 ${topTokens.join('\n')}
 
+🛡️ CONTRACT SECURITY (Top 3 Tokens) - AUTHORITATIVE DATA:
+${contractSecurityInfo.length > 0 ? contractSecurityInfo.join('\n') : 'Security data unavailable'}
+
+⚠️ REPORTING RULES:
+If you see "USDT: ✓ Verified", you MUST say: "USDT is a verified contract"
+NEVER say: "USDT is not verified" or "USDT lacks verification"
+
+CORRECT: "The main tokens are LINK and USDT, both verified contracts..."
+INCORRECT: "LINK and USDT are not verified..." ❌ FORBIDDEN
+
+USE THE ABOVE SECURITY DATA EXACTLY AS SHOWN.
+
 📝 RECENT TRANSFER EXAMPLES:
 ${recentTransfersSummary}
 
 INSTRUCTIONS:
-Provide a professional analysis (3-4 well-structured paragraphs) that covers:
+Provide a CONCISE analysis (2-3 short paragraphs, max 200 words total) covering:
 
-1. **Market Sentiment & Whale Behavior Patterns**
-   - What does this activity level suggest about whale confidence?
-   - Are whales accumulating, distributing, or consolidating?
-   - How does this compare to typical activity?
+**Paragraph 1: Key Activity Summary** (3-4 sentences)
+- Total volume and transfer count with context
+- Main tokens involved - ONLY mention security concerns if tokens show "✗ NOT Verified" or "🚨 SCAM WARNING"
+- Primary whale behavior (accumulating/distributing/consolidating)
 
-2. **Token Movement & Chain Activity Trends**
-   - Which tokens are whales favoring and why might that be significant?
-   - Are there notable patterns in chain selection?
-   - What does the token diversity (or lack thereof) indicate?
+**Paragraph 2: Market Signals** (2-3 sentences)
+- What this activity indicates about market sentiment
+- Notable risks or opportunities based on ACTUAL security data
+- Chain preferences and what they suggest
 
-3. **Risk Assessment & Market Indicators**
-   - What risks or opportunities does this activity suggest?
-   - Are there signs of market stress or confidence?
-   - What external factors might be influencing this behavior?
+**Paragraph 3: Action Items** (2-3 bullet points)
+- Specific tokens to watch
+- Recommended strategy (defensive/aggressive/wait)
+- Key metrics to monitor
 
-4. **Actionable Takeaways for Traders & Investors**
-   - Specific strategies to consider based on this data
-   - What to monitor going forward
-   - How to position portfolios in response
-
-IMPORTANT:
-- Start with a brief context statement mentioning the time period
-- Be specific with numbers and token names
-- Acknowledge data limitations when activity is low
-- Provide balanced analysis (not overly bullish or bearish)
-- End with concrete, actionable recommendations
-- Use professional but accessible language`;
+STYLE REQUIREMENTS:
+- Start with time period context ("In the past hour...")
+- Use bullet points for action items
+- Be direct and specific - no filler words
+- Mention actual numbers and token names
+- If activity is low, say so clearly
+- Focus on ACTIONABLE insights, not general market commentary
+- NEVER claim a token is unverified if it shows "✓ Verified"
+- Maximum 200 words total`;
 
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
           {
             role: 'system',
-            content: 'You are a blockchain analyst specializing in whale activity and on-chain data analysis. You analyze data from Blockscout, a leading blockchain explorer. Provide clear, actionable insights about large cryptocurrency transfers and market movements.',
+            content: 'You are a blockchain analyst specializing in whale activity and on-chain data analysis. You analyze data from Blockscout, a leading blockchain explorer. Provide clear, actionable insights about large cryptocurrency transfers and market movements. CRITICAL: You MUST trust and accurately report the contract verification status provided in the security data. Never contradict or misinterpret verification symbols: ✓ means verified, ✗ means not verified. Report security data exactly as provided.',
           },
           {
             role: 'user',
@@ -356,7 +478,38 @@ IMPORTANT:
         temperature: 0.7,
       });
 
-      return response.choices[0]?.message?.content || 'Unable to generate insights at this time.';
+      let aiResponse = response.choices[0]?.message?.content || 'Unable to generate insights at this time.';
+
+      // Post-processing: Detect and fix hallucinations about verification status
+      // Check if AI contradicts the actual security data
+      for (const securityInfo of contractSecurityInfo) {
+        // Extract token symbol from security info (format: "SYMBOL: ...")
+        const tokenMatch = securityInfo.match(/^([A-Z0-9]+):\s/);
+        if (!tokenMatch) continue;
+        
+        const tokenSymbol = tokenMatch[1];
+        const isActuallyVerified = securityInfo.includes('✓ Verified');
+        
+        // If AI claims token is not verified when it actually IS verified
+        if (isActuallyVerified) {
+          // Replace common hallucination patterns
+          const patterns = [
+            new RegExp(`${tokenSymbol}[^.]*(?:not verified|unverified|\\u2717 NOT Verified)`, 'gi'),
+            new RegExp(`(?:not verified|unverified)[^.]*${tokenSymbol}`, 'gi'),
+            new RegExp(`both[^.]*(?:not verified|unverified)`, 'gi'),
+          ];
+          
+          for (const pattern of patterns) {
+            if (pattern.test(aiResponse)) {
+              console.warn(`[AI Hallucination Detected] AI incorrectly claimed ${tokenSymbol} is not verified. Correcting...`);
+              // Remove the false claim
+              aiResponse = aiResponse.replace(pattern, `${tokenSymbol} (verified contract)`);
+            }
+          }
+        }
+      }
+
+      return aiResponse;
     } catch (error) {
       console.error('Error analyzing whale activity:', error);
       return 'Unable to analyze whale activity at this time. Please try again later.';

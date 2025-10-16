@@ -144,6 +144,26 @@ export class BlockscoutClient {
         balanceUsd,
         isContract: data.is_contract || false,
         ensName: data.ens_domain_name,
+        // Contract-specific fields
+        is_verified: data.is_verified,
+        is_scam: data.is_scam,
+        reputation: data.reputation,
+        creator_address_hash: data.creator_address_hash,
+        creation_transaction_hash: data.creation_transaction_hash,
+        creation_status: data.creation_status,
+        implementations: data.implementations,
+        token: data.token ? {
+          type: data.token.type,
+          name: data.token.name,
+          symbol: data.token.symbol,
+          decimals: data.token.decimals,
+          total_supply: data.token.total_supply,
+          holders: data.token.holders_count || data.token.holders,
+          exchange_rate: data.token.exchange_rate,
+          circulating_market_cap: data.token.circulating_market_cap,
+          volume_24h: data.token.volume_24h,
+          icon_url: data.token.icon_url,
+        } : undefined,
       };
     } catch (error) {
       console.error('Error getting address info:', error);

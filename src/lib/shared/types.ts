@@ -62,6 +62,29 @@ export interface AddressInfo {
   balanceUsd?: number;
   isContract: boolean;
   ensName?: string;
+  // Contract-specific fields
+  is_verified?: boolean;
+  is_scam?: boolean;
+  implementations?: Array<{
+    address: string;
+    name?: string;
+  }>;
+  token?: {
+    type?: string;
+    name?: string;
+    symbol?: string;
+    decimals?: string;
+    total_supply?: string;
+    holders?: string;
+    exchange_rate?: string;
+    circulating_market_cap?: string;
+    volume_24h?: string;
+    icon_url?: string;
+  };
+  reputation?: string;
+  creator_address_hash?: string;
+  creation_transaction_hash?: string;
+  creation_status?: string;
 }
 
 export interface Transaction {

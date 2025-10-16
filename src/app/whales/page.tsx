@@ -9,7 +9,7 @@ import { AppHeader } from '@/components/app-header';
 import { WhaleTrackerCard } from '@/components/whale-tracker-card';
 import { WhaleStatsComponent } from '@/components/whale-stats';
 import { AnimatedHover } from '@/components/animated-hover';
-import { RefreshCw, Filter, Trophy, Sparkles, Copy } from 'lucide-react';
+import { RefreshCw, Filter, Trophy, Sparkles, Copy, Check } from 'lucide-react';
 import type { WhaleTransfer, WhaleStats } from '@/core/services/whale-service';
 
 export default function WhalesPage() {
@@ -23,6 +23,7 @@ export default function WhalesPage() {
   const [timeRange, setTimeRange] = useState('1h');
   const [minValue, setMinValue] = useState(100000);
   const [tokenFilter, setTokenFilter] = useState<string>('');
+  const [copiedAddresses, setCopiedAddresses] = useState<Set<string>>(new Set());
 
   // Debug: Log when dataSourceStats changes
   useEffect(() => {
@@ -330,11 +331,11 @@ export default function WhalesPage() {
                   'from-orange-600 to-orange-700', // Bronze
                 ];
                 
-                const copyAddress = async () => {
+                const copyAddress = async (e: React.MouseEvent) => {
+                  e.stopPropagation();
                   try {
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                       await navigator.clipboard.writeText(whale.address);
-                      // Could add toast notification here
                     } else {
                       // Fallback for older browsers
                       const textArea = document.createElement('textarea');
@@ -346,6 +347,16 @@ export default function WhalesPage() {
                       document.execCommand('copy');
                       document.body.removeChild(textArea);
                     }
+                    // Add address to copied set
+                    setCopiedAddresses(prev => new Set(prev).add(whale.address));
+                    // Remove after 2 seconds
+                    setTimeout(() => {
+                      setCopiedAddresses(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(whale.address);
+                        return newSet;
+                      });
+                    }, 2000);
                   } catch (error) {
                     console.error('Failed to copy address:', error);
                   }
@@ -376,17 +387,29 @@ export default function WhalesPage() {
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
                           Address
                         </p>
-                        <div className="relative flex items-center gap-2">
-                          <code className="peer text-xs font-mono bg-muted px-2 py-1 rounded flex-1 truncate hover:overflow-visible hover:whitespace-normal hover:break-all hover:z-10 hover:relative transition-all cursor-help">
-                            {whale.address}
-                          </code>
-                          <button
-                            onClick={copyAddress}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 peer-hover:opacity-100 shrink-0 p-2 bg-background hover:bg-muted rounded transition-all z-20"
-                            title="Copy address"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
+                        <div className="group relative">
+                          <div className="flex items-center gap-2">
+                            <code className="block text-xs font-mono bg-muted px-2 py-1 rounded truncate flex-1 cursor-help">
+                              {whale.address}
+                            </code>
+                            <button
+                              onClick={copyAddress}
+                              className="shrink-0 p-1.5 bg-muted hover:bg-muted/80 active:scale-95 rounded transition-all duration-150 opacity-0 group-hover:opacity-100"
+                              title="Copy address"
+                            >
+                              {copiedAddresses.has(whale.address) ? (
+                                <Check className="w-3.5 h-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                          {/* Tooltip on hover */}
+                          <div className="absolute left-0 right-0 top-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                            <code className="block text-xs font-mono bg-popover text-popover-foreground px-3 py-2 rounded-md shadow-lg border border-border break-all">
+                              {whale.address}
+                            </code>
+                          </div>
                         </div>
                       </div>
                       

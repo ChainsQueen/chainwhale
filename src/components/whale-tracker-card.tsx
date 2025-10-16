@@ -104,13 +104,10 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
                       </div>
                     )}
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="bg-popover text-popover-foreground border-border">
                     <div className="text-xs">
                       <p className="font-semibold">{transferIconData.label}</p>
                       <p className="text-muted-foreground">{transferIconData.description}</p>
-                      {transfer.hash && transfer.hash !== '' && (
-                        <p className="text-primary mt-1">Click to view on explorer</p>
-                      )}
                     </div>
                   </TooltipContent>
                 </Tooltip>

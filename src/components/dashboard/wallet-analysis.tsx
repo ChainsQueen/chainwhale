@@ -461,11 +461,8 @@ export default function WalletAnalysis() {
                         <Button
                           onClick={() => {
                             if (!hasApiKey) {
-                              // Redirect to Settings tab
-                              const settingsTab = document.querySelector('[value="settings"]') as HTMLElement;
-                              if (settingsTab) {
-                                settingsTab.click();
-                              }
+                              // Redirect to Settings tab using URL
+                              window.location.href = '/dashboard?tab=settings';
                               return;
                             }
                             handleGenerateAI();

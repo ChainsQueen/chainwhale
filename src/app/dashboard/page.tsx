@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Activity, Wallet, Settings } from 'lucide-react';
 import { AppHeader } from '@/components/app-header';
@@ -9,8 +10,24 @@ import WhaleFeed from '@/components/dashboard/whale-feed';
 import WalletAnalysis from '@/components/dashboard/wallet-analysis';
 import ApiSettings from '@/components/dashboard/api-settings';
 
-export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState('chat');
+function DashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'chat');
+
+  // Update tab when URL parameter changes
+  useEffect(() => {
+    if (tabParam && ['chat', 'whale-feed', 'wallet', 'settings'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  // Handle tab change and update URL
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    router.push(`/dashboard?tab=${value}`, { scroll: false });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
@@ -19,7 +36,7 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-4 lg:w-[800px]">
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
@@ -59,5 +76,22 @@ export default function DashboardPage() {
         </Tabs>
       </main>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+        <AppHeader />
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        </main>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

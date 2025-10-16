@@ -81,10 +81,12 @@ export default function WhalesPage() {
         params.append('token', tokenFilter);
       }
 
-      const response = await fetch(`/api/whale-feed?${params}`);
+      const response = await fetch(`/api/whale-tracker/feed?${params}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch whale feed');
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`Failed to fetch whale feed (${response.status}): ${errorText.substring(0, 100)}`);
       }
 
       const data = await response.json();
@@ -132,10 +134,17 @@ export default function WhalesPage() {
   const handleGenerateAI = async () => {
     if (!transfers.length || isGeneratingAI) return;
 
+    // Check if API key exists
+    const userApiKey = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+    
+    if (!userApiKey) {
+      // Redirect to settings page if no API key (using relative URL)
+      window.location.href = '/dashboard?tab=settings';
+      return;
+    }
+
     setIsGeneratingAI(true);
     setError(null);
-
-    const userApiKey = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
 
     try {
       const response = await fetch('/api/whale-tracker/analyze-ai', {
@@ -189,17 +198,12 @@ export default function WhalesPage() {
             <div className="flex gap-2">
               <AnimatedHover type="button" disabled={loading || isGeneratingAI}>
                 <Button
-                  onClick={() => {
-                    if (!hasApiKey) {
-                      window.location.href = '/dashboard';
-                      return;
-                    }
-                    handleGenerateAI();
-                  }}
+                  onClick={handleGenerateAI}
                   disabled={loading || isGeneratingAI || !transfers.length}
                   size="sm"
                   variant={hasApiKey ? "default" : "outline"}
                   className="gap-2"
+                  title={!hasApiKey ? "Click to configure your OpenAI API key in Settings" : "Generate AI-powered whale activity insights"}
                 >
                   {isGeneratingAI ? (
                     <>
@@ -215,7 +219,7 @@ export default function WhalesPage() {
                   ) : (
                     <>
                       <AlertTriangle className="h-4 w-4" />
-                      Setup AI
+                      Setup AI in Settings
                     </>
                   )}
                 </Button>

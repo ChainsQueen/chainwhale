@@ -25,7 +25,7 @@ export default function WhaleFeed() {
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/whale-feed?chains=1,8453,42161&minValue=100000');
+      const response = await fetch('/api/whale-tracker/feed?chains=1,8453,42161&minValue=100000&timeRange=1h');
       const data = await response.json();
       
       // Convert new format to old format for compatibility

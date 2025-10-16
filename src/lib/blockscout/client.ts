@@ -23,7 +23,11 @@ export class BlockscoutClient {
     }
 
     try {
+      console.log('[MCP Client] Starting connection to Blockscout MCP server...');
+      console.log('[MCP Client] Using Docker image: ghcr.io/blockscout/mcp-server:latest');
+      
       // Use Docker to connect to the official Blockscout MCP server
+      // Official image: https://github.com/blockscout/mcp-server
       // This requires Docker to be installed and running
       this.transport = new StdioClientTransport({
         command: 'docker',
@@ -31,12 +35,14 @@ export class BlockscoutClient {
           'run',
           '--rm',
           '-i',
-          'sparfenyuk/mcp-proxy:latest',
-          '--transport',
-          'streamablehttp',
-          'https://mcp.blockscout.com/mcp'
+          'ghcr.io/blockscout/mcp-server:latest',
+          'python',
+          '-m',
+          'blockscout_mcp_server'
         ],
       });
+      
+      console.log('[MCP Client] Transport created successfully');
 
       this.client = new Client(
         {
@@ -48,9 +54,12 @@ export class BlockscoutClient {
         }
       );
 
+      console.log('[MCP Client] Attempting to connect client to transport...');
       await this.client.connect(this.transport);
       this.connected = true;
-      
+      console.log('✅ [MCP Client] Blockscout MCP client connected successfully!');
+      console.log('[MCP Client] MCP is ready to use');
+
       // Initialize the MCP server (required before using other tools)
       await this.client.callTool({
         name: '__unlock_blockchain_analysis__',
@@ -59,7 +68,16 @@ export class BlockscoutClient {
       
       console.log('✅ Connected to Blockscout MCP server');
     } catch (error) {
-      console.error('❌ Failed to connect to Blockscout MCP:', error);
+      console.error('❌ [MCP Client] Failed to connect to Blockscout MCP server');
+      console.error('[MCP Client] Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('[MCP Client] Error message:', error instanceof Error ? error.message : String(error));
+      console.error('[MCP Client] Full error:', error);
+      console.error('');
+      console.error('💡 [MCP Client] Troubleshooting:');
+      console.error('   1. Is Docker running? Run: docker ps');
+      console.error('   2. Is the image pulled? Run: docker pull ghcr.io/blockscout/mcp-server:latest');
+      console.error('   3. Can Docker run? Try: docker run --rm hello-world');
+      console.error('');
       throw new Error('Failed to connect to Blockscout MCP server. Make sure Docker is installed and running.');
     }
   }
@@ -195,10 +213,14 @@ export class BlockscoutClient {
       if (token) args.token = token;
       if (cursor) args.cursor = cursor;
 
+      console.log('[MCP Client] Calling get_token_transfers_by_address with args:', args);
+
       const result = await this.client!.callTool({
         name: 'get_token_transfers_by_address',
         arguments: args,
       });
+      
+      console.log('[MCP Client] Raw MCP response:', JSON.stringify(result, null, 2));
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const responseText = (result.content as any)[0].text;
@@ -211,9 +233,27 @@ export class BlockscoutClient {
       
       const data = JSON.parse(responseText);
       
+      console.log('[MCP Client] Parsed response data keys:', Object.keys(data));
+      console.log('[MCP Client] Full parsed data:', JSON.stringify(data, null, 2));
+      
       // The MCP returns data in { data: [...] } format, not { items: [...] }
       const rawItems = data.data || data.items || [];
       
+      console.log('[MCP Client] Number of items:', rawItems.length);
+      
+      // Debug: Log first item to see structure
+      if (rawItems.length > 0) {
+        console.log('[MCP Client] ===== FIRST TRANSFER SAMPLE =====');
+        console.log('[MCP Client] Full item:', JSON.stringify(rawItems[0], null, 2));
+        console.log('[MCP Client] item.hash:', rawItems[0].hash);
+        console.log('[MCP Client] item.tx_hash:', rawItems[0].tx_hash);
+        console.log('[MCP Client] item.transaction_hash:', rawItems[0].transaction_hash);
+        console.log('[MCP Client] All keys in item:', Object.keys(rawItems[0]));
+        console.log('[MCP Client] =====================================');
+      } else {
+        console.warn('[MCP Client] No items returned from MCP');
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const items: TokenTransfer[] = rawItems.map((item: any) => {
         // Calculate USD value

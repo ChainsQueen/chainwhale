@@ -13,17 +13,19 @@ export class HybridBlockscoutClient {
   private connected = false;
 
   async connect(): Promise<void> {
-    // Connect MCP first (HTTP is stateless)
-    if (!this.connected) {
-      try {
-        await this.mcp.connect();
-        this.connected = true;
-        console.log('🔌 HybridClient: MCP connected');
-      } catch (err) {
-        // If MCP connection fails, we still allow HTTP fallback usage
-        console.warn('HybridClient: MCP connect failed, HTTP-only mode enabled:', err instanceof Error ? err.message : err);
-      }
+    console.log('HybridClient: Attempting to connect to MCP...');
+    try {
+      await this.mcp.connect();
+      this.connected = true;
+      console.log('✅ HybridClient: MCP connected successfully - will use MCP-first approach');
+    } catch (error) {
+      console.error('❌ HybridClient: MCP connection failed:', error instanceof Error ? error.message : error);
+      console.warn('⚠️  HybridClient: Will use HTTP-only mode (no MCP data)');
+      this.connected = false;
     }
+    // Always ensure HTTP client is ready
+    await this.http.connect();
+    console.log('HybridClient: HTTP client ready as fallback');
   }
 
   async disconnect(): Promise<void> {
@@ -60,30 +62,71 @@ export class HybridBlockscoutClient {
   ): Promise<{ items: TokenTransfer[]; nextCursor?: string }> {
     // Try MCP first when available
     if (this.connected) {
+      console.log(`HybridClient: MCP is connected, attempting to fetch transfers for chain ${chainId}...`);
       try {
         const res = await this.mcp.getTokenTransfers(chainId, address, ageFrom, ageTo, token, cursor);
-        const mcpHasHashes = this.hasCompleteHashes(res.items);
-        if (mcpHasHashes) {
-          console.log(`HybridClient: using MCP transfers (count=${res.items.length}) for chain ${chainId}`);
-          return res;
+        
+        // If MCP returns data, enrich it with hashes from HTTP
+        if (res.items.length > 0) {
+          const mcpHasHashes = this.hasCompleteHashes(res.items);
+          
+          if (!mcpHasHashes && address) {
+            console.log(`HybridClient: MCP returned ${res.items.length} transfers without hashes. Enriching with HTTP data...`);
+            
+            // Get hashes from HTTP API
+            try {
+              const httpRes = await this.http.getTokenTransfers(chainId, address, ageFrom, ageTo, token);
+              
+              // Match MCP transfers with HTTP transfers to add hashes
+              const enrichedItems = res.items.map(mcpItem => {
+                // Find matching HTTP transfer by from/to/timestamp
+                const match = httpRes.items.find(httpItem => 
+                  httpItem.from.toLowerCase() === mcpItem.from.toLowerCase() &&
+                  httpItem.to.toLowerCase() === mcpItem.to.toLowerCase() &&
+                  Math.abs(httpItem.timestamp - mcpItem.timestamp) < 5000 // Within 5 seconds
+                );
+                
+                if (match?.hash) {
+                  return { ...mcpItem, hash: match.hash, dataSource: 'mcp' as const };
+                }
+                return { ...mcpItem, dataSource: 'mcp' as const };
+              });
+              
+              const enrichedCount = enrichedItems.filter(i => i.hash).length;
+              console.log(`HybridClient: Enriched ${enrichedCount}/${res.items.length} MCP transfers with hashes from HTTP`);
+              
+              return { ...res, items: enrichedItems };
+            } catch (enrichError) {
+              console.warn('HybridClient: Failed to enrich MCP data with hashes:', enrichError);
+              // Return MCP data anyway, tagged as MCP
+              const taggedItems = res.items.map(item => ({ ...item, dataSource: 'mcp' as const }));
+              return { ...res, items: taggedItems };
+            }
+          } else if (mcpHasHashes) {
+            console.log(`HybridClient: using MCP transfers with hashes (count=${res.items.length}) for chain ${chainId}`);
+            const taggedItems = res.items.map(item => ({ ...item, dataSource: 'mcp' as const }));
+            return { ...res, items: taggedItems };
+          }
         }
-        console.log(`HybridClient: MCP transfers missing hashes or empty (count=${res.items.length}). Considering HTTP fallback...`);
+        console.log(`HybridClient: MCP returned empty results. Trying HTTP fallback...`);
       } catch (e) {
-        console.warn('HybridClient.getTokenTransfers: MCP failed, considering HTTP fallback:', e instanceof Error ? e.message : e);
+        console.warn('HybridClient.getTokenTransfers: MCP failed, trying HTTP fallback:', e instanceof Error ? e.message : e);
       }
     }
 
-    // HTTP/RPC fallback requires an address
+    // HTTP fallback
+    console.log(`HybridClient: Using HTTP fallback (MCP not connected or failed)`);
+    
     if (!address) {
-      // If we don't have an address, return MCP (which might be empty) or nothing
-      // As last resort, return empty to avoid misleading data without hashes
       console.warn('HybridClient: HTTP fallback skipped (address required but not provided). Returning empty set.');
       return { items: [], nextCursor: undefined };
     }
 
     const httpRes = await this.http.getTokenTransfers(chainId, address, ageFrom, ageTo, token);
-    console.log(`HybridClient: using HTTP/RPC transfers (count=${httpRes.items.length}) for chain ${chainId}`);
-    return httpRes;
+    console.log(`HybridClient: ✅ HTTP returned ${httpRes.items.length} transfers for chain ${chainId}`);
+    // Tag transfers as HTTP data
+    const taggedItems = httpRes.items.map(item => ({ ...item, dataSource: 'http' as const }));
+    return { ...httpRes, items: taggedItems };
   }
 
   async getTokensByAddress(chainId: string, address: string): Promise<Record<string, unknown>[]> {

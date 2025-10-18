@@ -11,7 +11,6 @@ interface TransferTypeIndicatorProps {
   valueUsd?: number;
   hash?: string;
   chainId: string;
-  size?: 'sm' | 'md';
 }
 
 /**
@@ -24,8 +23,7 @@ interface TransferTypeIndicatorProps {
 export function TransferTypeIndicator({ 
   valueUsd, 
   hash, 
-  chainId, 
-  size = 'md' 
+  chainId
 }: TransferTypeIndicatorProps) {
   const getTransferIcon = () => {
     if (valueUsd && valueUsd > 500000) {

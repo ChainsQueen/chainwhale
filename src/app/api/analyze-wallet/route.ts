@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
             'now'
           );
           
-          // Add chain info and format transfers
+          // Add chain info and format transfers (preserve dataSource)
           recentTransactions.push(...transfers.slice(0, 15).map((transfer) => ({
             hash: transfer.hash,
             from: transfer.from,
@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
             valueUsd: transfer.valueUsd || 0,
             timestamp: transfer.timestamp,
             chainId: chainId as string,
+            dataSource: (transfer as { dataSource?: 'mcp' | 'http' }).dataSource, // Preserve data source
           })));
         } catch {
           console.log(`No recent token transfers on chain ${chainId}`);

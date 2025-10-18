@@ -415,18 +415,338 @@ src/
   - Contextual blockchain data for LLM
 
 ### **💼 Wallet Analysis**
-- **API Used**: Blockscout MCP Server (Model Context Protocol)
-- **Purpose**: Deep wallet investigation with AI-powered insights
-- **MCP Tools Used**:
-  - `get_address_info` - Wallet balance and metadata
-  - `get_token_transfers_by_address` - Transaction history
-  - `get_tokens_by_address` - Token holdings
-- **AI Provider**: OpenAI GPT-4 (user-configured)
-- **Features**:
-  - Comprehensive wallet profiling
-  - Risk assessment
-  - Transaction pattern analysis
-  - Token portfolio breakdown
+
+Comprehensive wallet investigation system with AI-powered insights, built using a modular architecture with custom hooks and utilities.
+
+#### **Architecture Overview**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  Wallet Analysis Component                       │
+│                  (wallet-analysis.tsx)                           │
+│                                                                  │
+│  Pure UI Component - 300 lines (down from 716)                  │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  Custom Hooks (Business Logic Separation):             │    │
+│  │  • useWalletAnalysis()  - API calls & state           │    │
+│  │  • useApiKey()          - localStorage detection       │    │
+│  │  • useAiInsights()      - AI generation               │    │
+│  │  • useAddressInput()    - Input validation            │    │
+│  │  • useClipboard()       - Copy functionality          │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  Utility Functions (Pure Logic):                       │    │
+│  │  • validateAddress()    - Address/ENS validation       │    │
+│  │  • getExplorerUrl()     - Block explorer links        │    │
+│  │  • getChainName()       - Chain ID to name            │    │
+│  │  • formatEthBalance()   - ETH formatting              │    │
+│  │  • formatUsdValue()     - USD formatting              │    │
+│  │  • getRiskColor()       - Risk score colors           │    │
+│  │  • getRiskLabel()       - Risk score labels           │    │
+│  └────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### **File Structure**
+
+```
+src/
+├── components/
+│   └── dashboard/
+│       └── wallet-analysis.tsx          # Main UI component (300 lines)
+│
+├── core/
+│   ├── hooks/                           # Custom React hooks
+│   │   ├── use-wallet-analysis.ts       # Wallet API calls & state
+│   │   ├── use-api-key.ts               # API key detection
+│   │   ├── use-ai-insights.ts           # AI insights generation
+│   │   ├── use-address-input.ts         # Address input validation
+│   │   └── use-clipboard.ts             # Clipboard operations
+│   │
+│   └── utils/
+│       └── wallet-utils.ts              # Pure utility functions
+│
+└── app/
+    └── api/
+        ├── analyze-wallet/
+        │   └── route.ts                  # Wallet data endpoint
+        └── analyze-wallet-ai/
+            └── route.ts                  # AI insights endpoint
+```
+
+#### **Component Refactoring Benefits**
+
+**Before Refactor:**
+- ❌ 716 lines - monolithic component
+- ❌ Mixed UI + API calls + validation + localStorage
+- ❌ Hard to test and maintain
+- ❌ Duplicated logic across components
+
+**After Refactor:**
+- ✅ 300 lines - focused UI component
+- ✅ Separated concerns (hooks + utils + UI)
+- ✅ Reusable hooks across app
+- ✅ Easy to test each piece independently
+- ✅ Follows best practices
+
+#### **Custom Hooks**
+
+##### **1. useWalletAnalysis()**
+```typescript
+// Handles wallet analysis API calls and state management
+const { 
+  analysis,           // Wallet analysis data
+  holdings,           // Token holdings array
+  ensName,            // ENS name if available
+  recentTransactions, // Recent transfers
+  isLoading,          // Loading state
+  error,              // Error message
+  analyzeWallet       // Function to analyze wallet
+} = useWalletAnalysis();
+```
+
+##### **2. useApiKey()**
+```typescript
+// Detects API key from localStorage with auto-refresh
+const { hasApiKey } = useApiKey();
+// Listens to storage events and window focus
+```
+
+##### **3. useAiInsights()**
+```typescript
+// Manages AI insights generation
+const { 
+  aiInsights,      // Generated insights text
+  isGenerating,    // Loading state
+  error,           // Error message
+  generateInsights // Function to generate insights
+} = useAiInsights();
+```
+
+##### **4. useAddressInput()**
+```typescript
+// Handles address input with validation
+const { 
+  address,            // Current input value
+  isValidAddress,     // Validation state
+  handleAddressChange // Change handler with validation
+} = useAddressInput();
+```
+
+##### **5. useClipboard()**
+```typescript
+// Manages clipboard copy with feedback
+const { 
+  copiedText,      // Currently copied text
+  copyToClipboard  // Copy function
+} = useClipboard();
+```
+
+#### **Data Flow**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 1: User Enters Wallet Address                             │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  Input: 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045    │    │
+│  │         or vitalik.eth                                 │    │
+│  │                                                         │    │
+│  │  Validation: useAddressInput() hook                    │    │
+│  │  • Checks 0x + 40 hex chars OR .eth format             │    │
+│  │  • Shows error if invalid                              │    │
+│  └────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 2: Analyze Wallet (useWalletAnalysis hook)               │
+│  POST /api/analyze-wallet                                        │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  Request:                                               │    │
+│  │  {                                                      │    │
+│  │    address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",│    │
+│  │    chains: ["1", "8453", "42161", "10", "137"]       │    │
+│  │  }                                                      │    │
+│  │                                                         │    │
+│  │  Response:                                              │    │
+│  │  {                                                      │    │
+│  │    analysis: {                                          │    │
+│  │      address, riskScore, totalValue, chains, insights  │    │
+│  │    },                                                   │    │
+│  │    holdings: [...],      // Token balances             │    │
+│  │    ensName: "vitalik.eth",                             │    │
+│  │    recentTransactions: [...] // Last 24h transfers     │    │
+│  │  }                                                      │    │
+│  └────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 3: Display Wallet Overview                                │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  📍 Address: vitalik.eth                                │    │
+│  │     0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045         │    │
+│  │     [Copy] [View on Explorer]                          │    │
+│  │                                                         │    │
+│  │  💰 Portfolio:                                          │    │
+│  │     ETH Balance: 1,234.5678 ETH                        │    │
+│  │     Token Holdings: $5,432,100.00 (25 tokens)          │    │
+│  │     Total Value: $8,765,432.10 (5 chains)              │    │
+│  │                                                         │    │
+│  │  🐋 Whale Detection: Mega Whale (Score: 95/100)        │    │
+│  │                                                         │    │
+│  │  ⚠️ Risk Assessment: Low Risk (15/100)                 │    │
+│  │     [████░░░░░░░░░░░░░░░░]                             │    │
+│  │                                                         │    │
+│  │  📝 Summary: [Generate AI Insights] 🤖                 │    │
+│  │     This wallet shows strong fundamentals...           │    │
+│  └────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 4: Generate AI Insights (Optional)                        │
+│  POST /api/analyze-wallet-ai                                     │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  Triggered by: [Generate AI Insights] button           │    │
+│  │  Requires: OpenAI API key (from localStorage)          │    │
+│  │                                                         │    │
+│  │  Request:                                               │    │
+│  │  {                                                      │    │
+│  │    address, holdings, recentTransactions,              │    │
+│  │    totalValue, chains, apiKey                          │    │
+│  │  }                                                      │    │
+│  │                                                         │    │
+│  │  AI Analysis (GPT-4):                                  │    │
+│  │  • Analyzes portfolio composition                      │    │
+│  │  • Evaluates transaction patterns                      │    │
+│  │  • Assesses risk factors                               │    │
+│  │  • Provides recommendations                            │    │
+│  │                                                         │    │
+│  │  Response:                                              │    │
+│  │  {                                                      │    │
+│  │    insights: "Detailed AI analysis...",                │    │
+│  │    riskScore: 15,                                      │    │
+│  │    summary: "Enhanced summary..."                      │    │
+│  │  }                                                      │    │
+│  └────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### **Features**
+
+- **Multi-Chain Analysis**: Ethereum, Base, Arbitrum, Optimism, Polygon
+- **ENS Support**: Resolves .eth names automatically
+- **Token Holdings**: Complete portfolio breakdown with USD values
+- **Transaction History**: Recent transfers (24h) with direction indicators
+- **Whale Detection**: Categorizes wallet size (Shrimp → Mega Whale)
+- **Risk Assessment**: AI-powered risk scoring (0-100)
+- **Chain Distribution**: Value breakdown across chains
+- **AI Insights**: Optional GPT-4 analysis with recommendations
+- **Copy to Clipboard**: One-click address copying
+- **Block Explorer Links**: Direct links to Etherscan, Basescan, etc.
+- **Real-time Validation**: Instant address format checking
+- **Privacy-First**: API keys stored client-side only
+
+#### **API Endpoints**
+
+##### **POST /api/analyze-wallet**
+```typescript
+// Analyzes wallet across multiple chains
+Request: {
+  address: string;        // Wallet address or ENS name
+  chains: string[];       // Chain IDs to analyze
+}
+
+Response: {
+  analysis: WalletAnalysis;           // Core analysis data
+  holdings: TokenHolding[];           // Token balances
+  ensName?: string;                   // ENS name if available
+  recentTransactions: Transaction[];  // Last 24h transfers
+}
+```
+
+##### **POST /api/analyze-wallet-ai**
+```typescript
+// Generates AI-powered insights
+Request: {
+  address: string;
+  holdings: TokenHolding[];
+  recentTransactions: Transaction[];
+  totalValue: number;
+  chains: Record<string, number>;
+  apiKey: string;         // User's OpenAI API key
+}
+
+Response: {
+  insights: string;       // AI-generated analysis
+  riskScore?: number;     // Updated risk score
+  summary?: string;       // Enhanced summary
+}
+```
+
+#### **Blockscout Integration (Hybrid MCP-First Approach)**
+
+**Wallet Analysis uses the SAME hybrid approach as Whale Tracker:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  HybridBlockscoutClient (MCP-first with HTTP fallback)          │
+│                                                                  │
+│  Factory: createBlockscoutClient()                               │
+│  Default: BLOCKSCOUT_MCP_FIRST=true (hybrid mode)               │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  Primary: Blockscout MCP Server (Docker)               │    │
+│  │  ───────────────────────────────────────               │    │
+│  │  MCP Tools Used:                                        │    │
+│  │                                                         │    │
+│  │  1. get_address_info                                   │    │
+│  │     • Wallet balance (ETH/native token)                │    │
+│  │     • ENS name resolution                              │    │
+│  │     • Transaction count                                │    │
+│  │     • Contract detection                               │    │
+│  │                                                         │    │
+│  │  2. get_tokens_by_address                              │    │
+│  │     • ERC-20 token holdings                            │    │
+│  │     • Token metadata (name, symbol, decimals)          │    │
+│  │     • Balance amounts with exchange rates              │    │
+│  │     • USD values                                       │    │
+│  │                                                         │    │
+│  │  3. get_token_transfers_by_address                     │    │
+│  │     • Recent transfers (24h)                           │    │
+│  │     • Direction (incoming/outgoing)                    │    │
+│  │     • Token details                                    │    │
+│  │     • Timestamps                                       │    │
+│  │     • USD values                                       │    │
+│  │     • Transaction hashes                               │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                              ↓                                   │
+│  ┌────────────────────────────────────────────────────────┐    │
+│  │  Fallback: Blockscout REST API v2 (HTTP)              │    │
+│  │  ─────────────────────────────────────                 │    │
+│  │  • Automatic fallback if MCP fails                     │    │
+│  │  • Same data structure                                 │    │
+│  │  • Seamless transition                                 │    │
+│  └────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+
+**Strategy**: MCP-first for complete data, HTTP fallback for reliability
+**Environment Variables**:
+- BLOCKSCOUT_MCP_FIRST=true (default) - Hybrid mode
+- BLOCKSCOUT_USE_HTTP=true - Force HTTP only
+```
+
+#### **Best Practices Implemented**
+
+✅ **Single Responsibility** - Each hook/util has one job  
+✅ **Separation of Concerns** - UI, logic, and utilities separated  
+✅ **Reusability** - Hooks can be used in other components  
+✅ **Type Safety** - Full TypeScript coverage  
+✅ **Testability** - Pure functions easy to unit test  
+✅ **Maintainability** - Small, focused files (<100 lines each)  
+✅ **Performance** - Optimized re-renders with proper hooks  
+✅ **Accessibility** - Keyboard navigation, ARIA labels  
+✅ **Error Handling** - Graceful fallbacks and user feedback  
+✅ **Privacy** - Client-side API key storage
 
 ### **📊 Whale Feed (Dashboard)**
 - **API Used**: Blockscout RPC API

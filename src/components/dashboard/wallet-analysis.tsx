@@ -59,7 +59,7 @@ export default function WalletAnalysis() {
       if (result.riskScore) {
         setUpdatedAnalysis({ ...displayAnalysis, riskScore: result.riskScore, summary: result.summary || displayAnalysis.summary });
       }
-    } catch (err) {
+    } catch {
       // Error handled in hook
     }
   };

@@ -3,13 +3,12 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ContractInfoDialog } from '@/components/contract-info-dialog';
-import { ArrowRight, TrendingUp, TrendingDown, ArrowLeftRight, ExternalLink, Sparkles } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { DataSourceBadge } from '@/components/ui/data-source-badge';
+import { ChainBadge } from '@/components/ui/chain-badge';
+import { AddressFlow } from '@/components/ui/address-flow';
+import { ValueDisplay } from '@/components/ui/value-display';
+import { ExplorerLink } from '@/components/ui/explorer-link';
+import { TransferTypeIndicator } from '@/components/features/whale/transfer-type-indicator';
 import type { WhaleTransfer } from '@/core/services/whale-service';
 
 interface WhaleTrackerCardProps {
@@ -17,55 +16,19 @@ interface WhaleTrackerCardProps {
 }
 
 export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
-  const formatValue = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(2)}M`;
-    }
-    return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-  };
+  const getRelativeTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-  const getTransferIcon = () => {
-    if (transfer.valueUsd && transfer.valueUsd > 500000) {
-      return {
-        icon: <TrendingUp className="w-4 h-4 text-green-500" />,
-        label: 'Mega Whale Move',
-        description: 'Transfer > $500K'
-      };
-    }
-    if (transfer.valueUsd && transfer.valueUsd > 200000) {
-      return {
-        icon: <TrendingDown className="w-4 h-4 text-orange-500" />,
-        label: 'Large Whale Move',
-        description: '$200K - $500K'
-      };
-    }
-    return {
-      icon: <ArrowLeftRight className="w-4 h-4 text-blue-500" />,
-      label: 'Medium Whale Move',
-      description: '$100K - $200K'
-    };
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'just now';
   };
-
-  const getValueColor = () => {
-    if (!transfer.valueUsd) return 'text-muted-foreground';
-    if (transfer.valueUsd >= 1000000) return 'text-green-600 dark:text-green-400';
-    if (transfer.valueUsd >= 500000) return 'text-orange-600 dark:text-orange-400';
-    return 'text-blue-600 dark:text-blue-400';
-  };
-
-  const getExplorerUrl = (identifier: string, type: 'tx' | 'address' | 'token' = 'tx') => {
-    const explorers: Record<string, string> = {
-      '1': 'https://etherscan.io',
-      '8453': 'https://basescan.org',
-      '42161': 'https://arbiscan.io',
-      '10': 'https://optimistic.etherscan.io',
-      '137': 'https://polygonscan.com',
-    };
-    const baseUrl = explorers[transfer.chainId] || explorers['1'];
-    return `${baseUrl}/${type}/${identifier}`;
-  };
-
-  const transferIconData = getTransferIcon();
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -73,45 +36,18 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {transfer.hash && transfer.hash !== '' ? (
-                      <a
-                        href={getExplorerUrl(transfer.hash, 'tx')}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="cursor-pointer hover:opacity-70 transition-opacity"
-                      >
-                        {transferIconData.icon}
-                      </a>
-                    ) : (
-                      <div className="cursor-help">
-                        {transferIconData.icon}
-                      </div>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-popover text-popover-foreground border-border">
-                    <div className="text-xs">
-                      <p className="font-semibold">{transferIconData.label}</p>
-                      <p className="text-muted-foreground">{transferIconData.description}</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5">
-                {transfer.chainName}
-              </Badge>
-              {transfer.dataSource === 'mcp' ? (
-                <Badge variant="default" className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-gradient-to-r from-purple-500 to-blue-500">
-                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5" />
-                  MCP
+              <TransferTypeIndicator
+                valueUsd={transfer.valueUsd}
+                hash={transfer.hash}
+                chainId={transfer.chainId}
+              />
+              {transfer.timestamp && (
+                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-muted">
+                  {getRelativeTime(transfer.timestamp)}
                 </Badge>
-              ) : transfer.dataSource === 'http' ? (
-                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-slate-600">
-                  HTTP
-                </Badge>
-              ) : null}
+              )}
+              <ChainBadge chainName={transfer.chainName} size="sm" />
+              <DataSourceBadge dataSource={transfer.dataSource} size="sm" />
               <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                 {transfer.token.symbol}
               </Badge>
@@ -128,15 +64,7 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
             </div>
 
             {/* Addresses */}
-            <div className="flex items-center gap-1.5 sm:gap-2 text-sm flex-wrap">
-              <code className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-muted rounded text-[10px] sm:text-xs font-mono break-all">
-                {transfer.from}
-              </code>
-              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
-              <code className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-muted rounded text-[10px] sm:text-xs font-mono break-all">
-                {transfer.to}
-              </code>
-            </div>
+            <AddressFlow from={transfer.from} to={transfer.to} size="sm" />
 
             {/* Token Name */}
             {transfer.token.name && (
@@ -144,26 +72,16 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
                 {transfer.token.name}
               </p>
             )}
+
           </div>
 
           {/* Right: Value */}
           <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 sm:gap-2 sm:text-right">
-            <a
-              href={transfer.hash && transfer.hash !== '' ? getExplorerUrl(transfer.hash, 'tx') : '#'}
-              target={transfer.hash && transfer.hash !== '' ? '_blank' : '_self'}
-              rel="noopener noreferrer"
-              className={`${transfer.hash && transfer.hash !== '' ? 'text-primary hover:opacity-70 cursor-pointer' : 'text-muted-foreground cursor-not-allowed opacity-30'} transition-opacity`}
-              onClick={(e) => {
-                if (!transfer.hash || transfer.hash === '') {
-                  e.preventDefault();
-                }
-              }}
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-            <p className={`text-base sm:text-lg font-bold ${getValueColor()}`}>
-              {transfer.valueUsd ? formatValue(transfer.valueUsd) : 'N/A'}
-            </p>
+            <ExplorerLink
+              href={transfer.hash ? `https://etherscan.io/tx/${transfer.hash}` : undefined}
+              disabled={!transfer.hash || transfer.hash === ''}
+            />
+            <ValueDisplay value={transfer.valueUsd} size="md" />
           </div>
         </div>
       </CardContent>

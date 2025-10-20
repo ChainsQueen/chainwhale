@@ -5,14 +5,14 @@
 /**
  * Data source for whale transfers
  */
-export type DataSource = 'mcp' | 'api' | 'hybrid';
+export type DataSource = 'mcp' | 'http' | 'hybrid';
 
 /**
  * Token information
  */
 export interface TokenInfo {
   address: string;
-  name: string;
+  name?: string;
   symbol: string;
   decimals?: string;
 }
@@ -25,12 +25,12 @@ export interface WhaleTransfer {
   from: string;
   to: string;
   value: string;
-  valueUsd: number;
+  valueUsd?: number;
   token: TokenInfo;
   chainId: string;
   chainName: string;
   timestamp?: number;
-  dataSource: DataSource;
+  dataSource?: DataSource;
 }
 
 /**

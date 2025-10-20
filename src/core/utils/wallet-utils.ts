@@ -33,10 +33,10 @@ export function validateAddress(addr: string): boolean {
  * @returns Full explorer URL
  * 
  * @example
- * getExplorerUrl('0x123...', '1', 'address') 
+ * getExplorerUrl('1', '0x123...', 'address') 
  * // 'https://etherscan.io/address/0x123...'
  * 
- * getExplorerUrl('0xabc...', '8453', 'tx')
+ * getExplorerUrl('8453', '0xabc...', 'tx')
  * // 'https://basescan.org/tx/0xabc...'
  */
 export function getExplorerUrl(

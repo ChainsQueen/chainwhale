@@ -4,8 +4,8 @@ import { ReactNode } from 'react';
  * Single item in the info grid
  */
 interface InfoGridItem {
-  /** Label text (e.g., 'Name', 'Symbol') */
-  label: string;
+  /** Label text or React component (e.g., 'Name', 'Symbol', or a tooltip) */
+  label: ReactNode;
   /** Value content (can be any React node) */
   value: ReactNode;
   /** Number of columns to span (1 or 2) */
@@ -70,8 +70,8 @@ export function InfoGrid({ title, items, columns = 2, className }: InfoGridProps
       <div className={`grid grid-cols-${columns} gap-2 text-sm`}>
         {items.map((item, index) => (
           <div key={index} className={item.colSpan === 2 ? 'col-span-2' : ''}>
-            <span className="text-muted-foreground">{item.label}:</span>
-            <div className="font-medium">{item.value}</div>
+            <span className="text-muted-foreground text-xs">{item.label}</span>
+            <div className="font-medium text-foreground">{item.value}</div>
           </div>
         ))}
       </div>

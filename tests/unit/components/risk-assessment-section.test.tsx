@@ -92,7 +92,7 @@ describe('RiskAssessmentSection', () => {
   });
 
   it('should apply correct badge styling', () => {
-    const { container } = render(<RiskAssessmentSection riskScore={50} />);
+    render(<RiskAssessmentSection riskScore={50} />);
 
     const badge = screen.getByText('50/100');
     expect(badge).toHaveClass('text-lg');

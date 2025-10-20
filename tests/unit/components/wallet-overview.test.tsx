@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { WalletOverview } from '@/components/dashboard/wallet/wallet-overview';
 
 // Mock window.open

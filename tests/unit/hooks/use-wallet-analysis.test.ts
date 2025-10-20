@@ -26,7 +26,7 @@ describe('useWalletAnalysis', () => {
       tokens: [],
     };
 
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         analysis: mockAnalysis,
@@ -34,7 +34,7 @@ describe('useWalletAnalysis', () => {
         ensName: 'vitalik.eth',
         recentTransactions: [],
       }),
-    });
+    } as Response);
 
     const { result } = renderHook(() => useWalletAnalysis());
 
@@ -52,10 +52,10 @@ describe('useWalletAnalysis', () => {
   });
 
   it('should handle API errors gracefully', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
       status: 500,
-    });
+    } as Response);
 
     const { result } = renderHook(() => useWalletAnalysis());
 
@@ -72,8 +72,8 @@ describe('useWalletAnalysis', () => {
   });
 
   it('should set loading state during fetch', async () => {
-    (global.fetch as any).mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, json: async () => ({}) }), 100))
+    vi.mocked(global.fetch).mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, json: async () => ({}) } as Response), 100))
     );
 
     const { result } = renderHook(() => useWalletAnalysis());

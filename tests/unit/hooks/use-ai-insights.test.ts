@@ -85,7 +85,7 @@ describe('useAiInsights', () => {
     await act(async () => {
       try {
         await result.current.generateInsights(mockWalletData);
-      } catch (err) {
+      } catch {
         // Expected to throw
       }
     });
@@ -104,7 +104,7 @@ describe('useAiInsights', () => {
     await act(async () => {
       try {
         await result.current.generateInsights(mockWalletData);
-      } catch (err) {
+      } catch {
         // Expected to throw
       }
     });
@@ -167,7 +167,7 @@ describe('useAiInsights', () => {
     await act(async () => {
       try {
         await result.current.generateInsights(mockWalletData);
-      } catch (err) {
+      } catch {
         // Expected
       }
     });

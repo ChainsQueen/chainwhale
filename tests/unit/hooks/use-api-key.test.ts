@@ -16,7 +16,7 @@ describe('useApiKey', () => {
   });
 
   it('should load API key from localStorage on mount', async () => {
-    (localStorage.getItem as any).mockReturnValue('sk-test123');
+    vi.mocked(localStorage.getItem).mockReturnValue('sk-test123');
 
     const { result } = renderHook(() => useApiKey());
 
@@ -39,7 +39,7 @@ describe('useApiKey', () => {
   });
 
   it('should remove API key from localStorage', () => {
-    (localStorage.getItem as any).mockReturnValue('sk-test123');
+    vi.mocked(localStorage.getItem).mockReturnValue('sk-test123');
 
     const { result } = renderHook(() => useApiKey());
 

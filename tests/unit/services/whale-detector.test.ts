@@ -15,11 +15,11 @@ describe('WhaleDetector', () => {
     mockBlockscout = {
       getTokenTransfers: vi.fn(),
       transactionSummary: vi.fn(),
-    } as any;
+    } as Partial<BlockscoutClient> as BlockscoutClient;
 
     mockAI = {
       analyzeTransaction: vi.fn(),
-    } as any;
+    } as Partial<AIEngine> as AIEngine;
 
     whaleDetector = new WhaleDetector(mockBlockscout, mockAI, 100);
     vi.clearAllMocks();

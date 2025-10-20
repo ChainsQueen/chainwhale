@@ -37,7 +37,7 @@ describe('WhaleService', () => {
       },
     ];
 
-    (mockClient.getTokenTransfers as any).mockResolvedValue({
+    vi.mocked(mockClient.getTokenTransfers).mockResolvedValue({
       items: mockTransfers,
       nextCursor: undefined,
     });
@@ -73,7 +73,7 @@ describe('WhaleService', () => {
       },
     ];
 
-    (mockClient.getTokenTransfers as any).mockResolvedValue({
+    vi.mocked(mockClient.getTokenTransfers).mockResolvedValue({
       items: mockTransfers,
       nextCursor: undefined,
     });
@@ -86,7 +86,7 @@ describe('WhaleService', () => {
   });
 
   it('should handle errors gracefully', async () => {
-    (mockClient.getTokenTransfers as any).mockRejectedValue(new Error('API Error'));
+    vi.mocked(mockClient.getTokenTransfers).mockRejectedValue(new Error('API Error'));
 
     const result = await whaleService.getWhaleFeed('1', 'Ethereum', '24h');
 

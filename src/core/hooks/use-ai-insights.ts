@@ -1,9 +1,16 @@
 import { useState } from 'react';
 
+/**
+ * Return type for useAiInsights hook
+ */
 interface UseAiInsightsReturn {
+  /** Generated AI insights text */
   aiInsights: string | null;
+  /** Whether insights are currently being generated */
   isGenerating: boolean;
+  /** Error message if generation failed */
   error: string;
+  /** Function to generate AI insights from wallet data */
   generateInsights: (params: {
     address: string;
     holdings: Array<{ symbol: string; balance: string; value: number; chain: string; address: string }>;
@@ -14,8 +21,51 @@ interface UseAiInsightsReturn {
 }
 
 /**
- * Hook to handle AI insights generation
- * Manages API calls to AI analysis endpoint
+ * Custom hook for generating AI-powered wallet insights
+ * 
+ * Manages the complete lifecycle of AI insight generation including:
+ * - API request state (loading, error, success)
+ * - OpenAI API key retrieval from localStorage
+ * - Wallet data analysis via AI endpoint
+ * - Risk score and summary extraction
+ * 
+ * Requires OpenAI API key to be stored in localStorage under 'openai_api_key'.
+ * 
+ * @returns Object containing AI insights state and generation function
+ * @returns {string | null} aiInsights - Generated insights text (null if not generated)
+ * @returns {boolean} isGenerating - Whether AI is currently generating insights
+ * @returns {string} error - Error message if generation failed
+ * @returns {function} generateInsights - Async function to generate insights from wallet data
+ * 
+ * @example
+ * function WalletInsights({ walletData }) {
+ *   const { aiInsights, isGenerating, error, generateInsights } = useAiInsights();
+ *   
+ *   const handleGenerate = async () => {
+ *     try {
+ *       const result = await generateInsights({
+ *         address: '0x123...',
+ *         holdings: walletData.holdings,
+ *         recentTransactions: walletData.transactions,
+ *         totalValue: 50000,
+ *         chains: { '1': 30000, '8453': 20000 }
+ *       });
+ *       console.log('Risk score:', result.riskScore);
+ *     } catch (err) {
+ *       console.error('Failed to generate insights');
+ *     }
+ *   };
+ *   
+ *   return (
+ *     <div>
+ *       <button onClick={handleGenerate} disabled={isGenerating}>
+ *         {isGenerating ? 'Generating...' : 'Generate Insights'}
+ *       </button>
+ *       {error && <p className="error">{error}</p>}
+ *       {aiInsights && <p>{aiInsights}</p>}
+ *     </div>
+ *   );
+ * }
  */
 export function useAiInsights(): UseAiInsightsReturn {
   const [aiInsights, setAiInsights] = useState<string | null>(null);

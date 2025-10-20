@@ -5,6 +5,70 @@ import { WhaleService } from '@/core/services/whale-service';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+/**
+ * GET /api/whale-tracker/feed
+ * 
+ * Fetches real-time whale transactions across multiple blockchains.
+ * Monitors 9 known whale addresses (Binance, Coinbase, Vitalik, etc.) and returns
+ * large token transfers with comprehensive metadata and statistics.
+ * 
+ * @route GET /api/whale-tracker/feed
+ * 
+ * @queryparam {string} [chains='1,8453,42161'] - Comma-separated chain IDs to monitor
+ * @queryparam {string} [timeRange='1h'] - Time range for transfers (e.g., '1h', '24h', '7d')
+ * @queryparam {string} [minValue='100000'] - Minimum USD value for whale transfers
+ * @queryparam {string} [token] - Optional token symbol filter (e.g., 'USDC', 'USDT')
+ * 
+ * @returns {Object} 200 - Successful response with whale transfers
+ * @returns {Array} returns.transfers - Array of whale transfers (max 50)
+ * @returns {Object} returns.stats - Aggregated statistics
+ * @returns {number} returns.stats.totalTransfers - Total number of transfers
+ * @returns {number} returns.stats.totalVolume - Total USD volume
+ * @returns {number} returns.stats.largestTransfer - Largest single transfer
+ * @returns {number} returns.stats.uniqueWhales - Count of unique whale addresses
+ * @returns {Array} returns.topWhales - Top 10 whales by volume
+ * @returns {Object} returns.metadata - Request metadata and configuration
+ * 
+ * @returns {Object} 500 - Server error
+ * @returns {string} returns.error - Error message
+ * @returns {string} returns.details - Detailed error information
+ * @returns {string} returns.timestamp - Error timestamp
+ * 
+ * @example
+ * // Request
+ * GET /api/whale-tracker/feed?chains=1,8453&timeRange=24h&minValue=500000
+ * 
+ * // Success Response
+ * {
+ *   "transfers": [
+ *     {
+ *       "hash": "0x123...",
+ *       "chainId": "1",
+ *       "chainName": "Ethereum",
+ *       "from": "0xabc...",
+ *       "to": "0xdef...",
+ *       "value": "1000000000000",
+ *       "valueUsd": 1500000,
+ *       "timestamp": 1234567890,
+ *       "token": { "symbol": "USDC", "name": "USD Coin", "address": "0x..." },
+ *       "dataSource": "mcp"
+ *     }
+ *   ],
+ *   "stats": {
+ *     "totalTransfers": 42,
+ *     "totalVolume": 50000000,
+ *     "largestTransfer": 5000000,
+ *     "uniqueWhales": 15
+ *   },
+ *   "topWhales": [...],
+ *   "metadata": {
+ *     "timeRange": "24h",
+ *     "minValueUsd": "$500,000",
+ *     "chains": ["Ethereum", "Base"],
+ *     "monitoredAddresses": 9
+ *   }
+ * }
+ */
 export async function GET(request: NextRequest) {
   let blockscout: IBlockscoutClient | null = null;
 
@@ -191,7 +255,15 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Get human-readable chain name
+ * Maps chain ID to human-readable chain name
+ * 
+ * @param chainId - Blockchain chain ID
+ * @returns Human-readable chain name or 'Chain {id}' if unknown
+ * 
+ * @example
+ * getChainName('1') // 'Ethereum'
+ * getChainName('8453') // 'Base'
+ * getChainName('999') // 'Chain 999'
  */
 function getChainName(chainId: string): string {
   const chains: Record<string, string> = {

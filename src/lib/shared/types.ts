@@ -97,3 +97,11 @@ export interface Transaction {
   timestamp: number;
   status: string;
 }
+
+export interface TokenHolding {
+  symbol: string;
+  balance: string;
+  value: number;
+  chain: string;
+  address: string;
+}

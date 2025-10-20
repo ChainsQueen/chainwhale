@@ -38,10 +38,8 @@ import { useApiKey } from "@/core/hooks/use-api-key";
 import { useAiInsights } from "@/core/hooks/use-ai-insights";
 import { useAddressInput } from "@/core/hooks/use-address-input";
 import {
-  validateAddress,
   getExplorerUrl,
   getChainName,
-  formatEthBalance,
   formatUsdValue,
   getRiskColor,
   getRiskLabel,
@@ -274,7 +272,7 @@ export default function WalletAnalysis() {
                                     ETH BALANCE
                                   </p>
                                   <p className="text-lg font-bold">
-                                    {formatEthBalance(ethBalance)} ETH
+                                    {ethBalance.toFixed(2)} ETH
                                   </p>
                                 </div>
                                 <div className="p-4 bg-muted/30 rounded-lg">
@@ -282,7 +280,7 @@ export default function WalletAnalysis() {
                                     ETH VALUE
                                   </p>
                                   <p className="text-lg font-bold text-primary">
-                                    {formatEthBalance(ethBalance)} ETH
+                                    {ethBalance.toFixed(2)} ETH
                                   </p>
                                   {ethValue > 0 && (
                                     <p className="text-xs text-muted-foreground mt-1">

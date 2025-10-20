@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type  Metadata  from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/layouts/theme-provider";
@@ -15,32 +15,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ChainWhale - AI-Powered Blockchain Analytics",
-  description: "Intelligent wallet analysis, whale tracking, and multi-chain portfolio monitoring powered by AI",
-  keywords: ["blockchain", "crypto", "explorer", "analysis", "web3", "whale", "tracking", "wallet", "portfolio"],
+  description: "AI-powered blockchain analytics for intelligent wallet analysis and whale tracking",
+  keywords: ["blockchain", "crypto", "explorer", "analysis", "web3", "whale", "tracking", "wallet", "portfolio", "AI", "analytics"],
   authors: [{ name: "ChainsQueen" }],
   creator: "ChainsQueen",
   publisher: "ChainsQueen",
   icons: {
-    icon: [
-      {
-        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🐋</text></svg>",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🐋</text></svg>",
+    icon: "/whalelogo.png",
+    apple: "/whalelogo.png",
   },
-  manifest: "/chainwhale/site.webmanifest",
-  metadataBase: new URL("https://chainsqueen.github.io/chainwhale"),
   openGraph: {
-    title: "ChainWhale - Blockchain Explorer",
-    description: "Blockchain exploration and analysis platform powered by AI",
+    title: "ChainWhale - AI-Powered Blockchain Analytics",
+    description: "AI-powered blockchain analytics for intelligent wallet analysis and whale tracking",
     url: "https://chainsqueen.github.io/chainwhale",
     siteName: "ChainWhale",
     images: [
       {
-        url: "/chainwhale/chainwhale-logo.svg",
-        width: 200,
-        height: 200,
+        url: "/whalelogo.png",
+        width: 512,
+        height: 512,
         alt: "ChainWhale Logo",
       },
     ],
@@ -49,9 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ChainWhale - Blockchain Explorer",
-    description: "Blockchain exploration and analysis platform powered by AI",
-    images: ["/chainwhale/chainwhale-logo.svg"],
+    title: "ChainWhale - AI-Powered Blockchain Analytics",
+    description: "AI-powered blockchain analytics for intelligent wallet analysis and whale tracking",
+    images: ["/whalelogo.png"],
   },
 };
 

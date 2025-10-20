@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -11,57 +12,64 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex h-24 items-center justify-between px-8">
         {/* Logo and Title */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <span className="text-xl font-bold">🐋 ChainWhale</span>
+          <Image
+            src="/whalelogo.png"
+            alt="ChainWhale Logo"
+            width={48}
+            height={48}
+            className="w-12 h-12"
+          />
+          <span className="text-3xl font-bold">ChainWhale</span>
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden md:flex items-center gap-4">
           <Button
             variant={pathname === '/' ? 'default' : 'ghost'}
-            size="sm"
+            size="lg"
             asChild
           >
-            <Link href="/" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
+            <Link href="/" className="flex items-center gap-2 text-base">
+              <Home className="h-5 w-5" />
               Home
             </Link>
           </Button>
           <Button
             variant={pathname === '/dashboard' ? 'default' : 'ghost'}
-            size="sm"
+            size="lg"
             asChild
           >
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <LayoutDashboard className="h-4 w-4" />
+            <Link href="/dashboard" className="flex items-center gap-2 text-base">
+              <LayoutDashboard className="h-5 w-5" />
               Dashboard
             </Link>
           </Button>
           <Button
             variant={pathname === '/whales' ? 'default' : 'ghost'}
-            size="sm"
+            size="lg"
             asChild
           >
-            <Link href="/whales" className="flex items-center gap-2">
-              <Activity className="h-4 w-4" />
+            <Link href="/whales" className="flex items-center gap-2 text-base">
+              <Activity className="h-5 w-5" />
               Whale Tracker
             </Link>
           </Button>
         </nav>
 
         {/* Mobile Navigation + Theme Toggle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {/* Mobile Menu */}
-          <div className="md:hidden flex items-center gap-1">
+          <div className="md:hidden flex items-center gap-2">
             <Button
               variant={pathname === '/' ? 'default' : 'ghost'}
               size="icon"
               asChild
             >
               <Link href="/">
-                <Home className="h-4 w-4" />
+                <Home className="h-5 w-5" />
               </Link>
             </Button>
             <Button
@@ -70,7 +78,7 @@ export function AppHeader() {
               asChild
             >
               <Link href="/dashboard">
-                <LayoutDashboard className="h-4 w-4" />
+                <LayoutDashboard className="h-5 w-5" />
               </Link>
             </Button>
             <Button
@@ -79,7 +87,7 @@ export function AppHeader() {
               asChild
             >
               <Link href="/whales">
-                <Activity className="h-4 w-4" />
+                <Activity className="h-5 w-5" />
               </Link>
             </Button>
           </div>

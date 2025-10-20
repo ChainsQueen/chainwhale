@@ -1,12 +1,17 @@
 {
   "name": "ChainWhale",
   "short_name": "ChainWhale",
-  "description": "Blockchain exploration and analysis platform",
+  "description": "AI-powered blockchain analytics for intelligent wallet analysis and whale tracking",
   "icons": [
     {
-      "src": "/chainwhale/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/chainwhale/whalelogo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/chainwhale/whalelogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ],
   "theme_color": "#2563EB",

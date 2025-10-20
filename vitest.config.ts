@@ -4,13 +4,18 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  css: {
+    postcss: {
+      plugins: [],
+    },
+  },
   test: {
     name: 'unit',
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'tests/integration', 'tests/e2e'],
-    css: false, // Completely disable CSS processing
+    css: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

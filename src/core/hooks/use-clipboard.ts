@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 /**
  * Custom hook for clipboard copy operations with temporary feedback
@@ -24,11 +24,17 @@ import { useState } from 'react';
  */
 export function useClipboard() {
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const copyToClipboard = (text: string) => {
+    // Clear previous timeout if it exists
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     navigator.clipboard.writeText(text);
     setCopiedText(text);
-    setTimeout(() => setCopiedText(null), 2000);
+    timeoutRef.current = setTimeout(() => setCopiedText(null), 2000);
   };
 
   return {

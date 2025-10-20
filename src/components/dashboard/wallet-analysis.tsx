@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search,
@@ -18,16 +17,8 @@ import {
   AlertTriangle,
   CheckCircle,
   TrendingUp,
-  Clock,
-  ExternalLink,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { WalletOverview } from "@/components/dashboard/wallet/wallet-overview";
 import { PortfolioBreakdown } from "@/components/dashboard/wallet-overview-section";
 import { WhaleDetectionSection } from "@/components/dashboard/wallet/whale-detection-section";
@@ -39,14 +30,7 @@ import { useWalletAnalysis } from "@/core/hooks/use-wallet-analysis";
 import { useApiKey } from "@/core/hooks/use-api-key";
 import { useAiInsights } from "@/core/hooks/use-ai-insights";
 import { useAddressInput } from "@/core/hooks/use-address-input";
-import {
-  getExplorerUrl,
-  getChainName,
-  formatUsdValue,
-  getRiskColor,
-  getRiskLabel,
-} from "@/core/utils/wallet-utils";
-import { DEFAULT_CHAIN_ID } from "@/core/constants/chains.constants";
+import { getChainName } from "@/core/utils/wallet-utils";
 
 export default function WalletAnalysis() {
 

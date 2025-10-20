@@ -1,6 +1,8 @@
-# 🐋 ChainWhale
-
-> AI-powered blockchain analytics for intelligent wallet analysis and whale tracking
+<div align="center">
+  <img src="./public/whalelogo.png" alt="ChainWhale Logo" width="120" height="120" />
+  <h1>ChainWhale</h1>
+  <p><em>AI-powered blockchain analytics for intelligent wallet analysis and whale tracking</em></p>
+</div>
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)

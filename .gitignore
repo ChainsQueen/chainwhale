@@ -41,6 +41,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
 # documentation (keep only README.md)
 *.md
 !README.md

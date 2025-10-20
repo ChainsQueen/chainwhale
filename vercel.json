@@ -4,9 +4,8 @@
   "framework": "nextjs",
   "regions": ["iad1"],
   "functions": {
-    "api/**/*.ts": {
+    "app/api/**/*.ts": {
       "maxDuration": 10
     }
-  },
-  "outputDirectory": ".next"
+  }
 }

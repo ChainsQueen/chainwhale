@@ -1,0 +1,55 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp } from "lucide-react";
+import type { TokenHolding } from "@/lib/shared/types";
+import { getChainName } from "@/core/utils/wallet-utils";
+
+interface TokenHoldingsSectionProps {
+  holdings: TokenHolding[];
+}
+
+export function TokenHoldingsSection({ holdings }: TokenHoldingsSectionProps) {
+  if (holdings.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Token Holdings ({holdings.length})</CardTitle>
+        <CardDescription>Top tokens by value</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {holdings.slice(0, 15).map((holding, index) => (
+            <div
+              key={`${holding.address}-${index}`}
+              className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">{holding.symbol}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {getChainName(holding.chain)}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-medium">
+                  $
+                  {holding.value.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {holding.balance} {holding.symbol}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

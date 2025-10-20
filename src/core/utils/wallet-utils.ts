@@ -6,7 +6,6 @@
  */
 
 import { CHAINS, DEFAULT_CHAIN_ID } from '@/core/constants/chains.constants';
-import type { RiskLevel, RiskScore } from '@/core/types/wallet.types';
 
 /**
  * Validates if a string is a valid Ethereum address or ENS name

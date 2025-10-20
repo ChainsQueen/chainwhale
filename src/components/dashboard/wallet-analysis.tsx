@@ -38,6 +38,7 @@ import { useApiKey } from "@/core/hooks/use-api-key";
 import { useAiInsights } from "@/core/hooks/use-ai-insights";
 import { useAddressInput } from "@/core/hooks/use-address-input";
 import {
+  validateAddress,
   getExplorerUrl,
   getChainName,
   formatEthBalance,
@@ -45,6 +46,7 @@ import {
   getRiskColor,
   getRiskLabel,
 } from "@/core/utils/wallet-utils";
+import { DEFAULT_CHAIN_ID } from "@/core/constants/chains.constants";
 
 export default function WalletAnalysis() {
   const getRelativeTime = (timestamp: number) => {
@@ -224,7 +226,7 @@ export default function WalletAnalysis() {
                               size="sm"
                               onClick={() =>
                                 window.open(
-                                  getExplorerUrl(displayAnalysis.address),
+                                  getExplorerUrl(DEFAULT_CHAIN_ID, displayAnalysis.address),
                                   "_blank"
                                 )
                               }

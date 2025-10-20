@@ -1,6 +1,7 @@
 {
   "name": "chainwhale",
   "version": "0.1.0",
+  "description": "AI-powered blockchain analytics for intelligent wallet analysis and whale tracking",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

@@ -147,7 +147,7 @@ export function RecentActivitySection({
                   className="h-8 w-8 p-0 flex-shrink-0"
                 >
                   <a
-                    href={`https://etherscan.io/tx/${tx.hash}`}
+                    href={`https://etherscan.io/tx/${txData.hash as string}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

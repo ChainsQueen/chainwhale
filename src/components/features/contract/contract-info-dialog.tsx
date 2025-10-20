@@ -18,38 +18,79 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { InfoGrid } from '@/components/ui/info-grid';
 import { SecurityBadges } from '@/components/features/contract/security-badges';
 
+/**
+ * Contract information data structure
+ */
 interface ContractInfo {
+  /** Whether contract source code is verified */
   isVerified?: boolean;
+  /** Whether contract is a proxy pattern */
   isProxy?: boolean;
+  /** Implementation contract address (for proxies) */
   implementationAddress?: string;
+  /** Token standard (ERC-20, ERC-721, etc.) */
   tokenType?: string;
+  /** Number of token holders */
   holderCount?: number;
+  /** Total token supply */
   totalSupply?: string;
+  /** Current token price in USD */
   tokenPrice?: string;
+  /** Market capitalization */
   marketCap?: string;
+  /** 24-hour trading volume */
   volume24h?: string;
+  /** Token icon URL */
   iconUrl?: string;
+  /** Whether flagged as scam */
   isScam?: boolean;
+  /** Security reputation status */
   reputation?: string;
+  /** Contract creator address */
   creatorAddress?: string;
+  /** Contract creation transaction hash */
   creationTxHash?: string;
 }
 
+/**
+ * Props for ContractInfoDialog component
+ */
 interface ContractInfoDialogProps {
+  /** Smart contract address */
   tokenAddress: string;
+  /** Token name (optional) */
   tokenName?: string;
+  /** Token symbol */
   tokenSymbol: string;
+  /** Token decimals (optional) */
   tokenDecimals?: number;
+  /** Blockchain chain ID */
   chainId: string;
+  /** Human-readable chain name */
   chainName: string;
+  /** Custom trigger element (defaults to info button) */
   trigger?: React.ReactNode;
 }
 
 /**
- * Reusable contract info dialog component
- * Used by both whale tracker and wallet analysis
+ * Modal dialog displaying comprehensive smart contract information
+ * 
+ * Features:
+ * - **Security badges**: Verification status, proxy detection, scam warnings
+ * - **Token metadata**: Name, symbol, decimals, type, icon
+ * - **Market data**: Price, market cap, 24h volume, holder count
+ * - **Contract details**: Creator address, creation tx, implementation address
+ * - **Explorer links**: Direct links to block explorer for addresses and transactions
+ * - **Lazy loading**: Fetches data only when dialog is opened
+ * - **Copy functionality**: One-click copy for addresses
+ * 
+ * Used across the application for consistent contract information display
+ * in whale tracker, wallet analysis, and token lists.
+ * 
+ * @component
  * 
  * @example
+ * // Basic usage with default trigger
  * <ContractInfoDialog
  *   tokenAddress="0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
  *   tokenName="USD Coin"
@@ -57,6 +98,16 @@ interface ContractInfoDialogProps {
  *   tokenDecimals={6}
  *   chainId="1"
  *   chainName="Ethereum"
+ * />
+ * 
+ * @example
+ * // Custom trigger element
+ * <ContractInfoDialog
+ *   tokenAddress="0x..."
+ *   tokenSymbol="TOKEN"
+ *   chainId="8453"
+ *   chainName="Base"
+ *   trigger={<Button>View Contract</Button>}
  * />
  */
 export function ContractInfoDialog({

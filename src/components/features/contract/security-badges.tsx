@@ -1,26 +1,62 @@
 import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, ShieldAlert, AlertTriangle, FileCode } from 'lucide-react';
 
+/**
+ * Props for SecurityBadges component
+ */
 interface SecurityBadgesProps {
+  /** Whether the contract is verified on block explorer */
   isVerified?: boolean;
+  /** Whether the contract is a proxy contract */
   isProxy?: boolean;
+  /** Token standard type (e.g., 'ERC-20', 'ERC-721') */
   tokenType?: string;
+  /** Whether the contract is flagged as a scam */
   isScam?: boolean;
+  /** Contract reputation status from security analysis */
   reputation?: string;
+  /** Whether security data is still loading */
   loading?: boolean;
 }
 
 /**
- * Displays security-related badges for a contract
- * Shows verification status, proxy detection, token type, scam warnings, and reputation
+ * Displays security and verification badges for smart contracts
+ * 
+ * Shows comprehensive security information including:
+ * - Verification status (verified/not verified/unknown)
+ * - Proxy contract detection with warning
+ * - Token type badge (ERC-20, ERC-721, etc.)
+ * - Scam warning badge (critical alert)
+ * - Reputation badges for suspicious contracts
+ * 
+ * Badges are color-coded:
+ * - Green: Verified and safe
+ * - Red: Not verified or scam warning
+ * - Orange: Proxy contract (requires caution)
+ * - Yellow: Reputation warnings
+ * - Gray: Unknown status
+ * 
+ * @component
  * 
  * @example
+ * // Verified ERC-20 token
  * <SecurityBadges
  *   isVerified={true}
- *   isProxy={false}
  *   tokenType="ERC-20"
- *   isScam={false}
+ *   isProxy={false}
  * />
+ * 
+ * @example
+ * // Scam warning
+ * <SecurityBadges
+ *   isVerified={false}
+ *   isScam={true}
+ *   reputation="suspicious"
+ * />
+ * 
+ * @example
+ * // Loading state
+ * <SecurityBadges loading={true} />
  */
 export function SecurityBadges({
   isVerified,

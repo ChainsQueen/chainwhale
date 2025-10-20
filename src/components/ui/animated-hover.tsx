@@ -3,12 +3,22 @@
 import { motion, Variants } from 'framer-motion';
 import { ReactNode } from 'react';
 
+/**
+ * Available animation types for hover effects
+ */
 type AnimationType = 'card' | 'button' | 'filter' | 'text' | 'scale' | 'lift' | 'stat' | 'label';
 
+/**
+ * Props for AnimatedHover component
+ */
 interface AnimatedHoverProps {
+  /** Content to be animated */
   children: ReactNode;
+  /** Predefined animation type */
   type?: AnimationType;
+  /** Additional CSS classes */
   className?: string;
+  /** Disable animations (renders static div) */
   disabled?: boolean;
 }
 
@@ -87,15 +97,39 @@ const animationVariants: Record<AnimationType, Variants> = {
 };
 
 /**
- * Reusable animated hover component with predefined animation types
+ * Reusable animated hover wrapper with predefined Framer Motion animations
+ * 
+ * Provides 8 predefined animation types optimized for different UI elements:
+ * - **card**: Scale + lift with shadow (1.02x scale, -4px lift)
+ * - **button**: Scale on hover and tap (1.05x hover, 0.95x tap)
+ * - **filter**: Scale + opacity change (1.05x scale, full opacity)
+ * - **text**: Subtle scale from center (1.03x scale)
+ * - **scale**: Larger scale effect (1.1x hover, 0.9x tap)
+ * - **lift**: Vertical lift only (-8px on hover)
+ * - **stat**: Gentle scale for stat cards (1.03x scale)
+ * - **label**: Opacity fade (0.8 to 1.0)
+ * 
+ * All animations use smooth easing and appropriate durations for polished UX.
+ * Animations can be disabled via the `disabled` prop for accessibility or performance.
+ * 
+ * @component
  * 
  * @example
+ * // Card with lift and shadow
  * <AnimatedHover type="card">
- *   <Card>Content</Card>
+ *   <Card>Hover me</Card>
  * </AnimatedHover>
  * 
+ * @example
+ * // Button with scale and tap feedback
  * <AnimatedHover type="button">
  *   <Button>Click me</Button>
+ * </AnimatedHover>
+ * 
+ * @example
+ * // Disabled animations
+ * <AnimatedHover type="card" disabled={true}>
+ *   <Card>No animation</Card>
  * </AnimatedHover>
  */
 export function AnimatedHover({ 

@@ -1,4 +1,3 @@
-// File: /Users/destiny/Desktop/chainwhale/src/components/features/whale/transfer-type-indicator.tsx
 import { TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
 import {
   Tooltip,
@@ -7,18 +6,48 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+/**
+ * Props for TransferTypeIndicator component
+ */
 interface TransferTypeIndicatorProps {
+  /** USD value of the transfer */
   valueUsd?: number;
+  /** Transaction hash (makes icon clickable to explorer) */
   hash?: string;
+  /** Blockchain chain ID for explorer link */
   chainId: string;
 }
 
 /**
- * Display transfer type indicator with icon and tooltip
- * Shows Mega/Large/Medium whale move based on value
+ * Displays categorized whale transfer indicator with visual icon and tooltip
+ * 
+ * Categorizes transfers into three tiers based on USD value:
+ * - **Mega Whale Move** (> $500K): Green trending up icon
+ * - **Large Whale Move** ($200K - $500K): Orange trending down icon
+ * - **Medium Whale Move** ($100K - $200K): Blue bidirectional arrow icon
+ * 
+ * Features:
+ * - Color-coded icons for quick visual identification
+ * - Tooltip with transfer category and value range
+ * - Clickable link to block explorer if transaction hash provided
+ * - Supports multiple chains (Ethereum, Base, Arbitrum, Optimism, Polygon)
+ * 
+ * @component
  * 
  * @example
- * <TransferTypeIndicator valueUsd={750000} hash="0x123..." chainId="1" />
+ * // Mega whale move with explorer link
+ * <TransferTypeIndicator
+ *   valueUsd={750000}
+ *   hash="0x123..."
+ *   chainId="1"
+ * />
+ * 
+ * @example
+ * // Medium whale move without link
+ * <TransferTypeIndicator
+ *   valueUsd={150000}
+ *   chainId="8453"
+ * />
  */
 export function TransferTypeIndicator({ 
   valueUsd, 

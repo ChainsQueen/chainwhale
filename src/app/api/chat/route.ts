@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         tokenAddress: t.token.address,
         tokenAmount: tokenAmount.toFixed(2), // Human-readable amount
         rawValue: t.value, // Keep raw for reference
-        timestamp: new Date(t.timestamp).toISOString(),
+        timestamp: new Date(t.timestamp || Date.now()).toISOString(),
         chainName: t.chainName,
         chainId: t.chainId,
         explorerUrl: `${getExplorerBaseUrl(t.chainId)}/tx/${t.hash}`,

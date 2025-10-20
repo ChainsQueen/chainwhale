@@ -41,6 +41,7 @@ export default function WalletAnalysis() {
     ensName,
     recentTransactions,
     isLoading,
+    loadingStep,
     error,
     analyzeWallet,
   } = useWalletAnalysis();
@@ -101,7 +102,7 @@ export default function WalletAnalysis() {
       <CardContent>
         <div className="space-y-6">
           {/* Search Form */}
-          <form onSubmit={handleAnalyze} className="space-y-2">
+          <form onSubmit={handleAnalyze} className="space-y-2" suppressHydrationWarning>
             <div className="flex gap-2">
               <div className="flex-1">
                 <Input
@@ -135,18 +136,108 @@ export default function WalletAnalysis() {
 
           {/* Loading State */}
           {isLoading && (
-            <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
               <Card>
                 <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <Skeleton className="h-8 w-[200px]" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-[300px]" />
+                  <div className="space-y-6">
+                    {/* Loading Header */}
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">Analyzing Wallet</h3>
+                        <p className="text-sm text-muted-foreground">This may take a few moments...</p>
+                      </div>
+                    </div>
+
+                    {/* Loading Steps */}
+                    <div className="space-y-3">
+                      <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        loadingStep === 'fetching' ? 'bg-primary/10' : loadingStep && ['analyzing', 'transactions', 'risk', 'complete'].includes(loadingStep) ? 'bg-green-500/10' : 'bg-muted/20'
+                      }`}>
+                        {loadingStep === 'fetching' ? (
+                          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        ) : loadingStep && ['analyzing', 'transactions', 'risk', 'complete'].includes(loadingStep) ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <div className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                        )}
+                        <p className={`text-sm ${
+                          loadingStep === 'fetching' ? 'font-medium' : loadingStep && ['analyzing', 'transactions', 'risk', 'complete'].includes(loadingStep) ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                        }`}>
+                          Fetching wallet data across multiple chains
+                        </p>
+                      </div>
+                      <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        loadingStep === 'analyzing' ? 'bg-primary/10' : loadingStep && ['transactions', 'risk', 'complete'].includes(loadingStep) ? 'bg-green-500/10' : 'bg-muted/20'
+                      }`}>
+                        {loadingStep === 'analyzing' ? (
+                          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        ) : loadingStep && ['transactions', 'risk', 'complete'].includes(loadingStep) ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <div className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                        )}
+                        <p className={`text-sm ${
+                          loadingStep === 'analyzing' ? 'font-medium' : loadingStep && ['transactions', 'risk', 'complete'].includes(loadingStep) ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                        }`}>
+                          Analyzing token holdings and balances
+                        </p>
+                      </div>
+                      <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        loadingStep === 'transactions' ? 'bg-primary/10' : loadingStep && ['risk', 'complete'].includes(loadingStep) ? 'bg-green-500/10' : 'bg-muted/20'
+                      }`}>
+                        {loadingStep === 'transactions' ? (
+                          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        ) : loadingStep && ['risk', 'complete'].includes(loadingStep) ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <div className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                        )}
+                        <p className={`text-sm ${
+                          loadingStep === 'transactions' ? 'font-medium' : loadingStep && ['risk', 'complete'].includes(loadingStep) ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                        }`}>
+                          Retrieving recent transactions
+                        </p>
+                      </div>
+                      <div className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        loadingStep === 'risk' ? 'bg-primary/10' : loadingStep === 'complete' ? 'bg-green-500/10' : 'bg-muted/20'
+                      }`}>
+                        {loadingStep === 'risk' ? (
+                          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        ) : loadingStep === 'complete' ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <div className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                        )}
+                        <p className={`text-sm ${
+                          loadingStep === 'risk' ? 'font-medium' : loadingStep === 'complete' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                        }`}>
+                          Calculating risk assessment
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-2">
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-primary"
+                          initial={{ width: "0%" }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 3, ease: "easeInOut" }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </motion.div>
           )}
 
           {/* Analysis Results */}

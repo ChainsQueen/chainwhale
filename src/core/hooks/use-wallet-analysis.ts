@@ -2,6 +2,11 @@ import { useState } from 'react';
 import type { WalletAnalysis } from '@/lib/shared/types';
 
 /**
+ * Loading steps for wallet analysis
+ */
+export type LoadingStep = 'fetching' | 'analyzing' | 'transactions' | 'risk' | 'complete';
+
+/**
  * Return type for useWalletAnalysis hook
  */
 interface UseWalletAnalysisReturn {
@@ -15,6 +20,8 @@ interface UseWalletAnalysisReturn {
   recentTransactions: Array<Record<string, unknown>>;
   /** Whether analysis is in progress */
   isLoading: boolean;
+  /** Current loading step */
+  loadingStep: LoadingStep | null;
   /** Error message if analysis failed */
   error: string;
   /** Function to trigger wallet analysis */
@@ -83,34 +90,49 @@ export function useWalletAnalysis(): UseWalletAnalysisReturn {
   const [ensName, setEnsName] = useState<string | undefined>();
   const [recentTransactions, setRecentTransactions] = useState<Array<Record<string, unknown>>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<LoadingStep | null>(null);
   const [error, setError] = useState('');
 
   const analyzeWallet = async (address: string, chains: string[]) => {
     setIsLoading(true);
     setError('');
     setAnalysis(null);
+    setLoadingStep('fetching');
 
     try {
+      // Simulate step progression for better UX
       const response = await fetch('/api/analyze-wallet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address: address.trim(), chains }),
       });
 
+      setLoadingStep('analyzing');
+
       if (!response.ok) {
         throw new Error('Failed to analyze wallet');
       }
 
       const data = await response.json();
+      
+      setLoadingStep('transactions');
+      await new Promise(resolve => setTimeout(resolve, 800)); // Delay for realistic UX
+      
+      setLoadingStep('risk');
+      await new Promise(resolve => setTimeout(resolve, 800)); // Delay for realistic UX
+      
       setAnalysis(data.analysis);
       setHoldings(data.holdings || []);
       setEnsName(data.ensName);
       setRecentTransactions(data.recentTransactions || []);
+      
+      setLoadingStep('complete');
     } catch (err) {
       setError('Failed to analyze wallet. Please check the address and try again.');
       console.error('Wallet analysis error:', err);
     } finally {
       setIsLoading(false);
+      setLoadingStep(null);
     }
   };
 
@@ -120,6 +142,7 @@ export function useWalletAnalysis(): UseWalletAnalysisReturn {
     ensName,
     recentTransactions,
     isLoading,
+    loadingStep,
     error,
     analyzeWallet,
   };

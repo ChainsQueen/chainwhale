@@ -16,6 +16,7 @@ describe('useWalletAnalysis', () => {
     expect(result.current.ensName).toBeUndefined();
     expect(result.current.recentTransactions).toEqual([]);
     expect(result.current.isLoading).toBe(false);
+    expect(result.current.loadingStep).toBeNull();
     expect(result.current.error).toBe('');
   });
 
@@ -89,5 +90,58 @@ describe('useWalletAnalysis', () => {
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
+  });
+
+  it('should progress through loading steps', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        analysis: { address: '0x123' },
+        holdings: [],
+        recentTransactions: [],
+      }),
+    } as Response);
+
+    const { result } = renderHook(() => useWalletAnalysis());
+
+    act(() => {
+      result.current.analyzeWallet('0x123', ['1']);
+    });
+
+    // Should start with 'fetching'
+    await waitFor(() => {
+      expect(result.current.loadingStep).toBe('fetching');
+    });
+
+    // Should progress to 'analyzing'
+    await waitFor(() => {
+      expect(result.current.loadingStep).toBe('analyzing');
+    });
+
+    // Should eventually complete and reset loadingStep
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.loadingStep).toBeNull();
+    }, { timeout: 3000 });
+  });
+
+  it('should reset loadingStep on error', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    } as Response);
+
+    const { result } = renderHook(() => useWalletAnalysis());
+
+    act(() => {
+      result.current.analyzeWallet('0x123', ['1']);
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.loadingStep).toBeNull();
+    expect(result.current.error).toBeTruthy();
   });
 });

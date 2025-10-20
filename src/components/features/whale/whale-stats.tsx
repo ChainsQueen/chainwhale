@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Activity, DollarSign, Users } from 'lucide-react';
-import { AnimatedHover } from '@/components/animated-hover';
+import { AnimatedHover } from '@/components/ui/animated-hover';
 import type { WhaleStats } from '@/core/services/whale-service';
 
 interface WhaleStatsProps {

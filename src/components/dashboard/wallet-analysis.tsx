@@ -28,7 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ContractInfoDialog } from "@/components/contract-info-dialog";
+import { ContractInfoDialog } from "@/components/features/contract/contract-info-dialog";
 import { DataSourceBadge } from "@/components/ui/data-source-badge";
 import { ChainBadge } from "@/components/ui/chain-badge";
 import { CopyButton } from "@/components/ui/copy-button";

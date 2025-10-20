@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { AppHeader } from '@/components/app-header';
-import { WhaleTrackerCard } from '@/components/whale-tracker-card';
-import { WhaleStatsComponent } from '@/components/whale-stats';
-import { AnimatedHover } from '@/components/animated-hover';
+import { AppHeader } from '@/components/layouts/app-header';
+import { WhaleTrackerCard } from '@/components/features/whale/whale-tracker-card';
+import { WhaleStatsComponent } from '@/components/features/whale/whale-stats';
+import { AnimatedHover } from '@/components/ui/animated-hover';
 import { RefreshCw, Filter, Trophy, Sparkles, Copy, Check, TrendingUp, AlertTriangle } from 'lucide-react';
 import type { WhaleTransfer, WhaleStats } from '@/core/services/whale-service';
 

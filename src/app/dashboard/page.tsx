@@ -3,10 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Activity, Wallet, Settings } from 'lucide-react';
-import { AppHeader } from '@/components/app-header';
+import { MessageSquare, Wallet, Settings } from 'lucide-react';
+import { AppHeader } from '@/components/layouts/app-header';
 import ChatInterface from '@/components/dashboard/chat-interface';
-import WhaleFeed from '@/components/dashboard/whale-feed';
 import WalletAnalysis from '@/components/dashboard/wallet-analysis';
 import ApiSettings from '@/components/dashboard/api-settings';
 
@@ -18,7 +17,7 @@ function DashboardContent() {
 
   // Update tab when URL parameter changes
   useEffect(() => {
-    if (tabParam && ['chat', 'whale-feed', 'wallet', 'settings'].includes(tabParam)) {
+    if (tabParam && ['chat', 'wallet', 'settings'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -37,14 +36,10 @@ function DashboardContent() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[800px]">
+          <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Chat</span>
-            </TabsTrigger>
-            <TabsTrigger value="whale-feed" className="flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              <span className="hidden sm:inline">Whale Feed</span>
             </TabsTrigger>
             <TabsTrigger value="wallet" className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
@@ -58,10 +53,6 @@ function DashboardContent() {
 
           <TabsContent value="chat" className="mt-6">
             <ChatInterface />
-          </TabsContent>
-
-          <TabsContent value="whale-feed" className="mt-6">
-            <WhaleFeed />
           </TabsContent>
 
           <TabsContent value="wallet" className="mt-6">

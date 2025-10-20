@@ -29,32 +29,50 @@ export async function GET(request: NextRequest) {
     console.log(`[Whale Feed API] Vercel: ${process.env.VERCEL}`);
 
     // Initialize services
-    blockscout = createBlockscoutClient();
-    await blockscout.connect();
+    try {
+      blockscout = createBlockscoutClient();
+      await blockscout.connect();
+    } catch (error) {
+      console.error('[Whale Feed API] Failed to initialize Blockscout client:', error);
+      throw new Error(
+        'Failed to connect to blockchain data service. ' +
+        'Please ensure the Blockscout MCP server is running (requires Docker) or check your configuration.'
+      );
+    }
 
     // Use WhaleService (works with known addresses)
     const whaleService = new WhaleService(minValue, blockscout);
 
     // Fetch whale transactions from each chain
     const allTransactions = [];
+    const chainErrors: string[] = [];
 
     for (const chainId of chainIds) {
       try {
-        console.log(`Fetching whale transactions for chain ${chainId}...`);
+        console.log(`[Whale Feed API] Fetching whale transactions for chain ${chainId}...`);
         const chainName = getChainName(chainId);
         const transactions = await whaleService.getWhaleFeed(chainId, chainName, timeRange);
-        console.log(`Found ${transactions.length} whale transactions on chain ${chainId}`);
+        console.log(`[Whale Feed API] Found ${transactions.length} whale transactions on chain ${chainId}`);
         
         // Debug: Check if hashes are present
         const withoutHash = transactions.filter(t => !t.hash || t.hash === '');
         if (withoutHash.length > 0) {
-          console.warn(`⚠️ ${withoutHash.length} transactions without hash on chain ${chainId}`);
+          console.warn(`[Whale Feed API] ⚠️ ${withoutHash.length} transactions without hash on chain ${chainId}`);
         }
         
         allTransactions.push(...transactions);
       } catch (error) {
-        console.error(`Error detecting whales on chain ${chainId}:`, error);
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`[Whale Feed API] Error detecting whales on chain ${chainId}:`, errorMsg);
+        chainErrors.push(`${getChainName(chainId)}: ${errorMsg}`);
       }
+    }
+
+    // If all chains failed, return error
+    if (allTransactions.length === 0 && chainErrors.length === chainIds.length) {
+      throw new Error(
+        `Failed to fetch whale data from all chains. Errors: ${chainErrors.join('; ')}`
+      );
     }
 
     // Filter by token if specified
@@ -66,7 +84,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by timestamp (newest first)
-    const sorted = filteredTransactions.sort((a, b) => b.timestamp - a.timestamp);
+    const sorted = filteredTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     // Calculate stats
     const stats = {
@@ -100,7 +118,8 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 10);
 
-    console.log(`Total transactions found: ${sorted.length}`);
+    console.log(`[Whale Feed API] Total transactions found: ${sorted.length}`);
+    console.log(`[Whale Feed API] Chain errors: ${chainErrors.length > 0 ? chainErrors.join('; ') : 'none'}`);
 
     // Convert to new format
     const transfers = sorted.slice(0, 50).map(t => ({
@@ -131,23 +150,42 @@ export async function GET(request: NextRequest) {
         dataSources: {
           mcp: transfers.filter(t => t.dataSource === 'mcp').length,
           http: transfers.filter(t => t.dataSource === 'http').length,
+          hybrid: transfers.filter(t => t.dataSource === 'hybrid').length,
           total: transfers.length
         },
+        warnings: chainErrors.length > 0 ? chainErrors : undefined,
         description: `Monitoring 9 known whale addresses (Binance, Coinbase, Vitalik, Polygon Bridge, and large holders) across selected chains. Showing transfers above $${minValue.toLocaleString()} USD.`
       }
     });
   } catch (error) {
-    console.error('Error in whale-feed API:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error('[Whale Feed API] Error:', errorMessage);
+    if (errorStack) {
+      console.error('[Whale Feed API] Stack trace:', errorStack);
+    }
+    
     return NextResponse.json(
       { 
         error: 'Failed to fetch whale transactions',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: errorMessage,
+        timestamp: new Date().toISOString()
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
     );
   } finally {
     if (blockscout) {
-      await blockscout.disconnect();
+      try {
+        await blockscout.disconnect();
+      } catch (disconnectError) {
+        console.error('[Whale Feed API] Error disconnecting:', disconnectError);
+      }
     }
   }
 }

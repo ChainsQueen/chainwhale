@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Home, LayoutDashboard, Activity } from 'lucide-react';
 
 export function AppHeader() {

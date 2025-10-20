@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ContractInfoDialog } from '@/components/contract-info-dialog';
+import { ContractInfoDialog } from '@/components/features/contract/contract-info-dialog';
 import { DataSourceBadge } from '@/components/ui/data-source-badge';
 import { ChainBadge } from '@/components/ui/chain-badge';
 import { AddressFlow } from '@/components/ui/address-flow';

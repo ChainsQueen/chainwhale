@@ -81,7 +81,13 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
               href={transfer.hash ? `https://etherscan.io/tx/${transfer.hash}` : undefined}
               disabled={!transfer.hash || transfer.hash === ''}
             />
-            <ValueDisplay value={transfer.valueUsd} size="md" />
+            <ValueDisplay 
+              value={transfer.valueUsd} 
+              tokenAmount={transfer.value}
+              tokenSymbol={transfer.token.symbol}
+              tokenDecimals={transfer.token.decimals}
+              size="md" 
+            />
           </div>
         </div>
       </CardContent>

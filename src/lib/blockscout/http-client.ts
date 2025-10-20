@@ -306,6 +306,19 @@ export class BlockscoutHttpClient {
         })
         .map((item): TokenTransfer => {
           const timestamp = new Date(item.timestamp).getTime();
+          
+          // Calculate USD value using historical exchange rate from transaction time
+          let valueUsd: number | undefined;
+          if (item.token?.exchange_rate && item.total?.value && item.total?.decimals) {
+            try {
+              const exchangeRate = parseFloat(item.token.exchange_rate);
+              const decimals = parseInt(item.total.decimals);
+              const tokenAmount = parseFloat(item.total.value) / Math.pow(10, decimals);
+              valueUsd = tokenAmount * exchangeRate;
+            } catch (error) {
+              console.warn(`[Blockscout] Failed to calculate USD value for ${item.token?.symbol}:`, error);
+            }
+          }
 
           return {
             hash: item.transaction_hash || '',
@@ -319,18 +332,37 @@ export class BlockscoutHttpClient {
               decimals: item.total?.decimals || item.token?.decimals || '18',
             },
             timestamp,
-            valueUsd: undefined,
+            valueUsd, // Use historical price from transaction time
             dataSource: 'http' as const,
           };
         });
 
       console.log(`[Blockscout] Fetched ${items.length} transfers for chain ${chainId}`);
+      
+      // Count how many have historical USD values
+      const withUsdCount = items.filter(t => t.valueUsd !== undefined).length;
+      console.log(`[Blockscout] ${withUsdCount}/${items.length} transfers have historical USD values`);
 
-      // Enrich with USD values
-      const enrichedItems = await this.enrichWithUsdValues(chainId, items);
+      // Only enrich transfers that don't have USD values yet (fallback to current price)
+      const itemsNeedingEnrichment = items.filter(t => t.valueUsd === undefined);
+      if (itemsNeedingEnrichment.length > 0) {
+        console.log(`[Blockscout] Enriching ${itemsNeedingEnrichment.length} transfers with current prices (fallback)`);
+        const enrichedFallback = await this.enrichWithUsdValues(chainId, itemsNeedingEnrichment);
+        
+        // Merge enriched items back
+        const enrichedMap = new Map(enrichedFallback.map(t => [t.hash, t]));
+        const finalItems = items.map(t => 
+          t.valueUsd !== undefined ? t : (enrichedMap.get(t.hash) || t)
+        );
+        
+        return {
+          items: finalItems,
+          nextCursor: data.next_page_params ? JSON.stringify(data.next_page_params) : undefined,
+        };
+      }
 
       return {
-        items: enrichedItems,
+        items,
         nextCursor: data.next_page_params ? JSON.stringify(data.next_page_params) : undefined,
       };
     } catch (error) {

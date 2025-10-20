@@ -276,15 +276,24 @@ export class BlockscoutClient {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const items: TokenTransfer[] = rawItems.map((item: any) => {
-        // Calculate USD value
+        // Calculate USD value using historical exchange rate from transaction time
         let valueUsd: number | undefined;
         
         if (item.total?.usd) {
+          // Direct USD value provided by MCP
           valueUsd = parseFloat(item.total.usd);
-        } else if (item.total?.value && item.token?.exchange_rate && item.token?.decimals) {
-          // Calculate from token value * exchange rate
-          const tokenValue = parseFloat(item.total.value) / Math.pow(10, parseInt(item.token.decimals));
-          valueUsd = tokenValue * parseFloat(item.token.exchange_rate);
+        } else if (item.total?.value && item.token?.exchange_rate) {
+          // Calculate from token value * historical exchange rate
+          // Use item.total.decimals (preferred) or fallback to item.token.decimals
+          const decimals = item.total?.decimals || item.token?.decimals || '18';
+          try {
+            const exchangeRate = parseFloat(item.token.exchange_rate);
+            const decimalPlaces = parseInt(decimals);
+            const tokenAmount = parseFloat(item.total.value) / Math.pow(10, decimalPlaces);
+            valueUsd = tokenAmount * exchangeRate;
+          } catch (error) {
+            console.warn(`[MCP Client] Failed to calculate USD value for ${item.token?.symbol}:`, error);
+          }
         }
         
         return {
@@ -296,12 +305,17 @@ export class BlockscoutClient {
             symbol: item.token?.symbol || 'UNKNOWN',
             address: item.token?.address_hash || item.token?.address || '',
             name: item.token?.name,
-            decimals: item.token?.decimals || '18',
+            decimals: item.total?.decimals || item.token?.decimals || '18',
           },
           timestamp: item.timestamp ? new Date(item.timestamp as string).getTime() : Date.now(),
           valueUsd,
+          dataSource: 'mcp' as const,
         };
       });
+
+      // Count how many have historical USD values
+      const withUsdCount = items.filter(t => t.valueUsd !== undefined).length;
+      console.log(`[MCP Client] ${withUsdCount}/${items.length} transfers have USD values`);
 
       return {
         items,

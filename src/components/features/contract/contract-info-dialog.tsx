@@ -1,5 +1,90 @@
 'use client';
 
+/**
+ * Token Contract Details Dialog - Data Sources & Testing Guide
+ * 
+ * ## Data Flow Architecture
+ * 
+ * ### 1. Props (Passed from Parent Component)
+ * These come from the whale tracker feed or wallet analysis:
+ * - `tokenAddress` - Contract address from blockchain event
+ * - `tokenName` - Token name from transfer event (may be undefined)
+ * - `tokenSymbol` - Token symbol from transfer event
+ * - `tokenDecimals` - Token decimals from transfer event
+ * - `chainId` - Blockchain chain ID (e.g., '1' for Ethereum)
+ * - `chainName` - Human-readable chain name (e.g., 'Ethereum')
+ * 
+ * ### 2. API Data (Fetched from Blockscout via `/api/whale-tracker/contract-info`)
+ * When dialog opens, fetches from Blockscout API `/addresses/{address}` endpoint:
+ * 
+ * **Security & Verification:**
+ * - `isVerified` - Contract source code verification status (boolean | undefined)
+ * - `isProxy` - Whether contract uses proxy pattern (boolean)
+ * - `implementationAddress` - Implementation contract for proxies (string | undefined)
+ * - `isScam` - Scam detection flag (boolean | undefined)
+ * - `reputation` - Security reputation score (string | undefined)
+ * 
+ * **Token Metadata:**
+ * - `tokenType` - Token standard (ERC-20, ERC-721, etc.)
+ * - `iconUrl` - Token logo URL from Blockscout
+ * 
+ * **Market Data (from Blockscout price feeds):**
+ * - `tokenPrice` - Current USD price per token (exchange_rate)
+ * - `marketCap` - Circulating market capitalization
+ * - `volume24h` - 24-hour trading volume
+ * 
+ * **Token Statistics:**
+ * - `holderCount` - Number of unique token holders
+ * - `totalSupply` - Total token supply (raw value, not adjusted by decimals)
+ * 
+ * **Contract Creation:**
+ * - `creatorAddress` - Address that deployed the contract
+ * - `creationTxHash` - Transaction hash of contract deployment
+ * 
+ * ### 3. Computed/Derived Data
+ * - Explorer URLs - Generated from `chainId` + `address` using `getExplorerUrl()`
+ * - Formatted numbers - Market cap, volume, price formatting
+ * - Badge states - Derived from verification, proxy, scam flags
+ * 
+ * ## Testing Checklist
+ * 
+ * ### Unit Tests (Component Behavior)
+ * - [ ] Dialog opens/closes correctly
+ * - [ ] Loading state displays while fetching
+ * - [ ] Props are displayed correctly (name, symbol, chain)
+ * - [ ] Copy button works for contract address
+ * - [ ] Custom trigger element renders
+ * 
+ * ### Integration Tests (API & Data Flow)
+ * - [ ] API endpoint returns correct data structure
+ * - [ ] Verified contracts show green badge
+ * - [ ] Unverified contracts show warning
+ * - [ ] Proxy contracts display implementation address
+ * - [ ] Scam contracts show red warning alert
+ * - [ ] Market data displays when available
+ * - [ ] Missing data (undefined) handled gracefully
+ * 
+ * ### E2E Tests (User Interactions)
+ * - [ ] "View on Explorer" opens correct Blockscout token page
+ * - [ ] "View Contract" opens correct Blockscout address page
+ * - [ ] Deployment tx link opens correct transaction page
+ * - [ ] Links use correct chain explorer (Etherscan, Basescan, etc.)
+ * - [ ] Copy address button copies to clipboard
+ * 
+ * ### Data Validation Tests
+ * - [ ] Test with verified contract (e.g., USDT on Ethereum)
+ * - [ ] Test with unverified contract
+ * - [ ] Test with proxy contract (e.g., USDC)
+ * - [ ] Test with token missing market data
+ * - [ ] Test with different chains (Ethereum, Base, Arbitrum)
+ * - [ ] Test error handling when API fails
+ * 
+ * ### Example Test Addresses
+ * - **Verified ERC-20**: `0xdAC17F958D2ee523a2206206994597C13D831ec7` (USDT on Ethereum)
+ * - **Proxy Contract**: `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` (USDC on Ethereum)
+ * - **Base Chain**: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (USDC on Base)
+ */
+
 import { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -11,12 +96,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { FileCode, ExternalLink } from 'lucide-react';
+import { FileCode, ExternalLink, Info } from 'lucide-react';
 import { getExplorerUrl } from '@/core/utils/wallet-utils';
 import { AlertBox } from '@/components/ui/alert-box';
 import { CopyButton } from '@/components/ui/copy-button';
 import { InfoGrid } from '@/components/ui/info-grid';
 import { SecurityBadges } from '@/components/features/contract/security-badges';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 /**
  * Contract information data structure
@@ -190,7 +281,7 @@ export function ContractInfoDialog({
 
           {/* Token Icon & Price */}
           {contractInfo && (contractInfo.tokenPrice || contractInfo.iconUrl) && (
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-muted/30 dark:bg-muted/50 rounded-lg border border-border">
               {contractInfo.iconUrl && (
                 <Image 
                   src={contractInfo.iconUrl} 
@@ -198,7 +289,7 @@ export function ContractInfoDialog({
                   width={40}
                   height={40}
                   className="w-10 h-10 rounded-full"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.style.display = 'none'; }}
                   unoptimized
                 />
               )}
@@ -206,7 +297,7 @@ export function ContractInfoDialog({
                 {contractInfo.tokenPrice && (
                   <div>
                     <span className="text-xs text-muted-foreground">Price</span>
-                    <p className="text-lg font-bold">${parseFloat(contractInfo.tokenPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
+                    <p className="text-lg font-bold text-foreground">${parseFloat(contractInfo.tokenPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
                   </div>
                 )}
               </div>
@@ -217,17 +308,17 @@ export function ContractInfoDialog({
           {contractInfo && (contractInfo.marketCap || contractInfo.volume24h) && (
             <div className="space-y-2">
               <h4 className="text-sm font-semibold">Market Statistics</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 {contractInfo.marketCap && (
-                  <div>
-                    <span className="text-muted-foreground">Market Cap:</span>
-                    <p className="font-medium">${parseFloat(contractInfo.marketCap).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                  <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                    <span className="text-muted-foreground text-xs">Market Cap</span>
+                    <p className="font-semibold text-foreground">${parseFloat(contractInfo.marketCap).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                   </div>
                 )}
                 {contractInfo.volume24h && (
-                  <div>
-                    <span className="text-muted-foreground">24h Volume:</span>
-                    <p className="font-medium">${parseFloat(contractInfo.volume24h).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                  <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                    <span className="text-muted-foreground text-xs">24h Volume</span>
+                    <p className="font-semibold text-foreground">${parseFloat(contractInfo.volume24h).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                   </div>
                 )}
               </div>
@@ -240,17 +331,41 @@ export function ContractInfoDialog({
             items={[
               { label: 'Name', value: tokenName || 'Unknown' },
               { label: 'Symbol', value: tokenSymbol },
-              ...(tokenDecimals ? [{ label: 'Decimals', value: tokenDecimals }] : []),
+              ...(tokenDecimals ? [{ label: 'Decimals', value: String(tokenDecimals) }] : []),
               { label: 'Chain', value: chainName },
               { 
-                label: 'Holders', 
+                label: (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1 cursor-help">
+                          HOLDERS
+                          <Info className="h-3 w-3 text-muted-foreground" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs bg-popover text-popover-foreground border-border">
+                        <p className="text-xs text-foreground">
+                          Holder count may differ from other sources (e.g., Etherscan) due to:
+                        </p>
+                        <ul className="text-xs list-disc list-inside mt-1 space-y-0.5 text-foreground">
+                          <li>Different counting methods</li>
+                          <li>Update timing differences</li>
+                          <li>Zero-balance address filtering</li>
+                        </ul>
+                        <p className="text-xs mt-1 text-muted-foreground">
+                          Data from Blockscout
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ),
                 value: contractInfo?.holderCount 
-                  ? contractInfo.holderCount.toLocaleString() 
+                  ? contractInfo.holderCount.toLocaleString(undefined, { maximumFractionDigits: 0 }) 
                   : 'Data unavailable' 
               },
               ...(contractInfo?.totalSupply ? [{ 
                 label: 'Total Supply', 
-                value: contractInfo.totalSupply,
+                value: parseFloat(contractInfo.totalSupply).toLocaleString(undefined, { maximumFractionDigits: 0 }),
                 colSpan: 2 as const
               }] : []),
             ]}
@@ -260,19 +375,19 @@ export function ContractInfoDialog({
           {contractInfo?.creatorAddress && (
             <div className="space-y-2">
               <h4 className="text-sm font-semibold">Contract Details</h4>
-              <div className="text-sm space-y-1">
-                <div>
-                  <span className="text-muted-foreground">Creator:</span>
-                  <p className="font-mono text-xs break-all">{contractInfo.creatorAddress}</p>
+              <div className="text-sm space-y-2 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs">Creator</span>
+                  <p className="font-mono text-xs break-all text-foreground">{contractInfo.creatorAddress}</p>
                 </div>
                 {contractInfo.creationTxHash && (
-                  <div>
-                    <span className="text-muted-foreground">Deployment Tx:</span>
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs">Deployment Tx</span>
                     <a 
-                      href={getExplorerUrl(contractInfo.creationTxHash, chainId, 'tx')}
+                      href={getExplorerUrl(chainId, contractInfo.creationTxHash, 'tx')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-xs text-primary hover:underline break-all"
+                      className="font-mono text-xs text-primary hover:underline break-all block"
                     >
                       {contractInfo.creationTxHash.slice(0, 20)}...
                     </a>
@@ -319,7 +434,7 @@ export function ContractInfoDialog({
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">Contract Address</h4>
             <div className="flex items-center gap-2">
-              <code className="flex-1 px-3 py-2 bg-muted rounded text-xs font-mono break-all">
+              <code className="flex-1 px-3 py-2 bg-muted/50 dark:bg-muted rounded text-xs font-mono break-all border border-border">
                 {tokenAddress}
               </code>
               <CopyButton text={tokenAddress} title="Copy address" />
@@ -331,18 +446,30 @@ export function ContractInfoDialog({
             <Button
               variant="outline"
               className="flex-1 gap-2"
-              onClick={() => window.open(getExplorerUrl(tokenAddress, chainId, 'token'), '_blank')}
+              asChild
             >
-              <ExternalLink className="h-4 w-4" />
-              View on Explorer
+              <a
+                href={getExplorerUrl(chainId, tokenAddress, 'token')}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View on Explorer
+              </a>
             </Button>
             <Button
               variant="outline"
               className="flex-1 gap-2"
-              onClick={() => window.open(getExplorerUrl(tokenAddress, chainId, 'address'), '_blank')}
+              asChild
             >
-              <FileCode className="h-4 w-4" />
-              View Contract
+              <a
+                href={getExplorerUrl(chainId, tokenAddress, 'address')}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileCode className="h-4 w-4" />
+                View Contract
+              </a>
             </Button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WhaleDetector } from '@/core/services/whale-detector';
 import { BlockscoutClient } from '@/lib/blockscout';
 import { AIEngine } from '@/lib/ai';
@@ -26,6 +26,20 @@ describe('WhaleDetector', () => {
   });
 
   describe('detectWhaleTransactions', () => {
+    // Suppress console output for all tests in this suite
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+    let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+      consoleLogSpy.mockRestore();
+    });
+
     it('should detect whale transactions above threshold', async () => {
       const mockTransfers = [
         {

@@ -1,22 +1,28 @@
+/**
+ * Whale tracking and analysis service
+ * 
+ * @module core/services/whale-service
+ */
+
 import type { IBlockscoutClient } from '@/lib/blockscout/factory';
 import type { TokenTransfer, Chain } from '@/lib/shared/types';
+import type { WhaleTransfer, WhaleStats } from '@/core/types/whale.types';
 
-export interface WhaleTransfer extends TokenTransfer {
-  chainName: string;
-  chainId: string;
-  dataSource?: 'mcp' | 'http';
-}
-
-export interface WhaleStats {
-  totalTransfers: number;
-  totalVolume: number;
-  largestTransfer: number;
-  uniqueWhales: number;
-}
+// Re-export types for backward compatibility
+export type { WhaleTransfer, WhaleStats } from '@/core/types/whale.types';
 
 /**
  * Whale Detection Service
- * Handles whale tracking and analysis without database
+ * 
+ * Handles real-time whale tracking and analysis across multiple blockchains.
+ * Monitors known whale addresses and provides statistics on large transfers.
+ * 
+ * @class WhaleService
+ * 
+ * @example
+ * const service = new WhaleService(100000, blockscoutClient);
+ * const transfers = await service.getWhaleFeed('1', 'Ethereum', '24h');
+ * const stats = service.getWhaleStats(transfers);
  */
 export class WhaleService {
   private client: IBlockscoutClient;
@@ -43,6 +49,18 @@ export class WhaleService {
 
   /**
    * Get real-time whale feed for a specific chain
+   * 
+   * Fetches token transfers from known whale addresses within the specified time range.
+   * Filters transfers by minimum USD value and sorts by value descending.
+   * 
+   * @param chainId - Blockchain chain ID (e.g., '1' for Ethereum)
+   * @param chainName - Human-readable chain name (e.g., 'Ethereum')
+   * @param timeRange - Time range for transfers (e.g., '24h', '7d')
+   * @returns Promise resolving to array of whale transfers sorted by USD value
+   * 
+   * @example
+   * const transfers = await service.getWhaleFeed('1', 'Ethereum', '24h');
+   * console.log(`Found ${transfers.length} whale transfers`);
    */
   async getWhaleFeed(
     chainId: string,
@@ -95,6 +113,17 @@ export class WhaleService {
 
   /**
    * Get whale feed across multiple chains
+   * 
+   * Fetches whale transfers from multiple blockchains in parallel and combines results.
+   * Handles failures gracefully by continuing with successful chains.
+   * 
+   * @param chains - Array of chain configurations to monitor
+   * @param timeRange - Time range for transfers (default: '1h')
+   * @returns Promise resolving to combined array of whale transfers sorted by USD value
+   * 
+   * @example
+   * const chains = [{ id: '1', name: 'Ethereum' }, { id: '8453', name: 'Base' }];
+   * const transfers = await service.getMultiChainWhaleFeed(chains, '24h');
    */
   async getMultiChainWhaleFeed(
     chains: Chain[],
@@ -125,7 +154,18 @@ export class WhaleService {
   }
 
   /**
-   * Get statistics for whale transfers
+   * Calculate statistics for whale transfers
+   * 
+   * Aggregates transfer data to provide insights on total volume, largest transfer,
+   * and unique whale addresses involved.
+   * 
+   * @param transfers - Array of whale transfers to analyze
+   * @returns Statistics object with aggregated metrics
+   * 
+   * @example
+   * const stats = service.getWhaleStats(transfers);
+   * console.log(`Total volume: $${stats.totalVolume.toLocaleString()}`);
+   * console.log(`Unique whales: ${stats.uniqueWhales}`);
    */
   getWhaleStats(transfers: WhaleTransfer[]): WhaleStats {
     const uniqueAddresses = new Set<string>();
@@ -153,7 +193,25 @@ export class WhaleService {
   }
 
   /**
-   * Get activity for a specific whale address
+   * Get detailed activity profile for a specific whale address
+   * 
+   * Fetches all token transfers for a whale address over the specified time period
+   * and calculates total volume and transfer count.
+   * 
+   * @param chainId - Blockchain chain ID
+   * @param chainName - Human-readable chain name
+   * @param address - Whale wallet address to analyze
+   * @param days - Number of days to look back (default: 7)
+   * @returns Promise resolving to whale profile with transfers and statistics
+   * 
+   * @example
+   * const profile = await service.getWhaleProfile(
+   *   '1',
+   *   'Ethereum',
+   *   '0x28C6c06298d514Db089934071355E5743bf21d60',
+   *   30
+   * );
+   * console.log(`${profile.transferCount} transfers, $${profile.totalVolume} volume`);
    */
   async getWhaleProfile(
     chainId: string,
@@ -210,6 +268,15 @@ export class WhaleService {
 
   /**
    * Filter transfers by token symbol
+   * 
+   * Case-insensitive filtering of transfers by token symbol.
+   * 
+   * @param transfers - Array of whale transfers to filter
+   * @param tokenSymbol - Token symbol to filter by (e.g., 'USDC', 'ETH')
+   * @returns Filtered array of transfers matching the token symbol
+   * 
+   * @example
+   * const usdcTransfers = service.filterByToken(allTransfers, 'USDC');
    */
   filterByToken(transfers: WhaleTransfer[], tokenSymbol: string): WhaleTransfer[] {
     return transfers.filter(t => 
@@ -219,6 +286,15 @@ export class WhaleService {
 
   /**
    * Filter transfers by minimum USD value
+   * 
+   * Returns only transfers with USD value greater than or equal to the specified minimum.
+   * 
+   * @param transfers - Array of whale transfers to filter
+   * @param minValue - Minimum USD value threshold
+   * @returns Filtered array of transfers meeting the minimum value
+   * 
+   * @example
+   * const largeTransfers = service.filterByMinValue(allTransfers, 1000000);
    */
   filterByMinValue(transfers: WhaleTransfer[], minValue: number): WhaleTransfer[] {
     return transfers.filter(t => 
@@ -227,7 +303,20 @@ export class WhaleService {
   }
 
   /**
-   * Get top whales by volume (from transfer data)
+   * Get top whale addresses ranked by total volume
+   * 
+   * Aggregates transfer data to identify the most active whale addresses
+   * by total USD volume. Counts both sent and received transfers.
+   * 
+   * @param transfers - Array of whale transfers to analyze
+   * @param limit - Maximum number of top whales to return (default: 10)
+   * @returns Array of top whales sorted by volume descending
+   * 
+   * @example
+   * const topWhales = service.getTopWhales(transfers, 5);
+   * topWhales.forEach(whale => {
+   *   console.log(`${whale.address}: $${whale.volume} (${whale.transferCount} txs)`);
+   * });
    */
   getTopWhales(transfers: WhaleTransfer[], limit: number = 10): Array<{
     address: string;

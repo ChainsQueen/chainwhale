@@ -10,6 +10,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'tests/integration', 'tests/e2e'],
+    css: false, // Completely disable CSS processing
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

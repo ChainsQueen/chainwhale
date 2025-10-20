@@ -1,35 +1,45 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Custom hook for monitoring OpenAI API key presence in localStorage
+ * Custom hook for managing OpenAI API key in localStorage
  * 
- * Tracks whether an API key is stored and automatically updates when:
+ * Tracks whether an API key is stored and provides methods to manage it.
+ * Automatically updates when:
  * - Component mounts
  * - localStorage changes (cross-tab synchronization)
  * - Window regains focus (detects external changes)
  * 
- * Checks both 'ai_api_key' and 'openai_api_key' keys for backwards compatibility.
+ * Uses 'openai_api_key' as the primary storage key.
  * 
- * @returns Object containing API key status
- * @returns {boolean} hasApiKey - Whether a valid API key exists in localStorage
+ * @returns Object containing API key state and methods
+ * @returns {string} apiKey - The current API key value (empty string if not set)
+ * @returns {boolean} hasApiKey - Whether a valid API key exists
+ * @returns {function} setApiKey - Function to save an API key
+ * @returns {function} removeApiKey - Function to remove the API key
  * 
  * @example
- * function ApiKeyStatus() {
- *   const { hasApiKey } = useApiKey();
+ * function ApiKeyManager() {
+ *   const { apiKey, hasApiKey, setApiKey, removeApiKey } = useApiKey();
  *   
  *   return (
  *     <div>
- *       {hasApiKey ? '✓ API Key configured' : '⚠ No API Key'}
+ *       {hasApiKey ? (
+ *         <button onClick={removeApiKey}>Remove Key</button>
+ *       ) : (
+ *         <input onChange={(e) => setApiKey(e.target.value)} />
+ *       )}
  *     </div>
  *   );
  * }
  */
 export function useApiKey() {
+  const [apiKey, setApiKeyState] = useState('');
   const [hasApiKey, setHasApiKey] = useState(false);
 
   useEffect(() => {
     const checkApiKey = () => {
-      const key = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+      const key = localStorage.getItem('openai_api_key') || '';
+      setApiKeyState(key);
       setHasApiKey(!!key);
     };
     
@@ -43,5 +53,17 @@ export function useApiKey() {
     };
   }, []);
 
-  return { hasApiKey };
+  const setApiKey = (key: string) => {
+    localStorage.setItem('openai_api_key', key);
+    setApiKeyState(key);
+    setHasApiKey(!!key);
+  };
+
+  const removeApiKey = () => {
+    localStorage.removeItem('openai_api_key');
+    setApiKeyState('');
+    setHasApiKey(false);
+  };
+
+  return { apiKey, hasApiKey, setApiKey, removeApiKey };
 }

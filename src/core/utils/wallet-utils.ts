@@ -41,8 +41,8 @@ export function validateAddress(addr: string): boolean {
  * // 'https://basescan.org/tx/0xabc...'
  */
 export function getExplorerUrl(
+  chainId: string,
   address: string,
-  chainId?: string,
   type: 'tx' | 'address' | 'token' = 'address'
 ): string {
   const chain = CHAINS[chainId || DEFAULT_CHAIN_ID];
@@ -66,69 +66,79 @@ export function getChainName(chainId: string): string {
 }
 
 /**
- * Formats an ETH balance with 4 decimal places
+ * Formats an ETH balance from wei to ETH with 2 decimal places
  * 
- * @param balance - Balance value in ETH
- * @returns Formatted string with thousands separators and 4 decimals
+ * @param wei - Balance value in wei (as string)
+ * @returns Formatted ETH balance
  * 
  * @example
- * formatEthBalance(1234.5678) // '1,234.5678'
- * formatEthBalance(0.0001) // '0.0001'
+ * formatEthBalance('1000000000000000000') // '1.00'
+ * formatEthBalance('1500000000000000000') // '1.50'
  */
-export function formatEthBalance(balance: number): string {
-  return balance.toLocaleString('en-US', {
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4,
-  });
+export function formatEthBalance(wei: string): string {
+  const ethValue = Number(wei) / 1e18;
+  return ethValue.toFixed(2);
 }
 
 /**
- * Formats a USD value with 2 decimal places
+ * Formats a USD value with proper formatting
  * 
  * @param value - Value in USD
- * @returns Formatted string with thousands separators and 2 decimals
+ * @param options - Formatting options (compact for K/M notation)
+ * @returns Formatted USD string
  * 
  * @example
- * formatUsdValue(1234567.89) // '1,234,567.89'
- * formatUsdValue(0.5) // '0.50'
+ * formatUsdValue(1234.56) // '$1,234.56'
+ * formatUsdValue(1500000, { compact: true }) // '$1.5M'
  */
-export function formatUsdValue(value: number): string {
-  return value.toLocaleString('en-US', {
+export function formatUsdValue(
+  value: number,
+  options?: { compact?: boolean }
+): string {
+  if (options?.compact && value >= 1000000) {
+    return `$${(value / 1000000).toFixed(1)}M`;
+  }
+  
+  if (options?.compact && value >= 1000) {
+    return `$${(value / 1000).toFixed(1)}K`;
+  }
+  
+  return `$${value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  })}`;
 }
 
 /**
  * Gets the Tailwind CSS color class for a risk score
  * 
- * @param score - Risk score (0-100)
+ * @param score - Risk score (0-10)
  * @returns Tailwind text color class
  * 
  * @example
- * getRiskColor(20) // 'text-green-500' (low risk)
- * getRiskColor(50) // 'text-yellow-500' (medium risk)
- * getRiskColor(80) // 'text-red-500' (high risk)
+ * getRiskColor(2) // 'text-green-500' (low risk)
+ * getRiskColor(5) // 'text-yellow-500' (medium risk)
+ * getRiskColor(8) // 'text-red-500' (high risk)
  */
-export function getRiskColor(score: RiskScore): string {
-  if (score < 30) return 'text-green-500';
-  if (score < 70) return 'text-yellow-500';
+export function getRiskColor(score: number): string {
+  if (score <= 3) return 'text-green-500';
+  if (score <= 6) return 'text-yellow-500';
   return 'text-red-500';
 }
 
 /**
  * Gets the human-readable label for a risk score
  * 
- * @param score - Risk score (0-100)
+ * @param score - Risk score (0-10)
  * @returns Risk level label
  * 
  * @example
- * getRiskLabel(20) // 'Low Risk'
- * getRiskLabel(50) // 'Medium Risk'
- * getRiskLabel(80) // 'High Risk'
+ * getRiskLabel(2) // 'Low'
+ * getRiskLabel(5) // 'Medium'
+ * getRiskLabel(8) // 'High'
  */
-export function getRiskLabel(score: RiskScore): RiskLevel {
-  if (score < 30) return 'low';
-  if (score < 70) return 'medium';
-  return 'high';
+export function getRiskLabel(score: number): string {
+  if (score <= 3) return 'Low';
+  if (score <= 6) return 'Medium';
+  return 'High';
 }

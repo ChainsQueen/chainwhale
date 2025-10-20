@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useWalletAnalysis } from '@/core/hooks/use-wallet-analysis';
 
 describe('useWalletAnalysis', () => {
@@ -38,7 +38,9 @@ describe('useWalletAnalysis', () => {
 
     const { result } = renderHook(() => useWalletAnalysis());
 
-    result.current.analyzeWallet('vitalik.eth', ['1']);
+    act(() => {
+      result.current.analyzeWallet('vitalik.eth', ['1']);
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -57,7 +59,9 @@ describe('useWalletAnalysis', () => {
 
     const { result } = renderHook(() => useWalletAnalysis());
 
-    result.current.analyzeWallet('invalid-address', ['1']);
+    act(() => {
+      result.current.analyzeWallet('invalid-address', ['1']);
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -74,9 +78,13 @@ describe('useWalletAnalysis', () => {
 
     const { result } = renderHook(() => useWalletAnalysis());
 
-    result.current.analyzeWallet('0x123', ['1']);
+    act(() => {
+      result.current.analyzeWallet('0x123', ['1']);
+    });
 
-    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(true);
+    }, { timeout: 50 });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

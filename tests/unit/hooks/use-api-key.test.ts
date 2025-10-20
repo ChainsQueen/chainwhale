@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useApiKey } from '@/core/hooks/use-api-key';
 
 describe('useApiKey', () => {
@@ -15,13 +15,15 @@ describe('useApiKey', () => {
     expect(result.current.hasApiKey).toBe(false);
   });
 
-  it('should load API key from localStorage on mount', () => {
-    localStorage.setItem('openai_api_key', 'sk-test123');
+  it('should load API key from localStorage on mount', async () => {
+    (localStorage.getItem as any).mockReturnValue('sk-test123');
 
     const { result } = renderHook(() => useApiKey());
 
-    expect(result.current.apiKey).toBe('sk-test123');
-    expect(result.current.hasApiKey).toBe(true);
+    await waitFor(() => {
+      expect(result.current.apiKey).toBe('sk-test123');
+      expect(result.current.hasApiKey).toBe(true);
+    });
   });
 
   it('should save API key to localStorage', () => {
@@ -37,7 +39,7 @@ describe('useApiKey', () => {
   });
 
   it('should remove API key from localStorage', () => {
-    localStorage.setItem('openai_api_key', 'sk-test123');
+    (localStorage.getItem as any).mockReturnValue('sk-test123');
 
     const { result } = renderHook(() => useApiKey());
 

@@ -1,19 +1,53 @@
-// File: /Users/destiny/Desktop/chainwhale/src/components/ui/explorer-link.tsx
 import { ExternalLink } from 'lucide-react';
 
+/**
+ * Props for ExplorerLink component
+ */
 interface ExplorerLinkProps {
+  /** URL to blockchain explorer */
   href?: string;
+  /** Disable the link (shows grayed out icon) */
   disabled?: boolean;
+  /** Icon size variant */
   size?: 'sm' | 'md' | 'lg';
+  /** Additional CSS classes */
   className?: string;
+  /** Accessibility label for screen readers */
   ariaLabel?: string;
 }
 
 /**
- * External link to blockchain explorer with conditional styling
+ * External link icon for blockchain explorer with smart disabled state
+ * 
+ * Features:
+ * - Opens in new tab with security attributes (noopener noreferrer)
+ * - Automatically disables if href is missing or '#'
+ * - Visual feedback: hover opacity change when enabled
+ * - Accessible: proper ARIA labels and keyboard navigation
+ * - Three size variants (sm/md/lg)
+ * 
+ * Disabled state:
+ * - Grayed out with reduced opacity
+ * - Cursor changes to not-allowed
+ * - Click events prevented
+ * 
+ * @component
  * 
  * @example
+ * // Active link to transaction
  * <ExplorerLink href="https://etherscan.io/tx/0x123..." />
+ * 
+ * @example
+ * // Small size with custom label
+ * <ExplorerLink
+ *   href="https://basescan.org/address/0xabc..."
+ *   size="sm"
+ *   ariaLabel="View contract on BaseScan"
+ * />
+ * 
+ * @example
+ * // Disabled state
+ * <ExplorerLink disabled={true} />
  */
 export function ExplorerLink({ 
   href, 

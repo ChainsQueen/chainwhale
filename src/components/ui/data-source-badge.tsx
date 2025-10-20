@@ -1,11 +1,40 @@
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 
+/**
+ * Props for DataSourceBadge component
+ */
 interface DataSourceBadgeProps {
+  /** Data source type (MCP, HTTP, or Hybrid) */
   dataSource?: 'mcp' | 'http' | 'hybrid';
+  /** Badge size variant */
   size?: 'sm' | 'md';
 }
 
+/**
+ * Displays a badge indicating the data source for blockchain data
+ * 
+ * Shows different visual styles based on data source:
+ * - **MCP**: Purple-to-blue gradient with sparkles icon (Model Context Protocol)
+ * - **Hybrid**: Purple-blue-slate gradient with sparkles (mixed sources)
+ * - **HTTP**: Gray badge (standard HTTP API)
+ * 
+ * Returns null if no data source is provided.
+ * 
+ * @component
+ * 
+ * @example
+ * // MCP data source
+ * <DataSourceBadge dataSource="mcp" size="md" />
+ * 
+ * @example
+ * // HTTP data source (small)
+ * <DataSourceBadge dataSource="http" size="sm" />
+ * 
+ * @example
+ * // Hybrid data source
+ * <DataSourceBadge dataSource="hybrid" />
+ */
 export function DataSourceBadge({ dataSource, size = 'md' }: DataSourceBadgeProps) {
   if (!dataSource) return null;
   

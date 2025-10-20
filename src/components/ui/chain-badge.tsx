@@ -1,19 +1,40 @@
-// File: /Users/destiny/Desktop/chainwhale/src/components/ui/chain-badge.tsx
 import { Badge } from '@/components/ui/badge';
 
+/**
+ * Props for ChainBadge component
+ */
 interface ChainBadgeProps {
+  /** Human-readable blockchain name (e.g., 'Ethereum', 'Base') */
   chainName: string;
+  /** Chain ID (optional, for future use) */
   chainId?: string;
+  /** Badge size variant */
   size?: 'sm' | 'md';
+  /** Badge visual variant */
   variant?: 'default' | 'secondary' | 'outline';
+  /** Additional CSS classes */
   className?: string;
 }
 
 /**
- * Display blockchain network badge
+ * Displays a blockchain network badge with consistent styling
+ * 
+ * Shows the blockchain name in a compact badge format.
+ * Supports two sizes (sm/md) and multiple visual variants.
+ * 
+ * @component
  * 
  * @example
+ * // Default medium size
  * <ChainBadge chainName="Ethereum" chainId="1" />
+ * 
+ * @example
+ * // Small size with outline variant
+ * <ChainBadge
+ *   chainName="Base"
+ *   size="sm"
+ *   variant="outline"
+ * />
  */
 export function ChainBadge({ 
   chainName, 

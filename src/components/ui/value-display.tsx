@@ -1,16 +1,43 @@
-// File: /Users/destiny/Desktop/chainwhale/src/components/ui/value-display.tsx
+/**
+ * Props for ValueDisplay component
+ */
 interface ValueDisplayProps {
+  /** USD value to display */
   value?: number;
+  /** Text size variant */
   size?: 'sm' | 'md' | 'lg';
+  /** Whether to show 'N/A' when value is undefined */
   showNA?: boolean;
+  /** Additional CSS classes */
   className?: string;
 }
 
 /**
- * Display formatted USD values with color coding based on amount
+ * Displays formatted USD values with color-coded styling based on amount
+ * 
+ * Features:
+ * - **Formatting**: Compact notation for large values (e.g., $1.5M)
+ * - **Color coding**:
+ *   - Green: >= $1M (mega whale)
+ *   - Orange: >= $500K (large whale)
+ *   - Blue: < $500K (medium whale)
+ *   - Gray: No value
+ * - **Responsive sizing**: Three size variants (sm/md/lg)
+ * - **Fallback**: Shows 'N/A' for undefined values (configurable)
+ * 
+ * @component
  * 
  * @example
+ * // Large whale transfer (green)
  * <ValueDisplay value={1500000} size="lg" />
+ * 
+ * @example
+ * // Medium transfer (blue)
+ * <ValueDisplay value={250000} size="md" />
+ * 
+ * @example
+ * // No value with custom behavior
+ * <ValueDisplay value={undefined} showNA={false} />
  */
 export function ValueDisplay({ value, size = 'md', showNA = true, className }: ValueDisplayProps) {
   const formatValue = (val: number) => {

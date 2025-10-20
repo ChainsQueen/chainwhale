@@ -4,19 +4,51 @@ import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+/**
+ * Props for CopyButton component
+ */
 interface CopyButtonProps {
+  /** Text to copy to clipboard */
   text: string;
+  /** Button visual variant */
   variant?: 'default' | 'outline' | 'ghost';
+  /** Button size variant */
   size?: 'default' | 'sm' | 'lg' | 'icon';
+  /** Additional CSS classes */
   className?: string;
+  /** Tooltip text on hover */
   title?: string;
 }
 
 /**
- * Reusable copy-to-clipboard button with visual feedback
+ * Copy-to-clipboard button with automatic visual feedback
+ * 
+ * Features:
+ * - Copies text to clipboard on click
+ * - Icon changes from Copy to Check (green) on success
+ * - Automatically reverts to Copy icon after 2 seconds
+ * - Supports all button variants and sizes
+ * - Accessible with proper title attribute
+ * 
+ * Perfect for copying addresses, transaction hashes, and other blockchain data.
+ * 
+ * @component
  * 
  * @example
- * <CopyButton text="0x123..." variant="outline" size="icon" />
+ * // Icon-only button with outline
+ * <CopyButton
+ *   text="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+ *   variant="outline"
+ *   size="icon"
+ * />
+ * 
+ * @example
+ * // Small button with custom title
+ * <CopyButton
+ *   text="Transaction hash: 0x123..."
+ *   size="sm"
+ *   title="Copy transaction hash"
+ * />
  */
 export function CopyButton({ 
   text, 

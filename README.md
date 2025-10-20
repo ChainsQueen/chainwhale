@@ -1,805 +1,294 @@
 # 🐋 ChainWhale
 
-AI-powered blockchain analytics platform for intelligent wallet analysis, whale tracking, and multi-chain portfolio monitoring.
+> AI-powered blockchain analytics for intelligent wallet analysis and whale tracking
+
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
+![Blockscout](https://img.shields.io/badge/Blockscout-MCP-purple)
+
+## Table of Contents
+
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Architecture](#-architecture)
+- [Tech Stack](#️-tech-stack)
+- [API Documentation](#-api-documentation)
+- [Development](#-development)
+- [Deployment](#-deployment)
+- [License](#-license)
 
 ## ✨ Features
 
-- **💬 AI Chat** - Natural language blockchain queries and smart contract analysis
-- **🐋 Whale Tracker** - Monitor large transfers ($10K-$1M+) across 5 chains in real-time
-- **💼 Wallet Analysis** - Comprehensive wallet investigation with risk assessment
-- **📊 Multi-Chain Support** - Ethereum, Base, Arbitrum, Optimism, Polygon
-- **🔐 Privacy-First** - User-managed API keys stored client-side only
+- **🐋 Whale Tracker** - Real-time monitoring of large transfers ($10K+) across 5 chains
+- **💼 Wallet Analysis** - Comprehensive portfolio breakdown with risk scoring
+- **💬 AI Chat** - Natural language blockchain queries with customizable AI models
+- **📊 Multi-Chain** - Ethereum, Base, Arbitrum, Optimism, Polygon
+- **🔐 Privacy-First** - Client-side API key storage
 
 ## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 20+
-- pnpm 9+
-- Docker (for Blockscout MCP integration)
-
-### Installation
 
 ```bash
 # Install dependencies
 pnpm install
 
-# (Optional) Create .env.local for configuration
-# By default, uses Blockscout MCP Server (requires Docker)
-# MCP provides complete data including transaction hashes
-# To force HTTP-only mode: BLOCKSCOUT_USE_HTTP=true
-# To disable MCP: BLOCKSCOUT_MCP_FIRST=false
-
 # Run development server
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and navigate to:
-- `/dashboard` - AI chat, whale feed, wallet analysis
-- `/whales` - Full-screen whale tracker with advanced filters
+**Visit:** [http://localhost:3000](http://localhost:3000)
 
-## 🛠️ Tech Stack
+> **💡 AI Configuration:** Navigate to Settings to add your AI API key (OpenAI, Anthropic, or any compatible provider) to enable AI-powered insights.
 
-- Next.js 15.5.4 + React 19 + TypeScript
-- Tailwind CSS 4.x + shadcn/ui
-- **Blockscout MCP Server** (Docker) + REST API v2 for blockchain data
-- Model Context Protocol SDK v1.20.0
+### Prerequisites
 
-## 🔗 Blockscout Integration
+- Node.js 20+
+- pnpm 9+
+- Docker (optional, for MCP server)
 
-ChainWhale leverages multiple Blockscout APIs and tools across different features:
+### Configuration
 
-### **🐋 Whale Tracker**
-- **API Used**: Blockscout MCP Server (Docker)
-  - **Primary**: Blockscout MCP Server via Docker (`get_token_transfers_by_address`)
-  - **Data**: Complete transfer data including transaction hashes from MCP
-  - **Fallback**: REST API v2 only when MCP connection fails or returns empty
-  - **Safety Net**: Hash enrichment from HTTP if MCP data lacks hashes (rarely needed)
-- **Docker Image**: `ghcr.io/blockscout/mcp-server:latest` (official v0.11.0)
-- **Purpose**: Fetch ERC-20 token transfers from known whale addresses
-- **Data Retrieved**: Transaction hashes, token transfers, timestamps, addresses, USD values, data source tags
-- **Strategy**: 100% MCP data usage - MCP provides complete blockchain data
-- **Supported Chains:**
-  - Ethereum (id:1)      - Ethereum Mainnet
-  - Base (id:8453)       - Coinbase L2
-  - Arbitrum (id:42161)  - Arbitrum One
-  - Optimism (id:10)     - Optimism Mainnet
-  - Polygon (id:137)     - Polygon PoS
-- **Features**: 
-  - Real-time whale monitoring (Binance, Coinbase, Vitalik, etc.)
-  - **MCP Data Source Badges** - Visual indicators showing when data comes from MCP
-  - **Token Filter** - Filter by USDC, USDT, WETH, DAI, WBTC
-  - **Top 5 Whales Leaderboard** - Most active addresses by volume
-  - **Advanced Filters** - Chains, time range (1h-7d), minimum value ($10K-$1M+)
-  - Clickable transaction links to block explorers
-  - Multi-chain aggregation with parallel processing
-  - Smooth animations with Framer Motion
-
-#### **Whale Tracker Architecture**
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    🐋 Whale Tracker UI (/whales)                │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  Filters:                                                 │  │
-│  │  • Chains: [ETH] [Base] [Arbitrum] [Optimism] [Polygon] │  │
-│  │  • Time: [1h] [6h] [24h] [7d]                            │  │
-│  │  • Value: [$10K+] [$50K+] [$100K+] [$500K+] [$1M+]       │  │
-│  │  • Token: [All] [USDC] [USDT] [WETH] [DAI] [WBTC]       │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  📊 Stats Dashboard                                       │  │
-│  │  Total: 25 | Volume: $5M | Largest: $1M | Whales: 15    │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  🏆 Top 5 Whales by Volume                                │  │
-│  │  #1 0x28C6...21d60  $2.5M  (12 transfers)                │  │
-│  │  #2 0xF977...1aceC  $1.8M  (8 transfers)                 │  │
-│  │  #3 0x0018...5478   $1.2M  (5 transfers)                 │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  Transfer Cards (with animations)                         │  │
-│  │  [Ethereum] [✨ MCP] [USDC]  $150K  →  Explorer Link     │  │
-│  │  [Base] [USDT]  $200K  →  Explorer Link                  │  │
-│  │  [Arbitrum] [✨ MCP] [WETH]  $500K  →  Explorer Link     │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-                    User Interaction
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│              API Route: /api/whale-tracker/feed                  │
-│                                                                  │
-│  1. Parse Query Params:                                          │
-│     • chains: Ethereum, Base, Arbitrum, Optimism, Polygon       │
-│     • timeRange: '1h' | '6h' | '24h' | '7d'                     │
-│     • minValue: 100000 (USD, e.g., $100,000)                     │
-│     • token: 'USDC' (optional filter)                            │
-│                                                                  │
-│  2. Initialize Services:                                         │
-│     • createBlockscoutClient() → Returns MCP or HTTP client      │
-│     • WhaleService(minValue, client)                             │
-│                                                                  │
-│  3. Fetch Whale Data (parallel):                                  │
-│     • For each chain: getWhaleFeed(chainId, timeRange)           │
-│     • Monitor 9 whale addresses (Binance, Coinbase, Vitalik...)  │
-│                                                                  │
-│  4. Process Results:                                             │
-│     • Filter by token (if specified)                             │
-│     • Sort by timestamp                                          │
-│     • Calculate stats (volume, largest, unique whales)           │
-│     • Generate Top 10 Whales leaderboard                         │
-│     • Limit to 50 transfers                                      │
-│     • Pass through dataSource field (mcp/http)                   │
-│                                                                  │
-│  5. Return JSON:                                                 │
-│     { transfers, stats, topWhales, metadata }                    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                      WhaleService Layer                          │
-│                                                                  │
-│  getWhaleFeed(chainId, chainName, timeRange):                   │
-│    • Loop through WHALE_ADDRESSES array                          │
-│    • Call client.getTokenTransfers() for each address            │
-│    • Filter transfers >= minWhaleValue                           │
-│    • Add chainId and chainName to each transfer                  │
-│    • Preserve dataSource field from client                       │
-│    • Return aggregated transfers                                 │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│              HybridBlockscoutClient (MCP-first)                  │
-│                                                                  │
-│  getTokenTransfers(chainId, address, ageFrom, ageTo):           │
-│                                                                  │
-│    ┌─────────────────────────────────────────┐                  │
-│    │ Step 1: Try MCP First                   │                  │
-│    │  • Call mcp.getTokenTransfers()         │                  │
-│    │  • Tool: get_token_transfers_by_address │                  │
-│    │  • Check if items have hashes           │                  │
-│    └─────────────────────────────────────────┘                  │
-│                      ↓                                           │
-│    ┌─────────────────────────────────────────┐                  │
-│    │ Step 2: Verify & Return MCP Data        │                  │
-│    │  • MCP data includes transaction hashes │                  │
-│    │  • Tag items: dataSource = 'mcp' ⭐     │                  │
-│    │  • Return complete MCP data             │                  │
-│    │  • (Hash enrichment available if needed)│                  │
-│    └─────────────────────────────────────────┘                  │
-│                      ↓                                           │
-│    ┌─────────────────────────────────────────┐                  │
-│    │ Step 3: HTTP Fallback (only if needed)  │                  │
-│    │  • Only if MCP fails or returns empty   │                  │
-│    │  • Call http.getTokenTransfers()        │                  │
-│    │  • Tag items: dataSource = 'http'       │                  │
-│    │  • Return HTTP data                     │                  │
-│    └─────────────────────────────────────────┘                  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-              ┌───────────────┴───────────────┐
-              ↓                               ↓
-┌──────────────────────────┐    ┌──────────────────────────┐
-│   Blockscout MCP Server  │    │  Blockscout REST API v2  │
-│                          │    │                          │
-│  Tools:                  │    │  Endpoints:              │
-│  • get_token_transfers   │    │  • /api/v2/addresses/... │
-│  • get_address_info      │    │  • /tokens/:address      │
-│  • get_tokens_by_address │    │  • /transactions/:hash   │
-│                          │    │                          │
-│  Returns:                │    │  Returns:                │
-│  • Complete transfer data│    │  • Transfer data         │
-│  • Transaction hashes ✅ │    │  • Transaction hashes ✅ │
-│  • Token metadata        │    │  • Token metadata        │
-│  • USD values            │    │  • Exchange rates        │
-│  • Timestamps            │    │  • Timestamps            │
-│                          │    │                          │
-│  Tagged: dataSource='mcp'│    │  Tagged: dataSource='http'│
-└──────────────────────────┘    └──────────────────────────┘
-              ↓                               ↓
-              └───────────────┬───────────────┘
-                              ↓
-                    Blockchain Networks
-              [Ethereum (id:1)] [Base (id:8453)] [Arbitrum (id:42161)]
-              [Optimism (id:10)] [Polygon (id:137)]
+```bash
+# Optional: Create .env.local
+BLOCKSCOUT_USE_HTTP=true        # Force HTTP-only mode
+BLOCKSCOUT_MCP_FIRST=false      # Disable MCP preference
+OPENAI_API_KEY=sk-...           # Server-side AI key (optional, users configure via Settings)
 ```
 
-#### **File Structure**
+## 🏗️ Architecture
+
+### System Overview
+
+```mermaid
+graph TB
+    User[User Browser] --> Next[Next.js App]
+    Next --> API[API Routes]
+    API --> MCP[Blockscout MCP]
+    API --> HTTP[Blockscout HTTP]
+    API --> AI[AI Provider<br/>User-Configured]
+    MCP --> Chain[Blockchain Networks]
+    HTTP --> Chain
+```
+
+### Component Structure
+
 ```
 src/
 ├── app/
-│   ├── whales/
-│   │   └── page.tsx                    # Whale Tracker UI + AI button
-│   └── api/
-│       └── whale-tracker/
-│           └── analyze-ai/
-│               └── route.ts            # AI analysis endpoint
-├── lib/
-│   └── ai/
-│       ├── client.ts                   # AIEngine class
-│       └── index.ts                    # analyzeWhaleTrackerActivity()
-└── components/
-    ├── whale-tracker-card.tsx          # Transfer display
-    └── whale-stats.tsx                 # Stats dashboard
-```
-
-#### **Data Flow**
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 1: User Applies Filters & Views Data                      │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │ Chains: [Ethereum (id:1)] [Base (id:8453)] [Arbitrum (id:42161)]│    │
-│  │ Time: [1h] [6h] [24h]                                  │    │
-│  │ Value: [$100K+] [$500K+]                               │    │
-│  │ Token: [USDC] [USDT]                                   │    │
-│  └────────────────────────────────────────────────────────┘    │
-│                           ↓                                     │
-│  📊 Blockscout Data Displayed (MCP/HTTP)                       │
-│  • 25 transfers | $5M volume | 15 unique whales               │
-│  • Top Whales: 0xDFd5...963d ($2.5M), 0xF977...aceC ($1.8M)   │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 2: User Clicks "Generate AI Insights" 🤖                 │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  [🤖 Generate AI Insights]  ← Button with API key check│    │
-│  │  • Detects OpenAI key from localStorage                │    │
-│  │  • Shows loading spinner during generation             │    │
-│  │  • Clears on filter change                             │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 3: Frontend Sends Real Data to API                        │
-│  POST /api/whale-tracker/analyze-ai                             │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │ {                                                       │    │
-│  │   transfers: [...],        // Top 20 actual transfers  │    │
-│  │   stats: {...},            // Real volume, count       │    │
-│  │   topWhales: [...],        // Top 3 by volume          │    │
-│  │   timeRange: "1h",         // Current filter           │    │
-│  │   selectedChains: [...],   // Active chains            │    │
-│  │   minValue: 100000,        // Min USD value            │    │
-│  │   tokenFilter: "USDC",     // Token filter             │    │
-│  │   dataSourceStats: {       // MCP vs HTTP              │    │
-│  │     mcp: 15, http: 10, total: 25                       │    │
-│  │   },                                                    │    │
-│  │   apiKey: "sk-..."         // User's OpenAI key        │    │
-│  │ }                                                       │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 4: AI Analysis Engine                                      │
-│  src/lib/ai/client.ts → analyzeWhaleTrackerActivity()           │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │ 1. Build Context:                                       │    │
-│  │    • Timestamp: 2025-10-16T15:08:43.431Z               │    │
-│  │    • Time Period: "past hour"                          │    │
-│  │    • Chains: "Ethereum, Base, Arbitrum"                │    │
-│  │    • Data Source: "MCP (15) + HTTP (10)"               │    │
-│  │                                                         │    │
-│  │ 2. Prepare Whale Data:                                 │    │
-│  │    • Full addresses (not truncated)                    │    │
-│  │    • Top whales with volume & count                    │    │
-│  │    • Token distribution                                │    │
-│  │    • Recent transfer examples                          │    │
-│  │                                                         │    │
-│  │ 3. Generate Prompt:                                    │    │
-│  │    📊 DATA CONTEXT                                     │    │
-│  │    📈 WHALE ACTIVITY STATISTICS                        │    │
-│  │    🐋 TOP WHALES BY VOLUME                             │    │
-│  │    🪙 MOST ACTIVE TOKENS                               │    │
-│  │    📝 RECENT TRANSFER EXAMPLES                         │    │
-│  │                                                         │    │
-│  │ 4. Call OpenAI GPT-4:                                  │    │
-│  │    • Model: gpt-4o-mini                                │    │
-│  │    • Max tokens: 800                                   │    │
-│  │    • Temperature: 0.7                                  │    │
-│  │    • System: "Blockchain analyst expert..."            │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 5: AI Response Processing                                  │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │ GPT-4 Analyzes:                                         │    │
-│  │ ✓ Market sentiment & whale confidence                  │    │
-│  │ ✓ Token movement patterns                              │    │
-│  │ ✓ Chain activity trends                                │    │
-│  │ ✓ Risk assessment                                      │    │
-│  │ ✓ Actionable recommendations                           │    │
-│  │                                                         │    │
-│  │ Returns: 3-4 paragraph analysis                        │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 6: Display AI Insights                                     │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  ✨ AI Insights  [Powered by AI]  [MCP Data]           │    │
-│  │  ─────────────────────────────────────────────────────  │    │
-│  │  In the past hour, whale activity on Ethereum, Base,   │    │
-│  │  and Arbitrum shows cautious positioning. With $5M     │    │
-│  │  total volume across 25 transfers, large holders are   │    │
-│  │  favoring USDC and USDT, suggesting defensive          │    │
-│  │  strategies amid market uncertainty.                   │    │
-│  │                                                         │    │
-│  │  Top whale 0xDFd5293D8e347dFe59E90eFd55b2956a1343963d │    │
-│  │  moved $2.5M primarily in stablecoins, indicating...   │    │
-│  │                                                         │    │
-│  │  [Full analysis with recommendations...]              │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### **Component Architecture**
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  /app/whales/page.tsx (Whale Tracker Component)                 │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │ State Management:                                       │    │
-│  │  • transfers[]         ← Blockscout data               │    │
-│  │  • stats              ← Volume, count, largest         │    │
-│  │  • topWhales[]        ← Top 10 by volume               │    │
-│  │  • dataSourceStats    ← MCP vs HTTP counts             │    │
-│  │  • aiInsights         ← AI analysis text               │    │
-│  │  • isGeneratingAI     ← Loading state                  │    │
-│  │  • hasApiKey          ← API key detection              │    │
-│  │                                                         │    │
-│  │ Effects:                                                │    │
-│  │  • fetchWhaleFeed() on filter change                   │    │
-│  │  • Clear insights when filters change                  │    │
-│  │  • Detect API key from localStorage                    │    │
-│  │  • Auto-refresh every 5 minutes                        │    │
-│  │                                                         │    │
-│  │ Handlers:                                               │    │
-│  │  • handleGenerateAI() → Call AI endpoint               │    │
-│  │  • toggleChain() → Clear data & fetch                  │    │
-│  │  • Filter changes → Reset all state                    │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### **Data Sources**
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Primary: Blockscout (MCP or HTTP)                              │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  MCP Server (Docker)          HTTP API v2              │    │
-│  │  ─────────────────────        ─────────────────        │    │
-│  │  ✓ Complete transfer data     ✓ Transfer data          │    │
-│  │  ✓ Transaction hashes         ✓ Transaction hashes     │    │
-│  │  ✓ Token metadata              ✓ Token metadata         │    │
-│  │  ✓ USD values                 ✓ Exchange rates         │    │
-│  │  ✓ Real-time updates          ✓ Real-time updates      │    │
-│  │                                                         │    │
-│  │  Tagged: dataSource='mcp'     Tagged: dataSource='http'│    │
-│  │  Badge: Purple 🟣             Badge: Blue 🔵           │    │
-│  └────────────────────────────────────────────────────────┘    │
-│                                                                  │
-│  AI Analysis: OpenAI GPT-4                                      │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Model: gpt-4o-mini                                     │    │
-│  │  Purpose: Analyze whale behavior patterns              │    │
-│  │  Input: Real Blockscout data from current filters      │    │
-│  │  Output: 3-4 paragraph professional analysis           │    │
-│  │  Key: User-provided (localStorage) or server env       │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### **Key Features**
-- ✅ **Real Data Analysis**: AI reads actual Blockscout transfers, not synthetic data
-- 🔄 **Auto-Clear**: Insights reset when filters change to prevent stale analysis
-- 🏷️ **Source Badges**: Shows if analysis based on MCP or HTTP data
-- 📍 **Full Addresses**: Complete wallet addresses visible in insights
-- ⏱️ **Timestamp Context**: Analysis includes exact time period reference
-- 🎯 **Filter-Aware**: AI knows which chains, tokens, and values were filtered
-- 🔐 **Privacy-First**: Uses user's API key from localStorage
-- 💡 **Actionable**: Provides specific trading strategies and recommendations
-
-### **💬 AI Chat**
-- **API Used**: Blockscout HTTP Client → RPC API
-- **Purpose**: Fetch whale activity data for AI analysis
-- **Integration**: Uses `WhaleService` to aggregate data from multiple chains
-- **AI Provider**: User-configured (supports OpenAI, Anthropic, etc.)
-- **Features**:
-  - Natural language queries about whale activity
-  - Cross-chain transaction analysis
-  - Market trend insights
-  - Contextual blockchain data for LLM
-
-### **💼 Wallet Analysis**
-
-Comprehensive wallet investigation system with AI-powered insights, built using a modular architecture with custom hooks and utilities.
-
-#### **Architecture Overview**
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                  Wallet Analysis Component                       │
-│                  (wallet-analysis.tsx)                           │
-│                                                                  │
-│  Pure UI Component - 300 lines (down from 716)                  │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Custom Hooks (Business Logic Separation):             │    │
-│  │  • useWalletAnalysis()  - API calls & state           │    │
-│  │  • useApiKey()          - localStorage detection       │    │
-│  │  • useAiInsights()      - AI generation               │    │
-│  │  • useAddressInput()    - Input validation            │    │
-│  │  • useClipboard()       - Copy functionality          │    │
-│  └────────────────────────────────────────────────────────┘    │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Utility Functions (Pure Logic):                       │    │
-│  │  • validateAddress()    - Address/ENS validation       │    │
-│  │  • getExplorerUrl()     - Block explorer links        │    │
-│  │  • getChainName()       - Chain ID to name            │    │
-│  │  • formatEthBalance()   - ETH formatting              │    │
-│  │  • formatUsdValue()     - USD formatting              │    │
-│  │  • getRiskColor()       - Risk score colors           │    │
-│  │  • getRiskLabel()       - Risk score labels           │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### **File Structure**
-
-```
-src/
+│   ├── dashboard/              # Main dashboard page
+│   ├── whales/                 # Whale tracker page
+│   └── api/                    # API routes
+│       ├── analyze-wallet/     # Wallet analysis endpoint
+│       └── whale-tracker/      # Whale feed endpoint
+│
 ├── components/
-│   └── dashboard/
-│       └── wallet-analysis.tsx          # Main UI component (300 lines)
+│   ├── dashboard/              # Dashboard components
+│   │   └── wallet/             # Wallet analysis UI
+│   └── features/               # Feature-specific components
 │
 ├── core/
-│   ├── hooks/                           # Custom React hooks
-│   │   ├── use-wallet-analysis.ts       # Wallet API calls & state
-│   │   ├── use-api-key.ts               # API key detection
-│   │   ├── use-ai-insights.ts           # AI insights generation
-│   │   ├── use-address-input.ts         # Address input validation
-│   │   └── use-clipboard.ts             # Clipboard operations
-│   │
-│   └── utils/
-│       └── wallet-utils.ts              # Pure utility functions
+│   ├── hooks/                  # Custom React hooks
+│   ├── services/               # Business logic
+│   └── utils/                  # Helper functions
 │
-└── app/
-    └── api/
-        ├── analyze-wallet/
-        │   └── route.ts                  # Wallet data endpoint
-        └── analyze-wallet-ai/
-            └── route.ts                  # AI insights endpoint
+└── lib/
+    ├── blockscout/             # Blockchain data client
+    │   ├── mcp-client.ts       # MCP integration
+    │   ├── http-client.ts      # REST API client
+    │   └── hybrid-client.ts    # MCP-first with fallback
+    └── ai/                     # AI integration
+        └── client.ts           # OpenAI wrapper
 ```
 
-#### **Component Refactoring Benefits**
+### Data Flow
 
-**Before Refactor:**
-- ❌ 716 lines - monolithic component
-- ❌ Mixed UI + API calls + validation + localStorage
-- ❌ Hard to test and maintain
-- ❌ Duplicated logic across components
+```mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant API
+    participant Blockscout
+    participant AI
 
-**After Refactor:**
-- ✅ 300 lines - focused UI component
-- ✅ Separated concerns (hooks + utils + UI)
-- ✅ Reusable hooks across app
-- ✅ Easy to test each piece independently
-- ✅ Follows best practices
+    User->>App: Enter wallet address
+    App->>API: POST /api/analyze-wallet
+    API->>Blockscout: Get address info
+    Blockscout-->>API: Balance, tokens, transfers
+    API->>AI: Generate insights
+    AI-->>API: Analysis
+    API-->>App: Complete analysis
+    App-->>User: Display dashboard
+```
 
-#### **Custom Hooks**
+## 🛠️ Tech Stack
 
-##### **1. useWalletAnalysis()**
+| Category | Technologies |
+|----------|-------------|
+| **Frontend** | Next.js 15.5.4, React 19, TypeScript 5.0 |
+| **Styling** | Tailwind CSS 4.x, shadcn/ui |
+| **Data** | Blockscout MCP Server, Blockscout REST API v2 |
+| **AI** | Customizable (OpenAI, Anthropic, etc.), Model Context Protocol SDK |
+| **Testing** | Playwright, Vitest |
+| **Deployment** | Vercel |
+
+<details>
+<summary><b>📖 Detailed Architecture & Integration</b></summary>
+
+## Blockscout Integration
+
+ChainWhale uses a **hybrid MCP-first approach** for blockchain data:
+
+### Whale Tracker
+
+**Data Source:** Blockscout MCP Server (primary) + REST API v2 (fallback)
+
+**Supported Chains:**
+- Ethereum (1), Base (8453), Arbitrum (42161), Optimism (10), Polygon (137)
+
+**Features:**
+- Real-time monitoring of 9 whale addresses
+- Advanced filters: time range, value threshold, token type
+- Top whales leaderboard
+- MCP data source badges
+- Transaction explorer links
+
+**MCP Tools:**
+- `get_token_transfers_by_address` - ERC-20 transfers
+- `get_address_info` - Wallet metadata
+- `get_tokens_by_address` - Token holdings
+
+### Wallet Analysis
+
+**Data Source:** Blockscout MCP Server (primary) + REST API v2 (fallback)
+
+**Features:**
+- Multi-chain portfolio analysis
+- ENS name resolution
+- Token holdings with USD values
+- Transaction history (24h)
+- Whale detection & categorization
+- AI-powered risk scoring
+- Block explorer integration
+
+**MCP Tools:**
+- `get_address_info` - Balance, ENS, contract status
+- `get_tokens_by_address` - ERC-20 holdings
+- `get_token_transfers_by_address` - Recent transfers
+
+### AI Chat
+
+**AI Provider:** User-configured (supports any AI API)
+
+**Supported Models:**
+- OpenAI (GPT-4, GPT-4o, GPT-3.5-turbo)
+- Anthropic (Claude 3.5 Sonnet, Claude 3 Opus)
+- Any OpenAI-compatible API
+
+**Configuration:** Users add their own API key via Settings page
+
+**Features:**
+- Natural language blockchain queries
+- Cross-chain transaction analysis
+- Market trend insights
+- Smart contract analysis
+
+</details>
+
+## 📚 API Documentation
+
+### Whale Tracker
+
+**GET** `/api/whale-tracker/feed`
+
 ```typescript
-// Handles wallet analysis API calls and state management
-const { 
-  analysis,           // Wallet analysis data
-  holdings,           // Token holdings array
-  ensName,            // ENS name if available
-  recentTransactions, // Recent transfers
-  isLoading,          // Loading state
-  error,              // Error message
-  analyzeWallet       // Function to analyze wallet
-} = useWalletAnalysis();
-```
+// Query Parameters
+chains: string[]        // Chain IDs (1, 8453, 42161, 10, 137)
+timeRange: string       // '1h' | '6h' | '24h' | '7d'
+minValue: number        // Minimum USD value
+token?: string          // Optional token filter
 
-##### **2. useApiKey()**
-```typescript
-// Detects API key from localStorage with auto-refresh
-const { hasApiKey } = useApiKey();
-// Listens to storage events and window focus
-```
-
-##### **3. useAiInsights()**
-```typescript
-// Manages AI insights generation
-const { 
-  aiInsights,      // Generated insights text
-  isGenerating,    // Loading state
-  error,           // Error message
-  generateInsights // Function to generate insights
-} = useAiInsights();
-```
-
-##### **4. useAddressInput()**
-```typescript
-// Handles address input with validation
-const { 
-  address,            // Current input value
-  isValidAddress,     // Validation state
-  handleAddressChange // Change handler with validation
-} = useAddressInput();
-```
-
-##### **5. useClipboard()**
-```typescript
-// Manages clipboard copy with feedback
-const { 
-  copiedText,      // Currently copied text
-  copyToClipboard  // Copy function
-} = useClipboard();
-```
-
-#### **Data Flow**
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 1: User Enters Wallet Address                             │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Input: 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045    │    │
-│  │         or vitalik.eth                                 │    │
-│  │                                                         │    │
-│  │  Validation: useAddressInput() hook                    │    │
-│  │  • Checks 0x + 40 hex chars OR .eth format             │    │
-│  │  • Shows error if invalid                              │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 2: Analyze Wallet (useWalletAnalysis hook)               │
-│  POST /api/analyze-wallet                                        │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Request:                                               │    │
-│  │  {                                                      │    │
-│  │    address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",│    │
-│  │    chains: ["1", "8453", "42161", "10", "137"]       │    │
-│  │  }                                                      │    │
-│  │                                                         │    │
-│  │  Response:                                              │    │
-│  │  {                                                      │    │
-│  │    analysis: {                                          │    │
-│  │      address, riskScore, totalValue, chains, insights  │    │
-│  │    },                                                   │    │
-│  │    holdings: [...],      // Token balances             │    │
-│  │    ensName: "vitalik.eth",                             │    │
-│  │    recentTransactions: [...] // Last 24h transfers     │    │
-│  │  }                                                      │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 3: Display Wallet Overview                                │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  📍 Address: vitalik.eth                                │    │
-│  │     0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045         │    │
-│  │     [Copy] [View on Explorer]                          │    │
-│  │                                                         │    │
-│  │  💰 Portfolio:                                          │    │
-│  │     ETH Balance: 1,234.5678 ETH                        │    │
-│  │     Token Holdings: $5,432,100.00 (25 tokens)          │    │
-│  │     Total Value: $8,765,432.10 (5 chains)              │    │
-│  │                                                         │    │
-│  │  🐋 Whale Detection: Mega Whale (Score: 95/100)        │    │
-│  │                                                         │    │
-│  │  ⚠️ Risk Assessment: Low Risk (15/100)                 │    │
-│  │     [████░░░░░░░░░░░░░░░░]                             │    │
-│  │                                                         │    │
-│  │  📝 Summary: [Generate AI Insights] 🤖                 │    │
-│  │     This wallet shows strong fundamentals...           │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 4: Generate AI Insights (Optional)                        │
-│  POST /api/analyze-wallet-ai                                     │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Triggered by: [Generate AI Insights] button           │    │
-│  │  Requires: OpenAI API key (from localStorage)          │    │
-│  │                                                         │    │
-│  │  Request:                                               │    │
-│  │  {                                                      │    │
-│  │    address, holdings, recentTransactions,              │    │
-│  │    totalValue, chains, apiKey                          │    │
-│  │  }                                                      │    │
-│  │                                                         │    │
-│  │  AI Analysis (GPT-4):                                  │    │
-│  │  • Analyzes portfolio composition                      │    │
-│  │  • Evaluates transaction patterns                      │    │
-│  │  • Assesses risk factors                               │    │
-│  │  • Provides recommendations                            │    │
-│  │                                                         │    │
-│  │  Response:                                              │    │
-│  │  {                                                      │    │
-│  │    insights: "Detailed AI analysis...",                │    │
-│  │    riskScore: 15,                                      │    │
-│  │    summary: "Enhanced summary..."                      │    │
-│  │  }                                                      │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### **Features**
-
-- **Multi-Chain Analysis**: Ethereum, Base, Arbitrum, Optimism, Polygon
-- **ENS Support**: Resolves .eth names automatically
-- **Token Holdings**: Complete portfolio breakdown with USD values
-- **Transaction History**: Recent transfers (24h) with direction indicators
-- **Whale Detection**: Categorizes wallet size (Shrimp → Mega Whale)
-- **Risk Assessment**: AI-powered risk scoring (0-100)
-- **Chain Distribution**: Value breakdown across chains
-- **AI Insights**: Optional GPT-4 analysis with recommendations
-- **Copy to Clipboard**: One-click address copying
-- **Block Explorer Links**: Direct links to Etherscan, Basescan, etc.
-- **Real-time Validation**: Instant address format checking
-- **Privacy-First**: API keys stored client-side only
-
-#### **API Endpoints**
-
-##### **POST /api/analyze-wallet**
-```typescript
-// Analyzes wallet across multiple chains
-Request: {
-  address: string;        // Wallet address or ENS name
-  chains: string[];       // Chain IDs to analyze
-}
-
-Response: {
-  analysis: WalletAnalysis;           // Core analysis data
-  holdings: TokenHolding[];           // Token balances
-  ensName?: string;                   // ENS name if available
-  recentTransactions: Transaction[];  // Last 24h transfers
+// Response
+{
+  transfers: Transfer[],
+  stats: { total, volume, largest, uniqueWhales },
+  topWhales: Whale[],
+  metadata: { timestamp, dataSource }
 }
 ```
 
-##### **POST /api/analyze-wallet-ai**
+### Wallet Analysis
+
+**POST** `/api/analyze-wallet`
+
 ```typescript
-// Generates AI-powered insights
-Request: {
-  address: string;
-  holdings: TokenHolding[];
-  recentTransactions: Transaction[];
-  totalValue: number;
-  chains: Record<string, number>;
-  apiKey: string;         // User's OpenAI API key
+// Request
+{
+  address: string,      // Wallet address or ENS
+  chains: string[]      // Chain IDs to analyze
 }
 
-Response: {
-  insights: string;       // AI-generated analysis
-  riskScore?: number;     // Updated risk score
-  summary?: string;       // Enhanced summary
+// Response
+{
+  analysis: WalletAnalysis,
+  holdings: TokenHolding[],
+  ensName?: string,
+  recentTransactions: Transaction[]
 }
 ```
 
-#### **Blockscout Integration (Hybrid MCP-First Approach)**
+**POST** `/api/analyze-wallet-ai`
 
-**Wallet Analysis uses the SAME hybrid approach as Whale Tracker:**
+```typescript
+// Request
+{
+  address: string,
+  holdings: TokenHolding[],
+  recentTransactions: Transaction[],
+  totalValue: number,
+  chains: Record<string, number>,
+  apiKey: string        // User's AI API key (OpenAI, Anthropic, etc.)
+}
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  HybridBlockscoutClient (MCP-first with HTTP fallback)          │
-│                                                                  │
-│  Factory: createBlockscoutClient()                               │
-│  Default: BLOCKSCOUT_MCP_FIRST=true (hybrid mode)               │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Primary: Blockscout MCP Server (Docker)               │    │
-│  │  ───────────────────────────────────────               │    │
-│  │  MCP Tools Used:                                        │    │
-│  │                                                         │    │
-│  │  1. get_address_info                                   │    │
-│  │     • Wallet balance (ETH/native token)                │    │
-│  │     • ENS name resolution                              │    │
-│  │     • Transaction count                                │    │
-│  │     • Contract detection                               │    │
-│  │                                                         │    │
-│  │  2. get_tokens_by_address                              │    │
-│  │     • ERC-20 token holdings                            │    │
-│  │     • Token metadata (name, symbol, decimals)          │    │
-│  │     • Balance amounts with exchange rates              │    │
-│  │     • USD values                                       │    │
-│  │                                                         │    │
-│  │  3. get_token_transfers_by_address                     │    │
-│  │     • Recent transfers (24h)                           │    │
-│  │     • Direction (incoming/outgoing)                    │    │
-│  │     • Token details                                    │    │
-│  │     • Timestamps                                       │    │
-│  │     • USD values                                       │    │
-│  │     • Transaction hashes                               │    │
-│  └────────────────────────────────────────────────────────┘    │
-│                              ↓                                   │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │  Fallback: Blockscout REST API v2 (HTTP)              │    │
-│  │  ─────────────────────────────────────                 │    │
-│  │  • Automatic fallback if MCP fails                     │    │
-│  │  • Same data structure                                 │    │
-│  │  • Seamless transition                                 │    │
-│  └────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
-
-**Strategy**: MCP-first for complete data, HTTP fallback for reliability
-**Environment Variables**:
-- BLOCKSCOUT_MCP_FIRST=true (default) - Hybrid mode
-- BLOCKSCOUT_USE_HTTP=true - Force HTTP only
+// Response
+{
+  insights: string,     // AI-generated analysis
+  riskScore?: number,
+  summary?: string
+}
 ```
 
-#### **Best Practices Implemented**
+## 🛠️ Development
 
-✅ **Single Responsibility** - Each hook/util has one job  
-✅ **Separation of Concerns** - UI, logic, and utilities separated  
-✅ **Reusability** - Hooks can be used in other components  
-✅ **Type Safety** - Full TypeScript coverage  
-✅ **Testability** - Pure functions easy to unit test  
-✅ **Maintainability** - Small, focused files (<100 lines each)  
-✅ **Performance** - Optimized re-renders with proper hooks  
-✅ **Accessibility** - Keyboard navigation, ARIA labels  
-✅ **Error Handling** - Graceful fallbacks and user feedback  
-✅ **Privacy** - Client-side API key storage
+```bash
+# Run development server
+pnpm dev
 
-### **📊 Whale Feed (Dashboard)**
-- **API Used**: Blockscout RPC API
-- **Purpose**: Display recent whale transactions in dashboard
-- **Features**:
-  - Time range filtering (1h, 24h, 7d)
-  - Chain selection
-  - Minimum value filtering
-  - Top whale leaderboard
+# Run tests
+pnpm test
 
-### **Architecture**
+# Run E2E tests
+pnpm test:e2e
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     ChainWhale App                       │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌────────────────────┐  ┌──────────────┐  ┌───────────┐ │
-│  │   Whale Tracker    │  │   AI Chat    │  │Analysis   │ │
-│  │  MCP-first Hybrid  │  │ MCP + RPC    │  │   (MCP)   │ │
-│  └─────────┬──────────┘  └──────┬───────┘  └─────┬─────┘ │
-│            │                    │                  │       │
-│            └──────────┬─────────┴──────────────────┘       │
-│                       │                                    │
-└───────────────────────┼────────────────────────────────────┘
-                        │
-            ┌───────────┴───────────┐
-            │                       │
-    ┌───────▼────────┐     ┌───────▼────────┐
-    │ Blockscout MCP │     │ Blockscout RPC │
-    │     Server     │     │      API       │
-    │                │     │                │
-    │ • get_address  │     │ • tokentx      │
-    │ • get_tokens   │     │ • account      │
-    │ • get_transfers│     │ • tx details   │
-    └───────┬────────┘     └────────┬───────┘
-            │  primary               │  fallback (hash guarantee)
-            └────────────────────────┴───────────────────────
+# Lint code
+pnpm lint
+
+# Build for production
+pnpm build
+
+# Start production server
+pnpm start
 ```
 
-### **Why Hybrid (MCP-first)?**
+### Docker Setup (Optional)
 
-1. **MCP Server first** - Rich AI context and multi-chain coverage; preferred path for prize alignment.
-2. **HTTP/RPC fallback** - Ensures `hash` is present for explorer links when MCP responses omit it.
-3. **Factory/Hybrid Pattern** - Automatically selects the best source per-request.
-
-### **MCP-first Runtime & Env Flags**
-
-- **Default behavior**: MCP-first with automatic HTTP/RPC fallback for transfers without hashes.
-- **Env overrides**:
-  - `BLOCKSCOUT_USE_HTTP=true` → Force HTTP/RPC-only mode.
-  - `BLOCKSCOUT_MCP_FIRST=false` → Disable hybrid preference and use legacy selection.
-    - See `src/lib/blockscout/factory.ts` and `src/lib/blockscout/hybrid-client.ts`.
+```bash
+# Start Blockscout MCP Server
+docker run -d \
+  --name blockscout-mcp \
+  -p 3000:3000 \
+  ghcr.io/blockscout/mcp-server:latest
+```
 
 ## 🚢 Deployment
 
@@ -807,16 +296,29 @@ Response: {
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ChainsQueen/chainwhale)
 
-1. Import your repository to Vercel
+1. Import repository to Vercel
 2. Configure build settings (auto-detected):
-   - Build Command: `pnpm build`
-   - Install Command: `pnpm install`
-3. (Optional) Add `OPENAI_API_KEY` environment variable
-   - Users can also add their own keys via Settings tab
+   - **Build Command:** `pnpm build`
+   - **Install Command:** `pnpm install`
+3. (Optional) Add environment variables:
+   - `OPENAI_API_KEY` - Server-side AI key (optional, users can add their own via Settings)
+   - `BLOCKSCOUT_USE_HTTP=true` - Force HTTP mode
 4. Deploy
 
-**Note:** No Docker required - uses HTTP-based Blockscout client in production.
+**Note:** Docker/MCP not required in production - uses HTTP client automatically.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `BLOCKSCOUT_MCP_FIRST` | Enable MCP-first hybrid mode | `true` |
+| `BLOCKSCOUT_USE_HTTP` | Force HTTP-only mode | `false` |
+| `OPENAI_API_KEY` | Server-side AI key (optional, users can configure their own) | - |
 
 ## 📄 License
 
-MIT
+MIT License - see [LICENSE](./LICENSE)
+
+---
+
+**Built with ❤️ using Next.js, Blockscout MCP, and customizable AI**

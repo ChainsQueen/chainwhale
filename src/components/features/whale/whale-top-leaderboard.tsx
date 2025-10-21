@@ -27,6 +27,17 @@ const RANK_COLORS = [
 export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
   const [copiedAddresses, setCopiedAddresses] = useState<Set<string>>(new Set());
 
+  // Format volume with K/M suffix
+  const formatVolume = (volume: number): string => {
+    if (volume >= 1000000) {
+      return `$${(volume / 1000000).toFixed(2)}M`;
+    } else if (volume >= 1000) {
+      return `$${(volume / 1000).toFixed(2)}K`;
+    } else {
+      return `$${volume.toFixed(2)}`;
+    }
+  };
+
   const copyAddress = async (e: React.MouseEvent, address: string) => {
     e.stopPropagation();
     try {
@@ -73,12 +84,12 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
         <AnimatedHover type="label">
           <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-500" />
-            Top {Math.min(topWhales.length, 3)} Whales by Volume
+            Top {Math.min(topWhales.length, 3)} Whales by Sent Volume
           </h2>
         </AnimatedHover>
         <AnimatedHover type="label">
           <p className="text-xs text-muted-foreground">
-            Most active addresses by total transfer volume
+            Addresses with highest outgoing transfer volume in selected time range
           </p>
         </AnimatedHover>
       </div>
@@ -139,17 +150,17 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
                   {/* Volume */}
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                      Total Volume
+                      Sent Volume
                     </p>
                     <p className="text-xl font-bold text-primary">
-                      ${(whale.volume / 1000000).toFixed(2)}M
+                      {formatVolume(whale.volume)}
                     </p>
                   </div>
                   
                   {/* Transfer Count */}
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                      Transfers
+                      Sent
                     </p>
                     <p className="text-sm font-semibold">
                       {whale.count} transfer{whale.count !== 1 ? 's' : ''}

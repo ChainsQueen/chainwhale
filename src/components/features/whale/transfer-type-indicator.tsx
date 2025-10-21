@@ -107,7 +107,7 @@ export function TransferTypeIndicator({
             <div className="cursor-help">{iconData.icon}</div>
           )}
         </TooltipTrigger>
-        <TooltipContent className="bg-popover text-popover-foreground border-border">
+        <TooltipContent>
           <div className="text-xs">
             <p className="font-semibold">{iconData.label}</p>
             <p className="text-muted-foreground">{iconData.description}</p>

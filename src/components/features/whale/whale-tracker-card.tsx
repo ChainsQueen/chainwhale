@@ -60,6 +60,11 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
                 tokenDecimals={transfer.token.decimals ? parseInt(transfer.token.decimals) : undefined}
                 chainId={transfer.chainId}
                 chainName={transfer.chainName}
+                transferHash={transfer.hash}
+                transferFrom={transfer.from}
+                transferTo={transfer.to}
+                transferTimestamp={transfer.timestamp}
+                transferValueUsd={transfer.valueUsd}
               />
             </div>
 
@@ -86,6 +91,7 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
               tokenAmount={transfer.value}
               tokenSymbol={transfer.token.symbol}
               tokenDecimals={transfer.token.decimals}
+              exchangeRate={transfer.token.exchangeRate}
               size="md" 
             />
           </div>

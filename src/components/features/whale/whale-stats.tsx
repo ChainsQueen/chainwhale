@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Activity, DollarSign, Users } from 'lucide-react';
+import { TrendingUp, Activity, DollarSign, Users, BarChart3 } from 'lucide-react';
 import { AnimatedHover } from '@/components/ui/animated-hover';
 import type { WhaleStats } from '@/core/services/whale-service';
 
@@ -47,7 +47,24 @@ export function WhaleStatsComponent({ stats }: WhaleStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-3">
+      {/* Section Header */}
+      <div className="space-y-1">
+        <AnimatedHover type="label">
+          <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-500" />
+            Whale Activity Stats
+          </h2>
+        </AnimatedHover>
+        <AnimatedHover type="label">
+          <p className="text-xs text-muted-foreground">
+            Summary of whale transfers in the selected time range
+          </p>
+        </AnimatedHover>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {statCards.map((stat) => (
         <AnimatedHover key={stat.title} type="stat">
           <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
@@ -69,6 +86,7 @@ export function WhaleStatsComponent({ stats }: WhaleStatsProps) {
           </Card>
         </AnimatedHover>
       ))}
+      </div>
     </div>
   );
 }

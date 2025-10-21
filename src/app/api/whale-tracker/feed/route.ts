@@ -158,18 +158,14 @@ export async function GET(request: NextRequest) {
       uniqueWhales: new Set([...sorted.map(t => t.from), ...sorted.map(t => t.to)]).size
     };
 
-    // Get top whales
+    // Get top whales by SENT volume (only outgoing transfers)
+    // We track what whales are SENDING, not what they're receiving
     const whaleMap = new Map<string, { volume: number; count: number }>();
     sorted.forEach(t => {
       const fromData = whaleMap.get(t.from) || { volume: 0, count: 0 };
       fromData.volume += (t.valueUsd || 0);
       fromData.count += 1;
       whaleMap.set(t.from, fromData);
-
-      const toData = whaleMap.get(t.to) || { volume: 0, count: 0 };
-      toData.volume += (t.valueUsd || 0);
-      toData.count += 1;
-      whaleMap.set(t.to, toData);
     });
 
     const topWhales = Array.from(whaleMap.entries())
@@ -177,7 +173,7 @@ export async function GET(request: NextRequest) {
         address,
         volume: data.volume,
         count: data.count,
-        chain: sorted.find(t => t.from === address || t.to === address)?.chainId || 'Unknown'
+        chain: sorted.find(t => t.from === address)?.chainId || 'Unknown'
       }))
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 10);

@@ -50,7 +50,9 @@ export async function GET(request: NextRequest) {
       isVerified: addressInfo.is_verified, // Keep undefined to distinguish from false
       isProxy: addressInfo.implementations && addressInfo.implementations.length > 0,
       implementationAddress: addressInfo.implementations?.[0]?.address,
+      implementationName: addressInfo.implementations?.[0]?.name,
       tokenType: addressInfo.token?.type || 'ERC-20',
+      tokenDecimals: addressInfo.token?.decimals,
       holderCount: addressInfo.token?.holders,
       totalSupply: addressInfo.token?.total_supply,
       tokenName: addressInfo.token?.name,
@@ -64,6 +66,7 @@ export async function GET(request: NextRequest) {
       reputation: addressInfo.reputation,
       creatorAddress: addressInfo.creator_address_hash,
       creationTxHash: addressInfo.creation_transaction_hash,
+      creationStatus: addressInfo.creation_status,
     };
 
     console.log('[Whale Tracker Contract Info] Final contractInfo being returned:', JSON.stringify(contractInfo, null, 2));

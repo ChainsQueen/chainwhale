@@ -93,7 +93,7 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
             transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
           >
             <AnimatedHover type="card">
-              <Card className="h-full">
+              <Card className="h-full border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                 <CardContent className="p-4 space-y-3">
                   {/* Rank Badge with Medal */}
                   <div className="flex items-center justify-between">

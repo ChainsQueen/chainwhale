@@ -31,7 +31,7 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 hover:shadow-lg transition-shadow">
       <CardContent className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
           <div className="flex-1 space-y-2">

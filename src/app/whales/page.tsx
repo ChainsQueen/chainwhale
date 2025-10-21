@@ -13,6 +13,7 @@ import { WhaleFiltersComponent } from '@/components/features/whale/whale-filters
 import { WhaleTopLeaderboard } from '@/components/features/whale/whale-top-leaderboard';
 import { AnimatedHover } from '@/components/ui/animated-hover';
 import { AIInsightsChecklistDialog } from '@/components/features/whale/ai-insights-checklist-dialog';
+import { MCPInfoCard } from '@/components/features/data-source/data-source-card';
 import { RefreshCw, Sparkles, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useWhaleFilters } from '@/core/hooks/use-whale-filters';
 import { useWhaleFeed } from '@/core/hooks/use-whale-feed';
@@ -122,6 +123,15 @@ export default function WhalesPage() {
           </AnimatedHover>
         </motion.div>
 
+        {/* Data Source Card - Shows MCP or HTTP based on data source */}
+        {dataSourceStats && dataSourceStats.total > 0 && (
+          <MCPInfoCard
+            mcpCount={dataSourceStats.mcp}
+            httpCount={dataSourceStats.http}
+            totalCount={dataSourceStats.total}
+          />
+        )}
+
         {/* Filters */}
         <WhaleFiltersComponent
           filters={filters}
@@ -191,46 +201,6 @@ export default function WhalesPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              {dataSourceStats && dataSourceStats.total > 0 && (
-                <motion.div
-                  key="data-source"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex justify-center mb-6"
-                >
-                  <AnimatedHover type="scale">
-                    <div className="inline-flex flex-col items-center gap-2 text-sm bg-muted/30 px-6 py-3 rounded-lg">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data Source</span>
-                  
-                  {/* Determine which source to show */}
-                  {dataSourceStats.mcp > 0 && dataSourceStats.http > 0 ? (
-                    // Both sources
-                    <div className="flex items-center gap-2">
-                      <Badge variant="default" className="bg-gradient-to-r from-purple-500 to-blue-500 text-white">
-                        <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                        MCP
-                      </Badge>
-                      <span className="text-muted-foreground">+</span>
-                      <Badge variant="secondary" className="bg-slate-600 text-white">
-                        HTTP
-                      </Badge>
-                    </div>
-                  ) : dataSourceStats.mcp > 0 ? (
-                    // Only MCP
-                    <Badge variant="default" className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-base px-3 py-1">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Blockscout MCP
-                    </Badge>
-                  ) : (
-                    // Only HTTP
-                    <Badge variant="secondary" className="bg-slate-600 text-white text-base px-3 py-1">
-                      REST API v2
-                    </Badge>
-                  )}
-                  </div>
-                </AnimatedHover>
-              </motion.div>
-              )}
               <AnimatedHover type="lift">
                 <WhaleStatsComponent stats={stats} />
               </AnimatedHover>

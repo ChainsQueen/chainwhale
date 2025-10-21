@@ -108,6 +108,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
  * Contract information data structure
@@ -119,8 +120,12 @@ interface ContractInfo {
   isProxy?: boolean;
   /** Implementation contract address (for proxies) */
   implementationAddress?: string;
+  /** Implementation contract name (for proxies) */
+  implementationName?: string;
   /** Token standard (ERC-20, ERC-721, etc.) */
   tokenType?: string;
+  /** Token decimals */
+  tokenDecimals?: string;
   /** Number of token holders */
   holderCount?: number;
   /** Total token supply */
@@ -141,6 +146,12 @@ interface ContractInfo {
   creatorAddress?: string;
   /** Contract creation transaction hash */
   creationTxHash?: string;
+  /** Contract creation status */
+  creationStatus?: string;
+  /** Token name from API */
+  tokenName?: string;
+  /** Token symbol from API */
+  tokenSymbol?: string;
 }
 
 /**
@@ -161,6 +172,16 @@ interface ContractInfoDialogProps {
   chainName: string;
   /** Custom trigger element (defaults to info button) */
   trigger?: React.ReactNode;
+  /** Optional: Transfer transaction hash */
+  transferHash?: string;
+  /** Optional: Transfer sender address */
+  transferFrom?: string;
+  /** Optional: Transfer recipient address */
+  transferTo?: string;
+  /** Optional: Transfer timestamp */
+  transferTimestamp?: number;
+  /** Optional: Transfer value in USD */
+  transferValueUsd?: number;
 }
 
 /**
@@ -209,6 +230,11 @@ export function ContractInfoDialog({
   chainId,
   chainName,
   trigger,
+  transferHash,
+  transferFrom,
+  transferTo,
+  transferTimestamp,
+  transferValueUsd,
 }: ContractInfoDialogProps) {
   const [contractInfo, setContractInfo] = useState<ContractInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -266,23 +292,33 @@ export function ContractInfoDialog({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {/* Security Status Badges */}
-          <div className="flex flex-wrap gap-2">
-            <SecurityBadges
-              loading={loading}
-              isVerified={contractInfo?.isVerified}
-              isProxy={contractInfo?.isProxy}
-              tokenType={contractInfo?.tokenType}
-              isScam={contractInfo?.isScam}
-              reputation={contractInfo?.reputation}
-            />
-          </div>
+        {/* Security Status Badges - Always visible */}
+        <div className="flex flex-wrap gap-2 px-6">
+          <SecurityBadges
+            loading={loading}
+            isVerified={contractInfo?.isVerified}
+            isProxy={contractInfo?.isProxy}
+            tokenType={contractInfo?.tokenType}
+            isScam={contractInfo?.isScam}
+            reputation={contractInfo?.reputation}
+          />
+        </div>
+
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="w-full grid grid-cols-4 mx-6" style={{ width: 'calc(100% - 3rem)' }}>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="market">Market</TabsTrigger>
+            <TabsTrigger value="transfer">Transfer</TabsTrigger>
+            <TabsTrigger value="contract">Contract</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-4 px-6 min-h-[400px]">
 
           {/* Token Icon & Price */}
-          {contractInfo && (contractInfo.tokenPrice || contractInfo.iconUrl) && (
+          {contractInfo && (
             <div className="flex items-center gap-3 p-3 bg-muted/30 dark:bg-muted/50 rounded-lg border border-border">
-              {contractInfo.iconUrl && (
+              {contractInfo.iconUrl ? (
                 <Image 
                   src={contractInfo.iconUrl} 
                   alt={tokenSymbol}
@@ -292,35 +328,48 @@ export function ContractInfoDialog({
                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => { e.currentTarget.style.display = 'none'; }}
                   unoptimized
                 />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-semibold">
+                  {tokenSymbol.slice(0, 2)}
+                </div>
               )}
               <div className="flex-1">
-                {contractInfo.tokenPrice && (
-                  <div>
-                    <span className="text-xs text-muted-foreground">Price</span>
-                    <p className="text-lg font-bold text-foreground">${parseFloat(contractInfo.tokenPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
-                  </div>
-                )}
+                <div>
+                  <span className="text-xs text-muted-foreground">Price</span>
+                  <p className="text-lg font-bold text-foreground">
+                    {contractInfo.tokenPrice 
+                      ? `$${parseFloat(contractInfo.tokenPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`
+                      : <span className="text-sm text-muted-foreground">Not Available</span>
+                    }
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
           {/* Market Stats */}
-          {contractInfo && (contractInfo.marketCap || contractInfo.volume24h) && (
+          {contractInfo && (
             <div className="space-y-2">
               <h4 className="text-sm font-semibold">Market Statistics</h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                {contractInfo.marketCap && (
-                  <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
-                    <span className="text-muted-foreground text-xs">Market Cap</span>
-                    <p className="font-semibold text-foreground">${parseFloat(contractInfo.marketCap).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                  </div>
-                )}
-                {contractInfo.volume24h && (
-                  <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
-                    <span className="text-muted-foreground text-xs">24h Volume</span>
-                    <p className="font-semibold text-foreground">${parseFloat(contractInfo.volume24h).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                  </div>
-                )}
+                <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                  <span className="text-muted-foreground text-xs">Market Cap</span>
+                  <p className="font-semibold text-foreground">
+                    {contractInfo.marketCap 
+                      ? `$${parseFloat(contractInfo.marketCap).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                      : <span className="text-xs text-muted-foreground">Not Available</span>
+                    }
+                  </p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                  <span className="text-muted-foreground text-xs">24h Volume</span>
+                  <p className="font-semibold text-foreground">
+                    {contractInfo.volume24h 
+                      ? `$${parseFloat(contractInfo.volume24h).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                      : <span className="text-xs text-muted-foreground">Not Available</span>
+                    }
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -329,9 +378,17 @@ export function ContractInfoDialog({
           <InfoGrid
             title="Token Information"
             items={[
-              { label: 'Name', value: tokenName || 'Unknown' },
-              { label: 'Symbol', value: tokenSymbol },
-              ...(tokenDecimals ? [{ label: 'Decimals', value: String(tokenDecimals) }] : []),
+              { label: 'Name', value: contractInfo?.tokenName || tokenName || 'Unknown' },
+              { label: 'Symbol', value: contractInfo?.tokenSymbol || tokenSymbol },
+              ...(contractInfo?.tokenType ? [{ label: 'Type', value: contractInfo.tokenType }] : []),
+              ...(contractInfo?.tokenPrice ? [{ 
+                label: 'Price', 
+                value: `$${parseFloat(contractInfo.tokenPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` 
+              }] : []),
+              ...((tokenDecimals || contractInfo?.tokenDecimals) ? [{ 
+                label: 'Decimals', 
+                value: String(tokenDecimals || contractInfo?.tokenDecimals) 
+              }] : []),
               { label: 'Chain', value: chainName },
               { 
                 label: (
@@ -343,7 +400,7 @@ export function ContractInfoDialog({
                           <Info className="h-3 w-3 text-muted-foreground" />
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-xs bg-popover text-popover-foreground border-border">
+                      <TooltipContent className="max-w-xs">
                         <p className="text-xs text-foreground">
                           Holder count may differ from other sources (e.g., Etherscan) due to:
                         </p>
@@ -370,29 +427,184 @@ export function ContractInfoDialog({
               }] : []),
             ]}
           />
+          </TabsContent>
+
+          {/* Market Tab */}
+          <TabsContent value="market" className="space-y-4 px-6 min-h-[400px]">
+
+          {/* Market Stats */}
+          {contractInfo && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Market Statistics</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                  <span className="text-muted-foreground text-xs">Market Cap</span>
+                  <p className="font-semibold text-foreground">
+                    {contractInfo.marketCap 
+                      ? `$${parseFloat(contractInfo.marketCap).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                      : <span className="text-xs text-muted-foreground">Not Available</span>
+                    }
+                  </p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                  <span className="text-muted-foreground text-xs">24h Volume</span>
+                  <p className="font-semibold text-foreground">
+                    {contractInfo.volume24h 
+                      ? `$${parseFloat(contractInfo.volume24h).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                      : <span className="text-xs text-muted-foreground">Not Available</span>
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          </TabsContent>
+
+          {/* Transfer Tab */}
+          <TabsContent value="transfer" className="space-y-4 px-6 min-h-[400px]">
+
+          {/* Transfer Details */}
+          {(transferHash || transferFrom || transferTo) && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Transfer Details</h4>
+              <div className="text-sm space-y-2 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
+                {transferHash && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs">Transaction Hash</span>
+                    <a 
+                      href={getExplorerUrl(chainId, transferHash, 'tx')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs text-primary hover:underline break-all block"
+                    >
+                      {transferHash}
+                    </a>
+                  </div>
+                )}
+                {transferFrom && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs">From</span>
+                    <a 
+                      href={getExplorerUrl(chainId, transferFrom, 'address')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs text-primary hover:underline break-all block"
+                    >
+                      {transferFrom}
+                    </a>
+                  </div>
+                )}
+                {transferTo && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs">To</span>
+                    <a 
+                      href={getExplorerUrl(chainId, transferTo, 'address')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs text-primary hover:underline break-all block"
+                    >
+                      {transferTo}
+                    </a>
+                  </div>
+                )}
+                {transferTimestamp && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs">Time</span>
+                    <p className="text-xs text-foreground">
+                      {new Date(transferTimestamp).toLocaleString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                )}
+                {transferValueUsd !== undefined && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground text-xs">Value</span>
+                    <p className="font-semibold text-foreground">
+                      ${transferValueUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          </TabsContent>
+
+          {/* Contract Tab */}
+          <TabsContent value="contract" className="space-y-4 px-6 min-h-[400px]">
 
           {/* Contract Details */}
-          {contractInfo?.creatorAddress && (
+          {contractInfo && (
             <div className="space-y-2">
               <h4 className="text-sm font-semibold">Contract Details</h4>
               <div className="text-sm space-y-2 p-3 rounded-lg bg-muted/30 dark:bg-muted/20 border border-border/50">
                 <div className="space-y-1">
                   <span className="text-muted-foreground text-xs">Creator</span>
-                  <p className="font-mono text-xs break-all text-foreground">{contractInfo.creatorAddress}</p>
+                  {contractInfo.creatorAddress ? (
+                    <a 
+                      href={getExplorerUrl(chainId, contractInfo.creatorAddress, 'address')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs text-primary hover:underline break-all block"
+                    >
+                      {contractInfo.creatorAddress}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Not Available</p>
+                  )}
                 </div>
-                {contractInfo.creationTxHash && (
-                  <div className="space-y-1">
-                    <span className="text-muted-foreground text-xs">Deployment Tx</span>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs">Deployment Tx</span>
+                  {contractInfo.creationTxHash ? (
                     <a 
                       href={getExplorerUrl(chainId, contractInfo.creationTxHash, 'tx')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-mono text-xs text-primary hover:underline break-all block"
                     >
-                      {contractInfo.creationTxHash.slice(0, 20)}...
+                      {contractInfo.creationTxHash}
                     </a>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Not Available</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs">Creation Status</span>
+                  <p className="text-xs text-foreground capitalize">
+                    {contractInfo.creationStatus || <span className="text-muted-foreground normal-case">Not Available</span>}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs">Implementation Contract</span>
+                  {contractInfo.implementationAddress ? (
+                    <>
+                      <a 
+                        href={getExplorerUrl(chainId, contractInfo.implementationAddress, 'address')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-xs text-primary hover:underline break-all block"
+                      >
+                        {contractInfo.implementationAddress}
+                      </a>
+                      {contractInfo.implementationName && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{contractInfo.implementationName}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Not a Proxy Contract</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground text-xs">Reputation</span>
+                  <p className="text-xs text-foreground capitalize">
+                    {contractInfo.reputation || <span className="text-muted-foreground normal-case">Not Available</span>}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -441,37 +653,39 @@ export function ContractInfoDialog({
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              asChild
+          </TabsContent>
+        </Tabs>
+
+        {/* Actions - Always visible at bottom */}
+        <div className="flex gap-2 px-6 pb-2">
+          <Button
+            variant="outline"
+            className="flex-1 gap-2"
+            asChild
+          >
+            <a
+              href={getExplorerUrl(chainId, tokenAddress, 'token')}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a
-                href={getExplorerUrl(chainId, tokenAddress, 'token')}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-4 w-4" />
-                View on Explorer
-              </a>
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              asChild
+              <ExternalLink className="h-4 w-4" />
+              View on Explorer
+            </a>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 gap-2"
+            asChild
+          >
+            <a
+              href={getExplorerUrl(chainId, tokenAddress, 'address')}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a
-                href={getExplorerUrl(chainId, tokenAddress, 'address')}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileCode className="h-4 w-4" />
-                View Contract
-              </a>
-            </Button>
-          </div>
+              <FileCode className="h-4 w-4" />
+              View Contract
+            </a>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

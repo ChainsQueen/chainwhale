@@ -19,6 +19,15 @@ export interface GenerateInsightsParams {
   minValue: number;
   tokenFilter: string;
   dataSourceStats: DataSourceStats | null;
+  config?: {
+    includeStats: boolean;
+    includeTopWhales: boolean;
+    includeTokenList: boolean;
+    includeContractSecurity: boolean;
+    includeRecentTransfers: boolean;
+    includeDataSources: boolean;
+    contractSecurityData?: unknown[];
+  };
 }
 
 /**
@@ -68,6 +77,7 @@ export function useWhaleAI(): UseWhaleAIReturn {
 
     // Check if API key exists
     const userApiKey = localStorage.getItem('ai_api_key') || localStorage.getItem('openai_api_key');
+    const userModel = localStorage.getItem('ai_model') || 'gpt-4o-mini';
     
     if (!userApiKey) {
       // Redirect to settings page if no API key
@@ -91,6 +101,7 @@ export function useWhaleAI(): UseWhaleAIReturn {
           tokenFilter,
           dataSourceStats,
           apiKey: userApiKey,
+          model: userModel,
         }),
       });
 

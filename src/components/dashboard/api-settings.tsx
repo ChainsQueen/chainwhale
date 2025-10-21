@@ -16,6 +16,7 @@ interface ProviderConfig {
   placeholder: string;
   description: string;
   docsUrl: string;
+  models: string[];
 }
 
 const AI_PROVIDERS: Record<AIProvider, ProviderConfig> = {
@@ -24,29 +25,34 @@ const AI_PROVIDERS: Record<AIProvider, ProviderConfig> = {
     placeholder: 'sk-...',
     description: 'GPT-4, GPT-3.5 Turbo',
     docsUrl: 'https://platform.openai.com/api-keys',
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
   },
   anthropic: {
     name: 'Anthropic',
     placeholder: 'sk-ant-...',
     description: 'Claude 3 Opus, Sonnet, Haiku',
     docsUrl: 'https://console.anthropic.com/settings/keys',
+    models: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
   },
   google: {
     name: 'Google AI',
     placeholder: 'AIza...',
     description: 'Gemini Pro, Gemini Ultra',
     docsUrl: 'https://makersuite.google.com/app/apikey',
+    models: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'],
   },
   custom: {
     name: 'Custom Provider',
     placeholder: 'Enter your API key',
     description: 'OpenAI-compatible API',
     docsUrl: '#',
+    models: ['gpt-4o-mini', 'gpt-4o', 'custom-model'],
   },
 };
 
 export default function ApiSettings() {
   const [provider, setProvider] = useState<AIProvider>('openai');
+  const [model, setModel] = useState('gpt-4o-mini');
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -56,8 +62,10 @@ export default function ApiSettings() {
   // Load API key from localStorage on mount
   useEffect(() => {
     const savedProvider = localStorage.getItem('ai_provider') as AIProvider;
+    const savedModel = localStorage.getItem('ai_model');
     const savedKey = localStorage.getItem('ai_api_key');
     if (savedProvider) setProvider(savedProvider);
+    if (savedModel) setModel(savedModel);
     if (savedKey) {
       setApiKey(savedKey);
       setIsSaved(true);
@@ -67,6 +75,7 @@ export default function ApiSettings() {
   const handleSaveKey = () => {
     if (apiKey.trim()) {
       localStorage.setItem('ai_provider', provider);
+      localStorage.setItem('ai_model', model);
       localStorage.setItem('ai_api_key', apiKey.trim());
       // Keep backward compatibility
       localStorage.setItem('openai_api_key', apiKey.trim());
@@ -82,6 +91,7 @@ export default function ApiSettings() {
 
   const handleRemoveKey = () => {
     localStorage.removeItem('ai_provider');
+    localStorage.removeItem('ai_model');
     localStorage.removeItem('ai_api_key');
     localStorage.removeItem('openai_api_key');
     setApiKey('');
@@ -134,7 +144,12 @@ export default function ApiSettings() {
         {/* Provider Selection */}
         <div className="space-y-2">
           <Label htmlFor="provider" className="text-sm font-medium">AI Provider</Label>
-          <Select value={provider} onValueChange={(value) => setProvider(value as AIProvider)}>
+          <Select value={provider} onValueChange={(value) => {
+            const newProvider = value as AIProvider;
+            setProvider(newProvider);
+            // Set default model for the new provider
+            setModel(AI_PROVIDERS[newProvider].models[0]);
+          }}>
             <SelectTrigger id="provider" className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -145,6 +160,23 @@ export default function ApiSettings() {
                     <span className="font-medium">{config.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">{config.description}</span>
                   </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Model Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="model" className="text-sm font-medium">Model</Label>
+          <Select value={model} onValueChange={setModel}>
+            <SelectTrigger id="model" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {currentProvider.models.map((modelName) => (
+                <SelectItem key={modelName} value={modelName}>
+                  <span className="font-mono text-sm">{modelName}</span>
                 </SelectItem>
               ))}
             </SelectContent>

@@ -249,10 +249,13 @@ Return your response as a JSON object with this structure:
         .slice(0, 5)
         .map(([token, count]) => `${token} (${count} transfers)`);
 
-      // Fetch contract security info for top 3 tokens using hybrid MCP-first approach
-      const top3Tokens = Object.entries(tokenCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 3);
+      // Fetch contract security info for ALL unique tokens using hybrid MCP-first approach
+      const allTokens = Object.entries(tokenCounts)
+        .sort(([, a], [, b]) => b - a); // Sort by frequency, most active first
+      
+      console.log('\n🔍 [AI Analysis] Fetching contract security data for ALL unique tokens...');
+      console.log(`   Total unique tokens: ${allTokens.length}`);
+      console.log(`   Tokens to analyze: ${allTokens.map(([symbol]) => symbol).join(', ')}`);
       
       const contractSecurityInfo: string[] = [];
       
@@ -263,8 +266,8 @@ Return your response as a JSON object with this structure:
         securityClient = createBlockscoutClient();
         await securityClient.connect();
         
-        // Fetch all contract info in parallel
-        const securityPromises = top3Tokens.map(async ([tokenSymbol]) => {
+        // Fetch all contract info in parallel for ALL tokens
+        const securityPromises = allTokens.map(async ([tokenSymbol]) => {
           try {
             // Find a transfer with this token to get the contract address and chain
             const transfer = transfers.find(t => {
@@ -285,14 +288,23 @@ Return your response as a JSON object with this structure:
             
             if (!addressInfo) return null;
             
+            // Extract all available contract data
             const isVerified = addressInfo.is_verified || false;
             const isProxy = addressInfo.implementations && addressInfo.implementations.length > 0;
             const isScam = addressInfo.is_scam || false;
             const reputation = addressInfo.reputation;
             const tokenPrice = addressInfo.token?.exchange_rate;
             const marketCap = addressInfo.token?.circulating_market_cap;
+            const volume24h = addressInfo.token?.volume_24h;
+            const totalSupply = addressInfo.token?.total_supply;
+            const holders = addressInfo.token?.holders;
+            const tokenType = addressInfo.token?.type;
+            const decimals = addressInfo.token?.decimals;
+            const creatorAddress = addressInfo.creator_address_hash;
+            const creationTxHash = addressInfo.creation_transaction_hash;
+            const implementations = addressInfo.implementations;
             
-            let securityStatus = `${tokenSymbol}: `;
+            let securityStatus = `${tokenSymbol} (${address.slice(0, 6)}...${address.slice(-4)}): `;
             
             // Critical: Scam warning first
             if (isScam) {
@@ -312,12 +324,21 @@ Return your response as a JSON object with this structure:
               securityStatus += '✗ NOT Verified';
             }
             
-            // Proxy warning
-            if (isProxy) {
-              securityStatus += ', ⚠️ Proxy (upgradeable)';
+            // Token type
+            if (tokenType) {
+              securityStatus += `, Type: ${tokenType}`;
             }
             
-            // Add price and market cap if available
+            // Proxy warning with implementation details
+            if (isProxy && implementations && implementations.length > 0) {
+              securityStatus += `, ⚠️ Proxy (upgradeable, ${implementations.length} impl)`;
+              implementations.forEach((impl, idx) => {
+                securityStatus += `\n    Implementation ${idx + 1}: ${impl.address.slice(0, 6)}...${impl.address.slice(-4)}`;
+                if (impl.name) securityStatus += ` (${impl.name})`;
+              });
+            }
+            
+            // Market data
             if (tokenPrice) {
               const price = parseFloat(tokenPrice);
               securityStatus += `, Price: $${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
@@ -329,7 +350,48 @@ Return your response as a JSON object with this structure:
                 securityStatus += `, MCap: $${(cap / 1e9).toFixed(2)}B`;
               } else if (cap > 1e6) {
                 securityStatus += `, MCap: $${(cap / 1e6).toFixed(2)}M`;
+              } else {
+                securityStatus += `, MCap: $${(cap / 1e3).toFixed(2)}K`;
               }
+            }
+            
+            if (volume24h) {
+              const vol = parseFloat(volume24h);
+              if (vol > 1e6) {
+                securityStatus += `, 24h Vol: $${(vol / 1e6).toFixed(2)}M`;
+              } else if (vol > 1e3) {
+                securityStatus += `, 24h Vol: $${(vol / 1e3).toFixed(2)}K`;
+              }
+            }
+            
+            // Supply and holder metrics
+            if (totalSupply && decimals) {
+              const supply = parseFloat(totalSupply) / Math.pow(10, parseInt(decimals));
+              if (supply > 1e9) {
+                securityStatus += `, Supply: ${(supply / 1e9).toFixed(2)}B`;
+              } else if (supply > 1e6) {
+                securityStatus += `, Supply: ${(supply / 1e6).toFixed(2)}M`;
+              }
+            }
+            
+            if (holders) {
+              const holderCount = parseInt(holders);
+              if (holderCount > 1e6) {
+                securityStatus += `, Holders: ${(holderCount / 1e6).toFixed(2)}M`;
+              } else if (holderCount > 1e3) {
+                securityStatus += `, Holders: ${(holderCount / 1e3).toFixed(1)}K`;
+              } else {
+                securityStatus += `, Holders: ${holderCount}`;
+              }
+            }
+            
+            // Creator info
+            if (creatorAddress) {
+              securityStatus += `\n    Creator: ${creatorAddress.slice(0, 6)}...${creatorAddress.slice(-4)}`;
+            }
+            
+            if (creationTxHash) {
+              securityStatus += `, Created in: ${creationTxHash.slice(0, 10)}...`;
             }
             
             return securityStatus;
@@ -341,13 +403,27 @@ Return your response as a JSON object with this structure:
         
         // Wait for all promises
         const results = await Promise.all(securityPromises);
-        contractSecurityInfo.push(...results.filter((r): r is string => r !== null));
+        const successfulResults = results.filter((r): r is string => r !== null);
+        contractSecurityInfo.push(...successfulResults);
+        
+        console.log(`   ✅ Successfully fetched ${successfulResults.length}/${allTokens.length} contract security records`);
+        if (successfulResults.length < allTokens.length) {
+          console.log(`   ⚠️ Failed to fetch ${allTokens.length - successfulResults.length} contract(s)`);
+        }
       } catch (error) {
         console.error('Error fetching contract security info:', error);
       } finally {
         if (securityClient) {
           await securityClient.disconnect();
         }
+      }
+
+      // Log contract security data that will be sent to AI
+      console.log('\n🛡️ [AI Analysis] Contract Security Data Being Sent to AI:');
+      if (contractSecurityInfo.length > 0) {
+        contractSecurityInfo.forEach(info => console.log(`   ${info}`));
+      } else {
+        console.log('   ⚠️ No contract security data available');
       }
 
       // Data source info
@@ -379,6 +455,16 @@ Return your response as a JSON object with this structure:
         const dataSource = (t.dataSource as string) || 'unknown';
         return `- ${symbol}: $${(valueUsd / 1000).toFixed(0)}K on ${chainName} [${dataSource.toUpperCase()}]`;
       }).join('\n');
+
+      // Log data source stats
+      console.log('\n📊 [AI Analysis] Data Source Stats:');
+      if (dataSourceStats && dataSourceStats.total > 0) {
+        console.log(`   MCP: ${dataSourceStats.mcp} transfers`);
+        console.log(`   HTTP: ${dataSourceStats.http} transfers`);
+        console.log(`   Total: ${dataSourceStats.total} transfers`);
+      } else {
+        console.log('   ⚠️ No data source stats available');
+      }
 
       const currentTime = new Date().toISOString();
       const timeRangeLabel = timeRange === '1h' ? 'past hour' : 
@@ -413,54 +499,99 @@ ${dataSourceInfo}
 - Largest Single Transfer: $${(((stats.largestTransfer as number) || 0) / 1000000).toFixed(2)}M
 - Unique Whale Addresses: ${(stats.uniqueWhales as number) || 0}
 
-🐋 TOP WHALES BY VOLUME:
+🐋 TOP 3 WHALES BY SENT VOLUME:
 ${topWhalesSummary}
 
 🪙 MOST ACTIVE TOKENS:
 ${topTokens.join('\n')}
 
-🛡️ CONTRACT SECURITY (Top 3 Tokens) - AUTHORITATIVE DATA:
+🛡️ CONTRACT SECURITY (All Tokens) - AUTHORITATIVE DATA:
 ${contractSecurityInfo.length > 0 ? contractSecurityInfo.join('\n') : 'Security data unavailable'}
 
-⚠️ REPORTING RULES:
-If you see "USDT: ✓ Verified", you MUST say: "USDT is a verified contract"
-NEVER say: "USDT is not verified" or "USDT lacks verification"
-
-CORRECT: "The main tokens are LINK and USDT, both verified contracts..."
-INCORRECT: "LINK and USDT are not verified..." ❌ FORBIDDEN
-
-USE THE ABOVE SECURITY DATA EXACTLY AS SHOWN.
+${contractSecurityInfo.length === 0 ? '⚠️ WARNING: No contract security data was fetched. AI will not have verification status information.' : ''}
 
 📝 RECENT TRANSFER EXAMPLES:
 ${recentTransfersSummary}
 
-INSTRUCTIONS:
-Provide a CONCISE analysis (2-3 short paragraphs, max 200 words total) covering:
+═══════════════════════════════════════════════════════════════
+INSTRUCTIONS: Provide DETAILED SECTION-BY-SECTION ANALYSIS
+═══════════════════════════════════════════════════════════════
 
-**Paragraph 1: Key Activity Summary** (3-4 sentences)
-- Total volume and transfer count with context
-- Main tokens involved - ONLY mention security concerns if tokens show "✗ NOT Verified" or "🚨 SCAM WARNING"
-- Primary whale behavior (accumulating/distributing/consolidating)
+Structure your response with these EXACT sections:
 
-**Paragraph 2: Market Signals** (2-3 sentences)
-- What this activity indicates about market sentiment
-- Notable risks or opportunities based on ACTUAL security data
-- Chain preferences and what they suggest
+## 📊 Whale Activity Overview
+- Analyze the total volume ($${(((stats.totalVolume as number) || 0) / 1000000).toFixed(2)}M) - is this high/low/normal for ${timeRangeLabel}?
+- Interpret the ${(stats.totalTransfers as number) || transfers.length} transfers - concentrated or distributed?
+- Compare largest transfer ($${(((stats.largestTransfer as number) || 0) / 1000000).toFixed(2)}M) to average - any outliers?
+- What does ${(stats.uniqueWhales as number) || 0} unique whales suggest about coordination?
 
-**Paragraph 3: Action Items** (2-3 bullet points)
-- Specific tokens to watch
-- Recommended strategy (defensive/aggressive/wait)
-- Key metrics to monitor
+## 🐋 Top 3 Whale Analysis
+For EACH of the top 3 whales, provide:
+- Address pattern recognition (exchange, institutional, unknown)
+- Volume significance ($XM in Y transfers)
+- Behavior type (accumulating/distributing/consolidating/arbitrage)
+- Risk level (high/medium/low) based on activity pattern
 
+Example format:
+**Whale #1** (0x28C6...1d60): $0.20M in 1 transfer
+- Pattern: [Exchange/Institution/Unknown]
+- Behavior: [Distributing/Accumulating]
+- Risk: [Assessment]
+
+## 🪙 Token Deep-Dive
+For EACH major token, analyze:
+- **Security Status**: Verified? Proxy? Scam alerts? (USE EXACT DATA FROM SECURITY SECTION)
+- **Market Metrics**: Price, MCap, Volume, Holders (from security data)
+- **Whale Interest**: Why are whales moving this token now?
+- **Risk Factors**: Low holders? Recent creation? Unverified? Proxy risks?
+
+Example:
+**USDT**: ✓ Verified, $1.00, MCap $140B, 5.8M holders
+- High liquidity, established token, low risk
+- Whales using for [reason]
+
+## 📈 Transfer Pattern Analysis
+- **Timing**: Are transfers clustered or spread out?
+- **Direction**: More inflows or outflows from exchanges?
+- **Size Distribution**: Many small or few large transfers?
+- **Chain Activity**: Why ${selectedChainNames}? Gas costs? Liquidity?
+
+## ⚠️ Risk Assessment
+- **Critical Risks**: Any unverified tokens? Scam warnings? Low holder counts?
+- **Proxy Risks**: Which tokens are upgradeable? Implementation details?
+- **Market Risks**: Unusual volume? Coordinated dumps? Liquidity concerns?
+- **Overall Risk Level**: HIGH/MEDIUM/LOW with justification
+
+## 🎯 Actionable Recommendations
+**Immediate Actions:**
+- [Specific action based on data]
+- [Specific action based on data]
+
+**Tokens to Watch:**
+- [Token]: [Why and what to monitor]
+- [Token]: [Why and what to monitor]
+
+**Strategy:**
+- Position: [Defensive/Neutral/Aggressive]
+- Rationale: [Based on whale behavior and security data]
+- Key Metrics: [Specific numbers to track]
+
+**Alerts to Set:**
+- [Specific threshold or condition]
+- [Specific threshold or condition]
+
+═══════════════════════════════════════════════════════════════
 STYLE REQUIREMENTS:
-- Start with time period context ("In the past hour...")
-- Use bullet points for action items
-- Be direct and specific - no filler words
-- Mention actual numbers and token names
-- If activity is low, say so clearly
-- Focus on ACTIONABLE insights, not general market commentary
-- NEVER claim a token is unverified if it shows "✓ Verified"
-- Maximum 200 words total`;
+═══════════════════════════════════════════════════════════════
+- Use markdown headers (##) for each section
+- Be SPECIFIC with numbers, addresses, and token names
+- Reference ACTUAL security data - never invent or assume
+- If data is missing, say "Data unavailable" - don't guess
+- Use bullet points and sub-bullets for clarity
+- Bold important terms (**term**)
+- Maximum 600 words total
+- NEVER claim verified tokens are unverified
+- Provide ACTIONABLE insights, not generic commentary`;
 
       const response = await this.client.chat.completions.create({
         model: this.model,
@@ -474,11 +605,21 @@ STYLE REQUIREMENTS:
             content: prompt,
           },
         ],
-        max_tokens: 800,
+        max_tokens: 1500,
         temperature: 0.7,
       });
 
       let aiResponse = response.choices[0]?.message?.content || 'Unable to generate insights at this time.';
+
+      console.log('\n✅ [AI Analysis] Received response from OpenAI');
+      console.log(`   Response Length: ${aiResponse.length} characters`);
+      console.log(`   Tokens Used: ${response.usage?.total_tokens || 'unknown'}`);
+      console.log(`   Prompt Tokens: ${response.usage?.prompt_tokens || 'unknown'}`);
+      console.log(`   Completion Tokens: ${response.usage?.completion_tokens || 'unknown'}`);
+      console.log(`   Model: ${response.model}`);
+      console.log(`   Finish Reason: ${response.choices[0]?.finish_reason || 'unknown'}`);
+      console.log('   First 200 chars:', aiResponse.substring(0, 200) + '...');
+      console.log('');
 
       // Post-processing: Detect and fix hallucinations about verification status
       // Check if AI contradicts the actual security data

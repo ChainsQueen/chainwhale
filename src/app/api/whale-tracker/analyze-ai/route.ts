@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
     const stats = body.stats;
     const topWhales = body.topWhales;
     const userApiKey = body.apiKey as string | undefined;
+    const userModel = body.model as string | undefined;
+    const config = body.config as Record<string, unknown> | undefined;
 
     // Extract filters
     const filters = {
@@ -23,6 +25,7 @@ export async function POST(request: NextRequest) {
       minValue: body.minValue,
       tokenFilter: body.tokenFilter,
       dataSourceStats: body.dataSourceStats,
+      config, // User's data selection configuration
     };
 
     if (!transfers) {
@@ -43,7 +46,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize AI Engine
-    const ai = new AIEngine({ apiKey });
+    const ai = new AIEngine({ 
+      apiKey,
+      model: userModel || 'gpt-4o-mini'
+    });
 
     // Generate whale tracker activity analysis
     const insights = await ai.analyzeWhaleTrackerActivity(

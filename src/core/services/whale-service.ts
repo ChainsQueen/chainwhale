@@ -27,6 +27,7 @@ export type { WhaleTransfer, WhaleStats } from '@/core/types/whale.types';
 export class WhaleService {
   private client: IBlockscoutClient;
   private minWhaleValue: number;
+  private readonly CONCURRENT_REQUESTS = 3; // Limit concurrent API calls to avoid rate limiting
 
   // Known whale addresses (same as WhaleDetector)
   private readonly WHALE_ADDRESSES = [
@@ -73,15 +74,29 @@ export class WhaleService {
       // Fetch all whale addresses in parallel for better performance
       const transferPromises = this.WHALE_ADDRESSES.map(async (whaleAddress) => {
         try {
-          const { items: transfers } = await this.client.getTokenTransfers(
-            chainId,
-            whaleAddress,
-            timeRange,
-            'now'
-          );
+          let allTransfers: TokenTransfer[] = [];
+          let cursor: string | undefined = undefined;
+          
+          // Fetch all pages (limit to 200 transfers per whale to avoid excessive API calls)
+          do {
+            const { items: transfers, nextCursor } = await this.client.getTokenTransfers(
+              chainId,
+              whaleAddress,
+              timeRange,
+              'now',
+              undefined,
+              cursor
+            );
+            
+            allTransfers.push(...transfers);
+            cursor = nextCursor;
+            
+            // Safety limit to avoid excessive API calls (reduced for performance)
+            if (allTransfers.length >= 20) break;
+          } while (cursor);
 
           // Filter by minimum value and add chain info
-          return transfers
+          return allTransfers
             .filter(t => (t.valueUsd || 0) >= this.minWhaleValue)
             .map(transfer => ({
               ...transfer,
@@ -95,8 +110,8 @@ export class WhaleService {
         }
       });
 
-      // Wait for all requests to complete
-      const results = await Promise.all(transferPromises);
+      // Wait for all requests to complete (with concurrency limit to avoid rate limiting)
+      const results = await this.batchPromises(transferPromises, this.CONCURRENT_REQUESTS);
       const allTransfers: WhaleTransfer[] = results.flat();
 
       await this.client.disconnect();
@@ -109,6 +124,30 @@ export class WhaleService {
       await this.client.disconnect();
       return [];
     }
+  }
+
+  /**
+   * Execute promises in batches to limit concurrency
+   * Prevents overwhelming external APIs with too many simultaneous requests
+   */
+  private async batchPromises<T>(
+    promises: Promise<T>[],
+    batchSize: number
+  ): Promise<T[]> {
+    const results: T[] = [];
+    
+    for (let i = 0; i < promises.length; i += batchSize) {
+      const batch = promises.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch);
+      results.push(...batchResults);
+      
+      // Small delay between batches to be nice to the API
+      if (i + batchSize < promises.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    return results;
   }
 
   /**

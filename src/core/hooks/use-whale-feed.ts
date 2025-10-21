@@ -42,6 +42,7 @@ export function useWhaleFeed(filters: WhaleFilters): UseWhaleFeedReturn {
   const [error, setError] = useState<string | null>(null);
 
   const fetchWhaleFeed = async () => {
+    console.log('[Whale Tracker] 🚀 fetchWhaleFeed called with filters:', filters);
     setLoading(true);
     setError(null);
 
@@ -66,6 +67,8 @@ export function useWhaleFeed(filters: WhaleFilters): UseWhaleFeedReturn {
 
       const data = await response.json();
       console.log('[Whale Tracker] Full API Response:', data);
+      console.log('[Whale Tracker] Transfer count:', data.transfers?.length || 0);
+      console.log('[Whale Tracker] First transfer:', data.transfers?.[0]);
       console.log('[Whale Tracker] Metadata:', data.metadata);
       console.log('[Whale Tracker] DataSources from API:', data.metadata?.dataSources);
       

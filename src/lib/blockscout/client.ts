@@ -14,6 +14,34 @@ export class BlockscoutClient {
   constructor() {}
 
   /**
+   * Convert token value from wei to decimal format
+   * Uses string manipulation to avoid JavaScript floating-point precision issues
+   */
+  private convertTokenValue(value: string, decimals: number): number {
+    if (!value || value === '0') return 0;
+    
+    // Remove leading zeros
+    const cleanValue = value.replace(/^0+/, '') || '0';
+    
+    // If decimals is 0, just parse as integer
+    if (decimals === 0) {
+      return parseInt(cleanValue);
+    }
+    
+    // Pad with zeros if needed
+    const paddedValue = cleanValue.padStart(decimals + 1, '0');
+    
+    // Split at decimal point
+    const integerPart = paddedValue.slice(0, -decimals) || '0';
+    const decimalPart = paddedValue.slice(-decimals);
+    
+    // Combine and parse
+    const result = parseFloat(`${integerPart}.${decimalPart}`);
+    
+    return result;
+  }
+
+  /**
    * Connect to the Blockscout MCP server
    * Uses Docker with the official cloud-hosted MCP server
    */
@@ -107,18 +135,44 @@ export class BlockscoutClient {
   }
 
   /**
-   * Get address information including balance and ENS name
+   * Get comprehensive address information from Blockscout
+   * 
+   * Returns detailed data including:
+   * - Balance (native coin) and USD value
+   * - ENS name association (if any)
+   * - Contract status (is_contract, is_verified, is_scam)
+   * - Contract creation details (creator, transaction hash)
+   * - Proxy implementation addresses (if proxy contract)
+   * - Token metadata (if address is a token contract):
+   *   - Symbol, name, decimals, total supply
+   *   - Holder count, exchange rate, market cap
+   *   - Trading volume, icon URL
+   * - Security reputation score
+   * 
+   * @param chainId - Blockchain chain ID (e.g., '1' for Ethereum)
+   * @param address - Wallet or contract address to query
+   * @returns Promise resolving to AddressInfo with comprehensive data
+   * 
+   * @example
+   * // Get USDT token contract info
+   * const info = await client.getAddressInfo('1', '0xdAC17F958D2ee523a2206206994597C13D831ec7');
+   * console.log(info.token.symbol); // 'USDT'
+   * console.log(info.is_verified); // true
    */
   async getAddressInfo(chainId: string, address: string): Promise<AddressInfo> {
     this.ensureConnected();
 
     try {
+      const requestArgs = {
+        chain_id: chainId,
+        address: address,
+      };
+      
+      // console.log('[MCP Client] Calling get_address_info with args:', requestArgs);
+      
       const result = await this.client!.callTool({
         name: 'get_address_info',
-        arguments: {
-          chain_id: chainId,
-          address: address,
-        },
+        arguments: requestArgs,
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,38 +185,44 @@ export class BlockscoutClient {
       
       const data = JSON.parse(responseText);
       
+      // Debug: Log the raw response to see what we actually received
+      // console.log('[MCP Client] Raw response data:', JSON.stringify(data, null, 2));
+      
+      // MCP server wraps response in data.basic_info
+      const basicInfo = data.data?.basic_info || data;
+      
       // Calculate USD value: convert Wei to ETH, then multiply by exchange rate
       let balanceUsd: number | undefined;
-      if (data.coin_balance && data.exchange_rate) {
-        const balanceInEth = parseFloat(data.coin_balance) / 1e18; // Wei to ETH
-        balanceUsd = balanceInEth * parseFloat(data.exchange_rate);
+      if (basicInfo.coin_balance && basicInfo.exchange_rate) {
+        const balanceInEth = parseFloat(basicInfo.coin_balance) / 1e18; // Wei to ETH
+        balanceUsd = balanceInEth * parseFloat(basicInfo.exchange_rate);
       }
       
       return {
-        address: data.hash || address,
-        balance: data.coin_balance || '0',
+        address: basicInfo.hash || address,
+        balance: basicInfo.coin_balance || '0',
         balanceUsd,
-        isContract: data.is_contract || false,
-        ensName: data.ens_domain_name,
+        isContract: basicInfo.is_contract || false,
+        ensName: basicInfo.ens_domain_name,
         // Contract-specific fields
-        is_verified: data.is_verified,
-        is_scam: data.is_scam,
-        reputation: data.reputation,
-        creator_address_hash: data.creator_address_hash,
-        creation_transaction_hash: data.creation_transaction_hash,
-        creation_status: data.creation_status,
-        implementations: data.implementations,
-        token: data.token ? {
-          type: data.token.type,
-          name: data.token.name,
-          symbol: data.token.symbol,
-          decimals: data.token.decimals,
-          total_supply: data.token.total_supply,
-          holders: data.token.holders_count || data.token.holders,
-          exchange_rate: data.token.exchange_rate,
-          circulating_market_cap: data.token.circulating_market_cap,
-          volume_24h: data.token.volume_24h,
-          icon_url: data.token.icon_url,
+        is_verified: basicInfo.is_verified,
+        is_scam: basicInfo.is_scam,
+        reputation: basicInfo.reputation,
+        creator_address_hash: basicInfo.creator_address_hash,
+        creation_transaction_hash: basicInfo.creation_transaction_hash,
+        creation_status: basicInfo.creation_status,
+        implementations: basicInfo.implementations,
+        token: basicInfo.token ? {
+          type: basicInfo.token.type,
+          name: basicInfo.token.name,
+          symbol: basicInfo.token.symbol,
+          decimals: basicInfo.token.decimals,
+          total_supply: basicInfo.token.total_supply,
+          holders: basicInfo.token.holders_count || basicInfo.token.holders,
+          exchange_rate: basicInfo.token.exchange_rate,
+          circulating_market_cap: basicInfo.token.circulating_market_cap,
+          volume_24h: basicInfo.token.volume_24h,
+          icon_url: basicInfo.token.icon_url,
         } : undefined,
       };
     } catch (error) {
@@ -279,8 +339,19 @@ export class BlockscoutClient {
         // Calculate USD value using historical exchange rate from transaction time
         let valueUsd: number | undefined;
         
+        // Debug: Check what fields are in total object
+        if (rawItems.length > 0 && item === rawItems[0]) {
+          console.log('[MCP Client] ===== CHECKING USD FIELD =====');
+          console.log('[MCP Client] item.total object:', JSON.stringify(item.total, null, 2));
+          console.log('[MCP Client] item.total.usd exists?', 'usd' in (item.total || {}));
+          console.log('[MCP Client] item.total.usd value:', item.total?.usd);
+          console.log('[MCP Client] item.token.exchange_rate:', item.token?.exchange_rate);
+          console.log('[MCP Client] ======================================');
+        }
+        
         if (item.total?.usd) {
           // Direct USD value provided by MCP
+          console.log(`[MCP Client] ✅ Found total.usd: ${item.total.usd}`);
           valueUsd = parseFloat(item.total.usd);
         } else if (item.total?.value && item.token?.exchange_rate) {
           // Calculate from token value * historical exchange rate
@@ -289,7 +360,8 @@ export class BlockscoutClient {
           try {
             const exchangeRate = parseFloat(item.token.exchange_rate);
             const decimalPlaces = parseInt(decimals);
-            const tokenAmount = parseFloat(item.total.value) / Math.pow(10, decimalPlaces);
+            // Use string-based conversion to avoid floating-point precision loss
+            const tokenAmount = this.convertTokenValue(item.total.value, decimalPlaces);
             valueUsd = tokenAmount * exchangeRate;
           } catch (error) {
             console.warn(`[MCP Client] Failed to calculate USD value for ${item.token?.symbol}:`, error);
@@ -306,6 +378,7 @@ export class BlockscoutClient {
             address: item.token?.address_hash || item.token?.address || '',
             name: item.token?.name,
             decimals: item.total?.decimals || item.token?.decimals || '18',
+            exchangeRate: item.token?.exchange_rate, // USD per token
           },
           timestamp: item.timestamp ? new Date(item.timestamp as string).getTime() : Date.now(),
           valueUsd,
@@ -319,7 +392,7 @@ export class BlockscoutClient {
 
       return {
         items,
-        nextCursor: data.next_page_params?.cursor,
+        nextCursor: data.pagination?.next_call?.params?.cursor,
       };
     } catch (error) {
       console.error('Error getting token transfers:', error);
@@ -406,36 +479,6 @@ export class BlockscoutClient {
     }
   }
 
-  /**
-   * Get whale transfers (large value transfers) for a specific time range
-   * This is optimized for whale detection
-   */
-  async getWhaleTransfers(
-    chainId: string,
-    minValueUsd: number = 100000,
-    ageFrom: string = '1h',
-    ageTo: string = 'now'
-  ): Promise<TokenTransfer[]> {
-    this.ensureConnected();
-
-    try {
-      // Get all transfers in the time range
-      const { items } = await this.getTokenTransfers(
-        chainId,
-        null, // all addresses
-        ageFrom,
-        ageTo
-      );
-
-      // Filter for whale-sized transfers
-      return items.filter(transfer => 
-        transfer.valueUsd && transfer.valueUsd >= minValueUsd
-      );
-    } catch (error) {
-      console.error('Error getting whale transfers:', error);
-      return [];
-    }
-  }
 
   /**
    * Get activity for a specific whale address

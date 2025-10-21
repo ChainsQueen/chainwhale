@@ -1,7 +1,7 @@
-import { BlockscoutClient } from './client';
-import { BlockscoutHttpClient } from './http-client';
-import { HybridBlockscoutClient } from './hybrid-client';
-import type { AddressInfo, TokenTransfer, Chain } from '../shared/types';
+import { BlockscoutClient } from './client';  // ← MCP client
+import { BlockscoutHttpClient } from './http-client'; // ← HTTP/REST client
+import { HybridBlockscoutClient } from './hybrid-client'; // ← Hybrid (tries MCP first, falls back to HTTP)
+import type { AddressInfo, TokenTransfer, Chain } from '../shared/types'; 
 
 /**
  * Interface that both clients must implement

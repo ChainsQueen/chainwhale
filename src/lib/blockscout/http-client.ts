@@ -56,6 +56,34 @@ export class BlockscoutHttpClient {
   constructor() {}
 
   /**
+   * Convert token value from wei to decimal format
+   * Uses string manipulation to avoid JavaScript floating-point precision issues
+   */
+  private convertTokenValue(value: string, decimals: number): number {
+    if (!value || value === '0') return 0;
+    
+    // Remove leading zeros
+    const cleanValue = value.replace(/^0+/, '') || '0';
+    
+    // If decimals is 0, just parse as integer
+    if (decimals === 0) {
+      return parseInt(cleanValue);
+    }
+    
+    // Pad with zeros if needed
+    const paddedValue = cleanValue.padStart(decimals + 1, '0');
+    
+    // Split at decimal point
+    const integerPart = paddedValue.slice(0, -decimals) || '0';
+    const decimalPart = paddedValue.slice(-decimals);
+    
+    // Combine and parse
+    const result = parseFloat(`${integerPart}.${decimalPart}`);
+    
+    return result;
+  }
+
+  /**
    * Get the base URL for a chain
    */
   private getBaseUrl(chainId: string): string {
@@ -98,6 +126,11 @@ export class BlockscoutHttpClient {
         });
 
         clearTimeout(timeoutId);
+
+        // Check if response is valid
+        if (!response || typeof response.ok === 'undefined') {
+          throw new Error('Fetch returned invalid response (missing ok property)');
+        }
 
         if (!response.ok) {
           // Handle rate limiting and timeouts
@@ -313,7 +346,8 @@ export class BlockscoutHttpClient {
             try {
               const exchangeRate = parseFloat(item.token.exchange_rate);
               const decimals = parseInt(item.total.decimals);
-              const tokenAmount = parseFloat(item.total.value) / Math.pow(10, decimals);
+              // Use string-based conversion to avoid floating-point precision loss
+              const tokenAmount = this.convertTokenValue(item.total.value, decimals);
               valueUsd = tokenAmount * exchangeRate;
             } catch (error) {
               console.warn(`[Blockscout] Failed to calculate USD value for ${item.token?.symbol}:`, error);
@@ -330,6 +364,7 @@ export class BlockscoutHttpClient {
               address: item.token?.address_hash || '',
               name: item.token?.name,
               decimals: item.total?.decimals || item.token?.decimals || '18',
+              exchangeRate: item.token?.exchange_rate, // USD per token
             },
             timestamp,
             valueUsd, // Use historical price from transaction time
@@ -357,13 +392,15 @@ export class BlockscoutHttpClient {
         
         return {
           items: finalItems,
-          nextCursor: data.next_page_params ? JSON.stringify(data.next_page_params) : undefined,
+          // HTTP API doesn't support pagination cursors like MCP does
+          nextCursor: undefined,
         };
       }
 
       return {
         items,
-        nextCursor: data.next_page_params ? JSON.stringify(data.next_page_params) : undefined,
+        // HTTP API doesn't support pagination cursors like MCP does
+        nextCursor: undefined,
       };
     } catch (error) {
       console.error('Error getting token transfers:', error);

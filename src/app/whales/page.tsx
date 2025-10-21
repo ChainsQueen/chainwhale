@@ -12,7 +12,7 @@ import { WhaleStatsComponent } from '@/components/features/whale/whale-stats';
 import { WhaleFiltersComponent } from '@/components/features/whale/whale-filters';
 import { WhaleTopLeaderboard } from '@/components/features/whale/whale-top-leaderboard';
 import { AnimatedHover } from '@/components/ui/animated-hover';
-import { AIInsightsChecklistDialog } from '@/components/features/whale/ai-insights-checklist-dialog';
+import { AIInsightsChecklistDialog, type AIInsightsConfig } from '@/components/features/whale/ai-insights-checklist-dialog';
 import { MCPInfoCard } from '@/components/features/data-source/data-source-card';
 import { RefreshCw, Sparkles, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useWhaleFilters } from '@/core/hooks/use-whale-filters';
@@ -38,7 +38,7 @@ export default function WhalesPage() {
   };
   
   // Actually generate insights after user confirms checklist
-  const handleConfirmGenerate = async () => {
+  const handleConfirmGenerate = async (config: AIInsightsConfig) => {
     setShowChecklist(false);
     try {
       await generateInsights({
@@ -50,6 +50,7 @@ export default function WhalesPage() {
         minValue: filters.minValue,
         tokenFilter: filters.tokenFilter,
         dataSourceStats,
+        config, // Pass the user's configuration
       });
     } catch {
       // Error is already logged in the hook
@@ -152,28 +153,28 @@ export default function WhalesPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.15 }}
             >
-              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+              <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg shrink-0">
-                      <Sparkles className="h-5 w-5 text-primary" />
+                    <div className="p-2 bg-blue-500/10 rounded-lg shrink-0">
+                      <Sparkles className="h-5 w-5 text-blue-400" />
                     </div>
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-3">
                       <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2 flex-wrap">
                         AI Insights
                         <Badge variant="secondary" className="text-xs">Powered by AI</Badge>
                         {dataSourceStats && dataSourceStats.total > 0 && (
                           <>
                             {dataSourceStats.mcp > 0 && dataSourceStats.http > 0 ? (
-                              <Badge className="text-xs bg-gradient-to-r from-purple-500 to-blue-500 text-white">
+                              <Badge className="text-xs bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0">
                                 MCP + HTTP Data
                               </Badge>
                             ) : dataSourceStats.mcp > 0 ? (
-                              <Badge className="text-xs bg-purple-500 text-white">
+                              <Badge className="text-xs bg-purple-600 text-white border-0">
                                 MCP Data
                               </Badge>
                             ) : (
-                              <Badge className="text-xs bg-blue-500 text-white">
+                              <Badge className="text-xs bg-blue-600 text-white border-0">
                                 HTTP Data
                               </Badge>
                             )}

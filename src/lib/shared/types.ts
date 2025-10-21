@@ -50,6 +50,7 @@ export interface TokenTransfer {
     address: string;
     name?: string;
     decimals?: string;
+    exchangeRate?: string; // USD per token
   };
   timestamp: number;
   valueUsd?: number;

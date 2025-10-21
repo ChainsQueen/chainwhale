@@ -15,6 +15,8 @@ export interface TokenInfo {
   name?: string;
   symbol: string;
   decimals?: string;
+  /** Exchange rate (USD per token) at transaction time */
+  exchangeRate?: string;
 }
 
 /**

@@ -29,8 +29,8 @@ describe('WhaleTopLeaderboard', () => {
   it('renders leaderboard title', () => {
     render(<WhaleTopLeaderboard topWhales={mockTopWhales} />);
     
-    expect(screen.getByText(/Top 3 Whales by Volume/i)).toBeInTheDocument();
-    expect(screen.getByText(/Most active addresses by total transfer volume/i)).toBeInTheDocument();
+    expect(screen.getByText(/Top 3 Whales by Sent Volume/i)).toBeInTheDocument();
+    expect(screen.getByText(/Addresses with highest outgoing transfer volume/i)).toBeInTheDocument();
   });
 
   it('renders all three whales', () => {

@@ -278,9 +278,7 @@ export default function WhalesPage() {
                     transition={{ duration: 0.4, delay: 0.6 + index * 0.05 }}
                   >
                     <AnimatedHover type="card">
-                      <WhaleTrackerCard
-                        transfer={transfer}
-                      />
+                      <WhaleTrackerCard transfer={transfer} />
                     </AnimatedHover>
                   </motion.div>
                 ))}

@@ -61,8 +61,18 @@ export function useWhaleFeed(filters: WhaleFilters): UseWhaleFeedReturn {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`Failed to fetch whale feed (${response.status}): ${errorText.substring(0, 100)}`);
+        console.error('[Whale Feed Hook] API Error Response:', errorText);
+        console.error('[Whale Feed Hook] Status:', response.status);
+        console.error('[Whale Feed Hook] Status Text:', response.statusText);
+        
+        // Try to parse as JSON for better error details
+        try {
+          const errorJson = JSON.parse(errorText);
+          console.error('[Whale Feed Hook] Parsed Error:', errorJson);
+          throw new Error(`Failed to fetch whale feed: ${errorJson.details || errorJson.error || errorText}`);
+        } catch {
+          throw new Error(`Failed to fetch whale feed (${response.status}): ${errorText.substring(0, 200)}`);
+        }
       }
 
       const data = await response.json();

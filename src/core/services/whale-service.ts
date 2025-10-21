@@ -74,7 +74,7 @@ export class WhaleService {
       // Fetch all whale addresses in parallel for better performance
       const transferPromises = this.WHALE_ADDRESSES.map(async (whaleAddress) => {
         try {
-          let allTransfers: TokenTransfer[] = [];
+          const allTransfers: TokenTransfer[] = [];
           let cursor: string | undefined = undefined;
           
           // Fetch all pages (limit to 200 transfers per whale to avoid excessive API calls)

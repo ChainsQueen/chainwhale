@@ -1,3 +1,10 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
 /**
  * Props for ValueDisplay component
  */
@@ -10,6 +17,8 @@ interface ValueDisplayProps {
   tokenSymbol?: string;
   /** Token decimals for formatting */
   tokenDecimals?: string;
+  /** Exchange rate (USD per token) */
+  exchangeRate?: string;
   /** Text size variant */
   size?: 'sm' | 'md' | 'lg';
   /** Whether to show 'N/A' when value is undefined */
@@ -53,6 +62,7 @@ export function ValueDisplay({
   tokenAmount, 
   tokenSymbol, 
   tokenDecimals,
+  exchangeRate,
   size = 'md', 
   showNA = true, 
   className 
@@ -124,13 +134,49 @@ export function ValueDisplay({
     const formattedAmount = formatTokenAmount(tokenAmount, tokenDecimals);
     const formattedUsd = formatUsdValue(value);
     
-    return (
-      <div className={`${sizeClasses[size]} font-bold ${getValueColor(value)} ${className}`}>
-        <div className="text-right">
-          <div>{formattedAmount} {tokenSymbol}</div>
-          <div className="text-sm text-muted-foreground">({formattedUsd})</div>
+    // Calculate actual token amount for tooltip
+    const decimalPlaces = parseInt(tokenDecimals);
+    const actualTokenAmount = parseFloat(tokenAmount) / Math.pow(10, decimalPlaces);
+    const rate = exchangeRate ? parseFloat(exchangeRate) : (value / actualTokenAmount);
+    
+    // Build calculation tooltip
+    const calculationTooltip = (
+      <div className="space-y-1 text-xs">
+        <div className="font-semibold border-b border-border pb-1 mb-2">💰 USD Calculation</div>
+        <div className="space-y-0.5">
+          <div><span className="text-muted-foreground">Raw Value:</span> {tokenAmount}</div>
+          <div><span className="text-muted-foreground">Decimals:</span> {tokenDecimals}</div>
+          <div><span className="text-muted-foreground">Token Amount:</span> {actualTokenAmount.toLocaleString()} {tokenSymbol}</div>
+          <div><span className="text-muted-foreground">Exchange Rate:</span> ${rate.toFixed(8)} per {tokenSymbol}</div>
+        </div>
+        <div className="border-t border-border pt-2 mt-2 font-mono text-[10px]">
+          <div className="text-muted-foreground mb-1">Formula:</div>
+          <div className="bg-muted/50 p-1.5 rounded">
+            valueUsd = (value / 10^decimals) × rate
+          </div>
+          <div className="mt-1.5 bg-muted/50 p-1.5 rounded">
+            ${value.toLocaleString()} = ({tokenAmount} / 10^{tokenDecimals}) × ${rate.toFixed(8)}
+          </div>
         </div>
       </div>
+    );
+    
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={200}>
+          <TooltipTrigger asChild>
+            <div className={`${sizeClasses[size]} font-bold ${getValueColor(value)} ${className} cursor-help`}>
+              <div className="text-right">
+                <div>{formattedAmount} {tokenSymbol}</div>
+                <div className="text-sm text-muted-foreground">({formattedUsd})</div>
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-xs">
+            {calculationTooltip}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 

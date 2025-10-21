@@ -305,6 +305,122 @@ GET https://eth.blockscout.com/api/v2/addresses/0xdAC17F958D2ee523a2206206994597
 
 ---
 
+#### 4. Blockscout MCP Data Flow (Internal Architecture)
+
+> **Important:** This diagram shows the internal architecture of how the Blockscout MCP Server processes requests. This is the foundation that powers all blockchain data features in ChainWhale.
+
+```mermaid
+sequenceDiagram
+    participant App as ChainWhale App<br/>(Your Code)
+    participant MCP as MCP Server<br/>(Docker Container)
+    participant CS as Chainscout<br/>(chains.blockscout.com)
+    participant BS as Blockscout Instance<br/>(eth.blockscout.com)
+    participant Meta as Metadata Service<br/>(metadata.services.blockscout.com)
+
+    Note over App: User requests address info<br/>(e.g., USDT contract)
+    
+    App->>MCP: 📤 SEND: get_address_info<br/>{ chain_id: "1", address: "0xdAC..." }
+    activate MCP
+    Note over MCP: MCP Server receives request<br/>via JSON-RPC 2.0
+    
+    par Concurrent API Calls (Performance Optimization)
+        MCP->>CS: GET /api/chains/1
+        activate CS
+        Note over CS: Returns chain metadata:<br/>• Blockscout instance URL<br/>• Native currency info<br/>• Chain configuration
+        CS-->>MCP: Chain metadata
+        deactivate CS
+        
+        MCP->>BS: GET /api/v2/addresses/0xdAC...
+        activate BS
+        Note over BS: Returns blockchain data:<br/>• Balance & transactions<br/>• Contract verification<br/>• Token metadata<br/>• Creator address<br/>• Proxy information
+        BS-->>MCP: Address data
+        deactivate BS
+        
+        MCP->>Meta: GET /api/v1/metadata?addresses=0xdAC...&chainId=1
+        activate Meta
+        Note over Meta: Returns enriched data:<br/>• Public tags<br/>• Reputation score<br/>• Verified domains<br/>• Security flags
+        Meta-->>MCP: Metadata tags
+        deactivate Meta
+    end
+    
+    Note over MCP: Combines all 3 responses<br/>into unified structure
+    
+    MCP->>App: 📥 RECEIVE: Combined response<br/>{ data: { basic_info: {...}, metadata: {...} } }
+    deactivate MCP
+    
+    Note over App: Parse and display:<br/>✅ Verified status<br/>💰 Price & market cap<br/>👥 Holder count<br/>🏷️ Tags & reputation
+```
+
+**Key Points:**
+
+1. **Single Request → 3 API Calls**
+   - Your app sends 1 request with 2 parameters
+   - MCP server makes 3 concurrent API calls
+   - Returns combined data from all sources
+
+2. **Data Sources**
+   - **Chainscout**: Chain configuration and Blockscout instance URLs
+   - **Blockscout API**: Primary blockchain data (balance, tokens, contracts)
+   - **Metadata Service**: Enrichment (tags, reputation, verified domains)
+
+3. **Response Structure**
+   ```json
+   {
+     "data": {
+       "basic_info": {
+         "hash": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+         "is_contract": true,
+         "is_verified": true,
+         "is_scam": false,
+         "reputation": "ok",
+         "coin_balance": "42",
+         "exchange_rate": "3877.23",
+         "token": {
+           "symbol": "USDT",
+           "name": "Tether",
+           "decimals": "6",
+           "holders_count": "10645873",
+           "exchange_rate": "1.001",
+           "circulating_market_cap": "182046749182.5312",
+           "volume_24h": "101914911777.51366"
+         }
+       },
+       "metadata": {
+         "tags": [
+           { "name": "USDT Stablecoin", "slug": "usdt-stablecoin-1" },
+           { "name": "Token Contract", "slug": "token-contract" },
+           { "name": "Stablecoin", "slug": "stablecoin" }
+         ]
+       }
+     }
+   }
+   ```
+
+4. **Performance Benefits**
+   - **Concurrent requests**: All 3 APIs called in parallel
+   - **Single connection**: One MCP request instead of 3 HTTP calls
+   - **Enriched data**: Automatic metadata augmentation
+   - **Caching**: MCP server caches chain metadata
+
+5. **MCP Tools Used**
+   - `get_address_info` - Address and contract information
+   - `get_token_transfers_by_address` - Token transfer history
+   - `get_tokens_by_address` - Token holdings
+   - `get_transaction_info` - Transaction details
+
+**Implementation Files:**
+- **MCP Client**: `/src/lib/blockscout/client.ts`
+- **HTTP Client**: `/src/lib/blockscout/http-client.ts` (fallback)
+- **Hybrid Client**: `/src/lib/blockscout/hybrid-client.ts` (orchestrator)
+- **Factory**: `/src/lib/blockscout/factory.ts` (client selection)
+
+**Environment Modes:**
+- **Development**: Uses MCP client (requires Docker)
+- **Production**: Uses HTTP client (Vercel-compatible)
+- **Hybrid**: Tries MCP first, falls back to HTTP
+
+---
+
 #### 3. Whale Tracker AI Analysis Flow
 
 ```mermaid

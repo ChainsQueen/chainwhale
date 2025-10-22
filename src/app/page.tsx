@@ -32,13 +32,17 @@ export default function Home() {
             const latest = data.transfers[0];
             setLatestWhale({
               valueUsd: latest.valueUsd,
-              tokenSymbol: latest.token.symbol,
+              tokenSymbol: latest.tokenSymbol,
               timestamp: latest.timestamp
             });
           }
+        } else {
+          // API returned error, fail silently
+          console.warn('Whale feed API returned:', response.status);
         }
       } catch (error) {
-        console.error('Failed to fetch latest whale transfer:', error);
+        // Network error or API unavailable, fail silently
+        console.warn('Whale feed unavailable:', error instanceof Error ? error.message : 'Unknown error');
       } finally {
         setIsLoading(false);
       }
@@ -230,7 +234,7 @@ export default function Home() {
                 Ready to Track Whale Movements?
               </h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Join traders who never miss a big move. Get started with ChainWhale today.
+                Join analysts who never miss a big move. Get started with ChainWhale today.
               </p>
               <div className="flex justify-center">
                 <Button size="lg" className="text-lg" asChild>

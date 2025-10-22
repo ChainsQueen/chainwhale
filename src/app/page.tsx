@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,44 @@ import { Badge } from "@/components/ui/badge";
 import { Activity, TrendingUp, Wallet, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/layouts/app-header";
 
+interface LatestWhaleTransfer {
+  valueUsd: number;
+  tokenSymbol: string;
+  timestamp: number;
+}
+
 export default function Home() {
+  const [latestWhale, setLatestWhale] = useState<LatestWhaleTransfer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLatestWhale() {
+      try {
+        const response = await fetch('/api/whale-tracker/feed?chains=1&timeRange=1h&minValue=10000');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.transfers && data.transfers.length > 0) {
+            // Get the most recent transfer
+            const latest = data.transfers[0];
+            setLatestWhale({
+              valueUsd: latest.valueUsd,
+              tokenSymbol: latest.token.symbol,
+              timestamp: latest.timestamp
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch latest whale transfer:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchLatestWhale();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchLatestWhale, 30000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-blue-500/5 to-background">
       {/* Header with Navigation */}
@@ -129,8 +167,16 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-blue-500" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Whale Alert</p>
-                    <p className="font-semibold">$5.2M Transfer</p>
+                    <p className="text-xs text-muted-foreground">Whale Alert (1h)</p>
+                    {isLoading ? (
+                      <p className="text-xs text-muted-foreground">Loading...</p>
+                    ) : latestWhale ? (
+                      <p className="font-semibold">
+                        ${(latestWhale.valueUsd / 1000000).toFixed(2)}M {latestWhale.tokenSymbol}
+                      </p>
+                    ) : (
+                      <p className="font-semibold">$5.2M Transfer</p>
+                    )}
                   </div>
                 </div>
               </Card>

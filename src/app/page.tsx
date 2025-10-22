@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Activity, TrendingUp, Wallet, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/layouts/app-header";
+import { SwimmingWhale } from "@/components/features/whale/swimming-whale";
+import { FloatingInfoCard } from "@/components/features/whale/floating-info-card";
 
 interface LatestWhaleTransfer {
   valueUsd: number;
@@ -22,7 +24,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchLatestWhale() {
       try {
-        const response = await fetch('/api/whale-tracker/feed?chains=1&timeRange=1h&minValue=10000');
+        const response = await fetch('/api/whale-tracker/feed?chains=1,8453,42161,10,137&timeRange=1h&minValue=10000');
         if (response.ok) {
           const data = await response.json();
           if (data.transfers && data.transfers.length > 0) {
@@ -54,13 +56,13 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-6"
+            className="space-y-6 lg:col-span-5"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -102,7 +104,10 @@ export default function Home() {
                 <a href="/dashboard">🚀 Dashboard</a>
               </Button>
               <Button size="lg" variant="outline" className="text-lg" asChild>
-                <a href="/whales">🐋 Whale Tracker</a>
+                <a href="/whales" className="flex items-center gap-2">
+                  <Image src="/whalelogo.png" alt="Whale" width={24} height={24} className="w-6 h-6" />
+                  Whale Tracker
+                </a>
               </Button>
             </motion.div>
 
@@ -122,90 +127,41 @@ export default function Home() {
             </motion.div>
           </motion.div>
 
-          {/* Right Image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative"
-          >
-            <motion.div
-              animate={{
-                y: [0, -20, 0],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="relative z-10"
-            >
-              <Image
-                src="/whales.png"
-                alt="ChainWhale - Whale Tracking"
-                width={600}
-                height={600}
-                priority
-                className="w-full h-auto rounded-2xl"
-              />
-            </motion.div>
+          {/* Right Image - Animated Swimming Whale */}
+          <div className="relative min-h-[500px] lg:col-span-7">
+            {/* Whales in isolated background layer */}
+            <div className="absolute inset-0 z-0">
+              <SwimmingWhale />
+            </div>
 
-            {/* Floating Elements */}
-            <motion.div
-              animate={{
-                y: [0, -15, 0],
-                rotate: [0, 5, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="absolute -top-4 -right-4 z-20"
+            {/* Floating Info Cards */}
+            <FloatingInfoCard
+              icon={TrendingUp}
+              title="Whale Alert (1h)"
+              position="top-right"
+              duration={3}
             >
-              <Card className="p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-blue-500" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Whale Alert (1h)</p>
-                    {isLoading ? (
-                      <p className="text-xs text-muted-foreground">Loading...</p>
-                    ) : latestWhale ? (
-                      <p className="font-semibold">
-                        ${(latestWhale.valueUsd / 1000000).toFixed(2)}M {latestWhale.tokenSymbol}
-                      </p>
-                    ) : (
-                      <p className="font-semibold">$5.2M Transfer</p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+              {isLoading ? (
+                <p className="text-xs text-muted-foreground">Loading...</p>
+              ) : latestWhale ? (
+                <p className="font-semibold">
+                  ${(latestWhale.valueUsd / 1000000).toFixed(2)}M {latestWhale.tokenSymbol}
+                </p>
+              ) : (
+                <p className="font-semibold">$5.2M Transfer</p>
+              )}
+            </FloatingInfoCard>
 
-            <motion.div
-              animate={{
-                y: [0, 15, 0],
-                rotate: [0, -5, 0],
-              }}
-              transition={{
-                duration: 3.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 0.5,
-              }}
-              className="absolute -bottom-4 -left-4 z-20"
+            <FloatingInfoCard
+              icon={Activity}
+              title="Live Activity"
+              position="bottom-left"
+              duration={3.5}
+              animationDelay={0.5}
             >
-              <Card className="p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-blue-500" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Live Activity</p>
-                    <p className="font-semibold">5 EVM Chains</p>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          </motion.div>
+              <p className="font-semibold">5 EVM Chains</p>
+            </FloatingInfoCard>
+          </div>
         </div>
       </section>
 

@@ -85,7 +85,7 @@ export default function ChatInterface() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
       <CardHeader>
         <CardTitle>Ask About Whale Activity</CardTitle>
         <CardDescription>
@@ -95,7 +95,7 @@ export default function ChatInterface() {
       <CardContent>
         <div className="space-y-4">
           {/* Chat Messages */}
-          <ScrollArea className="h-[500px] w-full rounded-md border p-4">
+          <ScrollArea className="h-[500px] w-full rounded-md border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 p-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                 <Bot className="h-12 w-12 mb-4 opacity-50" />
@@ -125,7 +125,7 @@ export default function ChatInterface() {
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                           message.role === 'user'
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                            : 'border border-blue-500/30 bg-gradient-to-r from-blue-500/10 via-slate-500/10 to-blue-500/10'
                         }`}
                       >
                         {message.role === 'user' ? (
@@ -158,10 +158,10 @@ export default function ChatInterface() {
                     className="mb-4 flex justify-start"
                   >
                     <div className="flex gap-3 max-w-[80%]">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted animate-pulse">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-blue-500/30 bg-gradient-to-r from-blue-500/10 via-slate-500/10 to-blue-500/10 animate-pulse">
                         <Bot className="h-4 w-4" />
                       </div>
-                      <div className="rounded-lg px-4 py-2 bg-muted">
+                      <div className="rounded-lg px-4 py-2 border border-blue-500/30 bg-gradient-to-r from-blue-500/10 via-slate-500/10 to-blue-500/10">
                         <p className="text-sm text-muted-foreground">
                           🔍 Analyzing whale activity across chains...
                         </p>
@@ -180,7 +180,7 @@ export default function ChatInterface() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about whale activity..."
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5"
             />
             <Button type="submit" disabled={isLoading || !input.trim()}>
               <Send className="h-4 w-4" />
@@ -204,7 +204,7 @@ export default function ChatInterface() {
                 size="sm"
                 onClick={() => setInput(question)}
                 disabled={isLoading}
-                className="text-xs"
+                className="text-xs border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 hover:from-blue-500/10 hover:via-slate-500/10 hover:to-blue-500/10"
               >
                 {question}
               </Button>

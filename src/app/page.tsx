@@ -10,7 +10,7 @@ import { AppHeader } from "@/components/layouts/app-header";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-screen bg-gradient-to-b from-background via-blue-500/5 to-background">
       {/* Header with Navigation */}
       <AppHeader />
 
@@ -29,7 +29,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Badge className="mb-4" variant="secondary">
+              <Badge className="mb-4 bg-blue-500/10 text-blue-600 border-blue-500/30 hover:bg-blue-500/20">
                 <Sparkles className="w-3 h-3 mr-1" />
                 AI-Powered Blockchain Analytics
               </Badge>
@@ -42,7 +42,7 @@ export default function Home() {
               className="text-5xl md:text-6xl font-bold tracking-tight"
             >
               Track Whale Movements Across{" "}
-              <span className="text-primary">1000+ Chains</span>
+              <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">Multiple EVM Chains</span>
             </motion.h1>
 
             <motion.p
@@ -51,7 +51,7 @@ export default function Home() {
               transition={{ delay: 0.4 }}
               className="text-xl text-muted-foreground"
             >
-              Never miss a big move again. Get AI-powered insights on whale transactions across multiple blockchains in real-time.
+              Monitor large transfers ($10K+) in real-time across Ethereum, Base, Arbitrum, Optimism, and Polygon. Get AI-powered insights with comprehensive contract security analysis.
             </motion.p>
 
             <motion.div
@@ -75,11 +75,11 @@ export default function Home() {
               className="flex items-center gap-6 pt-4"
             >
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
                 <span className="text-sm text-muted-foreground">Live Tracking</span>
               </div>
               <div className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">1000+</span> Chains Supported
+                <span className="font-semibold text-blue-600">5</span> EVM Chains Supported
               </div>
             </motion.div>
           </motion.div>
@@ -125,9 +125,9 @@ export default function Home() {
               }}
               className="absolute -top-4 -right-4 z-20"
             >
-              <Card className="p-4 shadow-lg">
+              <Card className="p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-green-500" />
+                  <TrendingUp className="w-5 h-5 text-blue-500" />
                   <div>
                     <p className="text-xs text-muted-foreground">Whale Alert</p>
                     <p className="font-semibold">$5.2M Transfer</p>
@@ -149,12 +149,12 @@ export default function Home() {
               }}
               className="absolute -bottom-4 -left-4 z-20"
             >
-              <Card className="p-4 shadow-lg">
+              <Card className="p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                 <div className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-blue-500" />
                   <div>
                     <p className="text-xs text-muted-foreground">Live Activity</p>
-                    <p className="font-semibold">24 Chains</p>
+                    <p className="font-semibold">5 EVM Chains</p>
                   </div>
                 </div>
               </Card>
@@ -190,10 +190,10 @@ export default function Home() {
               viewport={{ once: true }}
               whileHover={{ scale: 1.05 }}
             >
-              <Card className="h-full hover:shadow-lg transition-shadow">
+              <Card className="h-full hover:shadow-lg transition-shadow border-blue-500/20 hover:border-blue-500/40">
                 <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-blue-600" />
                   </div>
                   <CardTitle>{feature.title}</CardTitle>
                   <CardDescription>{feature.description}</CardDescription>
@@ -202,7 +202,7 @@ export default function Home() {
                   <ul className="space-y-2">
                     {feature.points.map((point) => (
                       <li key={point} className="flex items-start gap-2 text-sm">
-                        <span className="text-primary mt-1">•</span>
+                        <span className="text-blue-600 mt-1">•</span>
                         <span>{point}</span>
                       </li>
                     ))}
@@ -222,7 +222,7 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20">
+          <Card className="bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-background border-blue-500/30">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Ready to Track Whale Movements?
@@ -230,12 +230,9 @@ export default function Home() {
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
                 Join traders who never miss a big move. Get started with ChainWhale today.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg">
-                  Start Tracking
-                </Button>
-                <Button size="lg" variant="outline" className="text-lg">
-                  Learn More
+              <div className="flex justify-center">
+                <Button size="lg" className="text-lg" asChild>
+                  <a href="/whales">Start Tracking</a>
                 </Button>
               </div>
             </CardContent>
@@ -250,31 +247,31 @@ const features = [
   {
     icon: Activity,
     title: "Real-Time Whale Feed",
-    description: "Monitor large transactions as they happen across multiple chains",
+    description: "Monitor large transfers ($10K+) as they happen across 5 EVM chains",
     points: [
-      "Live alerts for transactions >$100k",
-      "Multi-chain monitoring",
-      "AI-powered transaction analysis",
+      "Track transfers from known whale addresses",
+      "Ethereum, Base, Arbitrum, Optimism, Polygon",
+      "AI-powered insights with contract security analysis",
     ],
   },
   {
     icon: Sparkles,
-    title: "Natural Language Queries",
-    description: "Ask questions in plain English and get instant insights",
+    title: "AI-Powered Insights",
+    description: "Get comprehensive analysis with customizable AI providers",
     points: [
-      "Chat with your blockchain data",
-      "AI-powered explanations",
-      "Complex queries made simple",
+      "OpenAI, Anthropic, Google AI support",
+      "600-word structured analysis with 6 sections",
+      "Contract security, whale behavior, risk assessment",
     ],
   },
   {
     icon: Wallet,
     title: "Wallet Analysis",
-    description: "Deep dive into any wallet's activity across all chains",
+    description: "Comprehensive portfolio breakdown with security insights",
     points: [
-      "Cross-chain portfolio view",
-      "Risk assessment",
-      "Historical tracking",
+      "Token holdings with USD values",
+      "Recent activity (24h transfers)",
+      "Whale detection and risk scoring",
     ],
   },
 ];

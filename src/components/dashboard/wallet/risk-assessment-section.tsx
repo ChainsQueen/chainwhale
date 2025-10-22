@@ -10,7 +10,7 @@ export function RiskAssessmentSection({
   riskScore,
 }: RiskAssessmentSectionProps) {
   return (
-    <div className="p-6 bg-muted/30 rounded-lg border border-muted">
+    <div className="p-6 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary/10 rounded-full">

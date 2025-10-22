@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -91,15 +90,17 @@ export default function WalletAnalysis() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
-      <CardHeader>
-        <CardTitle>Wallet Analysis</CardTitle>
-        <CardDescription>
+    <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Title and Description */}
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold tracking-tight">Wallet Analysis</h2>
+        <p className="text-sm text-muted-foreground">
           Analyze any wallet across multiple chains with AI-powered insights
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
+        </p>
+      </div>
+
+      {/* Content */}
+      <div className="space-y-6">
           {/* Search Form */}
           <form onSubmit={handleAnalyze} className="space-y-2" suppressHydrationWarning>
             <div className="flex gap-2">
@@ -342,7 +343,7 @@ export default function WalletAnalysis() {
                           .map(([chainId, value]) => (
                             <div
                               key={chainId}
-                              className="p-4 bg-muted/50 rounded-lg"
+                              className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5"
                             >
                               <p className="text-sm text-muted-foreground mb-1">
                                 {getChainName(chainId)}
@@ -406,8 +407,7 @@ export default function WalletAnalysis() {
               </p>
             </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

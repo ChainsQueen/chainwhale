@@ -31,18 +31,18 @@ export function PortfolioBreakdown({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {ethBalance > 0 && (
         <>
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
             <p className="text-xs text-muted-foreground mb-1">ETH BALANCE</p>
             <p className="text-lg font-bold">{ethBalance.toFixed(2)} ETH</p>
           </div>
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
             <p className="text-xs text-muted-foreground mb-1">ETH VALUE</p>
             <p className="text-lg font-bold text-primary">
               {ethBalance.toFixed(2)} ETH
             </p>
             {ethValue > 0 && (
               <p className="text-xs text-muted-foreground mt-1">
-                ≈ ${formatUsdValue(ethValue)}
+                ≈ {formatUsdValue(ethValue)}
               </p>
             )}
           </div>
@@ -52,7 +52,7 @@ export function PortfolioBreakdown({
         <div className="p-4 bg-muted/30 rounded-lg">
           <p className="text-xs text-muted-foreground mb-1">TOKEN HOLDINGS</p>
           <p className="text-lg font-bold text-primary">
-            ${formatUsdValue(tokenValue)}
+            {formatUsdValue(tokenValue)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             ({tokenCount} {tokenCount === 1 ? "Token" : "Tokens"})
@@ -60,10 +60,10 @@ export function PortfolioBreakdown({
         </div>
       )}
       {totalValue > 0 && (
-        <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+        <div className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
           <p className="text-xs text-muted-foreground mb-1">MULTICHAIN INFO</p>
           <p className="text-lg font-bold text-primary">
-            ${formatUsdValue(totalValue)}
+            {formatUsdValue(totalValue)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {chainCount} {chainCount === 1 ? "chain" : "chains"} scanned

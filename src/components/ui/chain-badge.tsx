@@ -45,7 +45,10 @@ export function ChainBadge({
   const sizeClasses = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1';
   
   return (
-    <Badge variant={variant} className={`${sizeClasses} ${className}`}>
+    <Badge
+      variant={variant}
+      className={`${sizeClasses} border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 ${className || ""}`}
+    >
       {chainName}
     </Badge>
   );

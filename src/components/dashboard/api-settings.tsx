@@ -124,7 +124,7 @@ export default function ApiSettings() {
   const currentProvider = AI_PROVIDERS[provider];
 
   return (
-    <Card className="border-2">
+    <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -150,16 +150,13 @@ export default function ApiSettings() {
             // Set default model for the new provider
             setModel(AI_PROVIDERS[newProvider].models[0]);
           }}>
-            <SelectTrigger id="provider" className="w-full">
+            <SelectTrigger id="provider" className="w-full border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(AI_PROVIDERS).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-medium">{config.name}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{config.description}</span>
-                  </div>
+                <SelectItem key={key} value={key} className="hover:bg-blue-500/10 data-[highlighted]:bg-blue-500/10 data-[state=checked]:from-blue-500/10 data-[state=checked]:via-slate-500/10 data-[state=checked]:to-blue-500/10">
+                  <span className="font-medium">{config.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -170,12 +167,12 @@ export default function ApiSettings() {
         <div className="space-y-2">
           <Label htmlFor="model" className="text-sm font-medium">Model</Label>
           <Select value={model} onValueChange={setModel}>
-            <SelectTrigger id="model" className="w-full">
+            <SelectTrigger id="model" className="w-full border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="border border-blue-500/30 bg-background">
               {currentProvider.models.map((modelName) => (
-                <SelectItem key={modelName} value={modelName}>
+                <SelectItem key={modelName} value={modelName} className="hover:bg-blue-500/10 data-[highlighted]:bg-blue-500/10 data-[state=checked]:from-blue-500/10 data-[state=checked]:via-slate-500/10 data-[state=checked]:to-blue-500/10">
                   <span className="font-mono text-sm">{modelName}</span>
                 </SelectItem>
               ))}
@@ -185,17 +182,8 @@ export default function ApiSettings() {
 
         {/* API Key Input */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-start">
             <Label htmlFor="api-key" className="text-sm font-medium">API Key</Label>
-            <a
-              href={currentProvider.docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-primary hover:underline flex items-center gap-1"
-            >
-              <Info className="h-3 w-3" />
-              Get API Key
-            </a>
           </div>
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -208,7 +196,7 @@ export default function ApiSettings() {
                   setKeyStatus(null);
                 }}
                 placeholder={currentProvider.placeholder}
-                className="pr-10 font-mono text-sm"
+                className="pr-10 font-mono text-sm border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5"
               />
               <button
                 type="button"
@@ -242,19 +230,20 @@ export default function ApiSettings() {
         {apiKey && (
           <div className="flex gap-2">
             <Button
-              onClick={handleTestKey}
-              disabled={isTestingKey}
-              variant="outline"
-              size="sm"
-            >
+               onClick={handleTestKey}
+               disabled={isTestingKey}
+               variant="outline"
+               size="sm"
+               className="border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 hover:from-blue-500/10 hover:via-slate-500/10 hover:to-blue-500/10"
+             >
               {isTestingKey ? 'Testing...' : 'Test Key'}
             </Button>
             <Button
-              onClick={handleRemoveKey}
-              variant="outline"
-              size="sm"
-              className="text-red-500 hover:text-red-600"
-            >
+               onClick={handleRemoveKey}
+               variant="outline"
+               size="sm"
+               className="text-red-500 hover:text-red-600 border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 hover:from-blue-500/10 hover:via-slate-500/10 hover:to-blue-500/10"
+             >
               <X className="h-4 w-4 mr-2" />
               Remove Key
             </Button>
@@ -280,7 +269,7 @@ export default function ApiSettings() {
         )}
 
         {/* Security Info */}
-        <div className="p-4 bg-muted/30 rounded-lg border border-muted space-y-2">
+        <div className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Info className="h-4 w-4 text-primary" />
             <span>Privacy & Security</span>
@@ -289,7 +278,7 @@ export default function ApiSettings() {
             <p>✓ Your API key is stored locally in your browser only</p>
             <p>✓ Never sent to our servers - used for direct API calls only</p>
             <p>✓ You maintain full control and can remove it anytime</p>
-            <p>✓ Works with any OpenAI-compatible API endpoint</p>
+            <p>✓ Works with your selected AI provider</p>
           </div>
         </div>
       </CardContent>

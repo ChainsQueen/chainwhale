@@ -8,6 +8,9 @@ import { ChainBadge } from '@/components/ui/chain-badge';
 import { ValueDisplay } from '@/components/ui/value-display';
 import { ExplorerLink } from '@/components/ui/explorer-link';
 import { TransferTypeIndicator } from '@/components/features/whale/transfer-type-indicator';
+import { AddressPill } from '@/components/ui/address-pill';
+import { CopyButton } from '@/components/ui/copy-button';
+import { ArrowRight } from 'lucide-react';
 import type { WhaleTransfer } from '@/core/services/whale-service';
 
 interface WhaleTrackerCardProps {
@@ -64,6 +67,27 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
                 transferTo={transfer.to}
                 transferTimestamp={transfer.timestamp}
                 transferValueUsd={transfer.valueUsd}
+              />
+            </div>
+
+            {/* From/To Addresses */}
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+              <AddressPill address={transfer.from} />
+              <CopyButton
+                text={transfer.from}
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                title="Copy from address"
+              />
+              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+              <AddressPill address={transfer.to} />
+              <CopyButton
+                text={transfer.to}
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                title="Copy to address"
               />
             </div>
 

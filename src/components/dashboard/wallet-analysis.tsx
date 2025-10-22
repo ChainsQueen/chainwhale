@@ -91,7 +91,7 @@ export default function WalletAnalysis() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
       <CardHeader>
         <CardTitle>Wallet Analysis</CardTitle>
         <CardDescription>
@@ -109,6 +109,7 @@ export default function WalletAnalysis() {
                   onChange={(e) => handleAddressChange(e.target.value)}
                   placeholder="Enter wallet address (0x...) or ENS name (.eth)"
                   disabled={isLoading}
+                  className="border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5"
                 />
                 {!isValidAddress && address.trim() && (
                   <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -140,7 +141,7 @@ export default function WalletAnalysis() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              <Card>
+              <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                 <CardContent className="p-6">
                   <div className="space-y-6">
                     {/* Loading Header */}
@@ -247,7 +248,7 @@ export default function WalletAnalysis() {
               className="space-y-6"
             >
               {/* Overview Card */}
-              <Card>
+              <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Wallet className="h-5 w-5" />
@@ -330,7 +331,7 @@ export default function WalletAnalysis() {
                 Object.values(displayAnalysis.chains).some(
                   (v) => (v as number) > 0
                 ) && (
-                  <Card>
+                  <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                     <CardHeader>
                       <CardTitle>Chain Distribution</CardTitle>
                     </CardHeader>
@@ -367,7 +368,7 @@ export default function WalletAnalysis() {
 
               {/* Insights */}
               {displayAnalysis.insights.length > 0 && (
-                <Card>
+                <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
                   <CardHeader>
                     <CardTitle>Key Insights</CardTitle>
                   </CardHeader>

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
+import { AddressPill } from "@/components/ui/address-pill";
 import {
   Tooltip,
   TooltipContent,
@@ -23,17 +24,16 @@ export function WalletOverview({ address, ensName }: WalletOverviewProps) {
         <p className="text-lg font-semibold mb-2 text-primary">{ensName}</p>
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <TooltipProvider>
-          <div className="inline-flex items-center gap-2 bg-muted rounded px-3 py-2">
-            <code className="text-xs font-mono break-all">{address}</code>
-            <CopyButton
-              text={address}
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 flex-shrink-0"
-            />
-          </div>
-        </TooltipProvider>
+        <div className="inline-flex items-center gap-2">
+          <AddressPill address={address} size="md" className="text-sm" />
+          <CopyButton
+            text={address}
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            title="Copy address"
+          />
+        </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

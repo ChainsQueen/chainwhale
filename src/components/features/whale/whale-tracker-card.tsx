@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { ContractInfoDialog } from '@/components/features/contract/contract-info-dialog';
 import { DataSourceBadge } from '@/components/ui/data-source-badge';
 import { ChainBadge } from '@/components/ui/chain-badge';
-import { AddressFlow } from '@/components/ui/address-flow';
 import { ValueDisplay } from '@/components/ui/value-display';
 import { ExplorerLink } from '@/components/ui/explorer-link';
 import { TransferTypeIndicator } from '@/components/features/whale/transfer-type-indicator';
@@ -67,9 +66,6 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
                 transferValueUsd={transfer.valueUsd}
               />
             </div>
-
-            {/* Addresses */}
-            <AddressFlow from={transfer.from} to={transfer.to} size="sm" />
 
             {/* Token Name */}
             {transfer.token.name && (

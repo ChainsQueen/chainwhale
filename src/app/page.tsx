@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { AppHeader } from "@/components/layouts/app-header";
 import { SwimmingWhale } from "@/components/features/whale/swimming-whale";
 import { FloatingInfoCard } from "@/components/features/whale/floating-info-card";
 import { WalletAddressTooltip } from "@/components/ui/wallet-address-tooltip";
+import { CelebrationAnimation } from "@/components/features/whale/celebration-animation";
 
 import { useWhaleFeed } from "@/core/hooks/use-whale-feed";
 import { FEATURES } from "@/core/constants/features.constants";
@@ -32,6 +33,10 @@ export default function Home() {
     minValue: 10000,
     tokenFilter: "",
   });
+
+  // Track previous largest transfer value for celebration animation
+  const [showCelebration, setShowCelebration] = useState(false);
+  const prevLargestValueRef = useRef<number | null>(null);
 
   // Get top 6 largest transfers sorted by amount
   const top6Transfers = [...(transfers || [])]
@@ -126,20 +131,50 @@ export default function Home() {
       largestFrom: largestTransfer?.from,
     });
   }, [loading, largestTransfer, transfers, top6Transfers]);
+
+  // Trigger celebration animation on first load and when largest transfer amount changes
+  useEffect(() => {
+    const currentValue = largestTransfer?.valueUsd;
+    
+    if (currentValue) {
+      // First load - trigger celebration when data first arrives
+      if (prevLargestValueRef.current === null) {
+        console.log('[Home] 🎉 Initial whale data loaded!', {
+          value: currentValue,
+        });
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 2000);
+      }
+      // Subsequent updates - only trigger if value increased
+      else if (currentValue > prevLargestValueRef.current) {
+        console.log('[Home] 🎉 New largest transfer detected!', {
+          previous: prevLargestValueRef.current,
+          current: currentValue,
+        });
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 2000);
+      }
+    }
+    
+    // Update the ref with current value
+    if (currentValue !== undefined) {
+      prevLargestValueRef.current = currentValue;
+    }
+  }, [largestTransfer?.valueUsd]);
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-blue-500/5 to-background">
       {/* Header with Navigation */}
       <AppHeader />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="grid lg:grid-cols-12 gap-12 items-center">
+      <section className="container mx-auto px-4 py-8 md:py-16 lg:py-24">
+        <div className="grid lg:grid-cols-12 gap-8 md:gap-12 items-center">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-6 lg:col-span-5"
+            className="space-y-4 md:space-y-6 lg:col-span-5"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -156,7 +191,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-5xl md:text-6xl font-bold tracking-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
             >
               Track Whale Movements Across{" "}
               <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
@@ -168,7 +203,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-xl text-muted-foreground"
+              className="text-base md:text-lg lg:text-xl text-muted-foreground"
             >
               Monitor large transfers ($10K+) in real-time across Ethereum,
               Base, Arbitrum, Optimism, and Polygon. Get AI-powered insights
@@ -179,12 +214,12 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4"
+              className="flex flex-col sm:flex-row gap-3 md:gap-4"
             >
-              <Button size="lg" className="text-lg" asChild>
+              <Button size="lg" className="text-base md:text-lg w-full sm:w-auto" asChild>
                 <a href="/dashboard">🚀 Dashboard</a>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg" asChild>
+              <Button size="lg" variant="outline" className="text-base md:text-lg w-full sm:w-auto" asChild>
                 <a href="/whales" className="flex items-center gap-2">
                   <Image
                     src="/whalelogo.png"
@@ -202,7 +237,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="flex items-center gap-6 pt-4"
+              className="flex flex-wrap items-center gap-4 md:gap-6 pt-2 md:pt-4 mb-8 md:mb-0"
             >
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
@@ -218,28 +253,33 @@ export default function Home() {
           </motion.div>
 
           {/* Right Image - Animated Swimming Whale */}
-          <div className="relative min-h-[500px] lg:col-span-7 pt-16 overflow-visible">
+          <div className="relative min-h-[300px] md:min-h-[500px] lg:col-span-7 pt-4 md:pt-16 overflow-visible">
+            {/* Celebration Animation - positioned above largest whale (first whale at 8% top) */}
+            <div className="absolute top-[8%] left-[35%] -translate-x-1/2 -translate-y-full z-[60] pointer-events-none">
+              <CelebrationAnimation show={showCelebration} />
+            </div>
+            
             {/* Whales in isolated background layer */}
             <div className="absolute inset-0 z-0 overflow-visible">
               <SwimmingWhale whaleActivity={whaleActivityWithTiers} />
             </div>
 
             {/* Floating Info Cards */}
-            <div className="relative">
+            <div className="absolute inset-0 pointer-events-none">
               <FloatingInfoCard
-                icon={TrendingUp}
-                title="Whale Alert (1h)"
-                position="top-right"
-                duration={3}
-                badge={
-                  largestTransfer?.dataSource ? (
-                    <DataSourceBadge
-                      dataSource={largestTransfer.dataSource}
-                      size="xs"
-                    />
-                  ) : undefined
-                }
-              >
+                  icon={TrendingUp}
+                  title="Whale Alert (1h)"
+                  position="top-right"
+                  duration={3}
+                  badge={
+                    largestTransfer?.dataSource ? (
+                      <DataSourceBadge
+                        dataSource={largestTransfer.dataSource}
+                        size="xs"
+                      />
+                    ) : undefined
+                  }
+                >
                 {loading && !largestTransfer ? (
                   <div className="flex flex-col gap-1">
                     <p className="text-xs text-muted-foreground">Loading...</p>
@@ -275,23 +315,75 @@ export default function Home() {
                   <p className="text-xs text-muted-foreground">No data</p>
                 )}
               </FloatingInfoCard>
+              
+              {/* Desktop floating cards - Live Activity */}
+              <FloatingInfoCard
+                icon={Activity}
+                title="Live Activity"
+                position="bottom-left"
+                duration={3.5}
+                animationDelay={0.5}
+              >
+                <p className="font-semibold">5 EVM Chains</p>
+              </FloatingInfoCard>
             </div>
-
-            <FloatingInfoCard
-              icon={Activity}
-              title="Live Activity"
-              position="bottom-left"
-              duration={3.5}
-              animationDelay={0.5}
-            >
-              <p className="font-semibold">5 EVM Chains</p>
-            </FloatingInfoCard>
+            
+            {/* Mobile-only info cards - below whale container - HIDDEN, using floating cards instead */}
+            <div className="hidden mt-4 space-y-3">
+              {largestTransfer && (
+                <div className="bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 border border-blue-500/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-blue-500" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Whale Alert (1h)</p>
+                        <div className="flex items-center gap-2">
+                          {largestTransfer.hash ? (
+                            <a
+                              href={getExplorerUrl(
+                                largestTransfer.chainId || "1",
+                                largestTransfer.hash,
+                                "tx"
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold text-green-600 hover:text-green-700 hover:underline cursor-pointer text-sm"
+                            >
+                              {formatVolume(largestTransfer.valueUsd ?? 0)}
+                            </a>
+                          ) : (
+                            <p className="font-semibold text-green-600 text-sm">
+                              {formatVolume(largestTransfer.valueUsd ?? 0)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {largestTransfer.dataSource && (
+                      <DataSourceBadge
+                        dataSource={largestTransfer.dataSource}
+                        size="xs"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 border border-blue-500/30 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-500" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Live Activity</p>
+                    <p className="font-semibold text-sm">5 EVM Chains</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container mx-auto px-4 py-16">
+      <section id="features" className="container mx-auto px-4 py-12 md:py-16">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -299,16 +391,16 @@ export default function Home() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
             Real-Time Blockchain Intelligence
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Monitor whale movements, analyze wallet portfolios, and track large
             transfers across multiple chains with AI-powered insights.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {FEATURES.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -346,7 +438,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-12 md:py-16">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -354,16 +446,16 @@ export default function Home() {
           viewport={{ once: true }}
         >
           <Card className="bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-background border-blue-500/30">
-            <CardContent className="p-12 text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <CardContent className="p-6 md:p-12 text-center">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
                 Ready to Track Whale Movements?
               </h2>
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-8 max-w-2xl mx-auto">
                 Join analysts who never miss a big move. Get started with
                 ChainWhale today.
               </p>
               <div className="flex justify-center">
-                <Button size="lg" className="text-lg" asChild>
+                <Button size="lg" className="text-base md:text-lg w-full sm:w-auto" asChild>
                   <a href="/whales">Start Tracking</a>
                 </Button>
               </div>

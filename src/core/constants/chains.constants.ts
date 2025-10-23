@@ -21,7 +21,7 @@ export const CHAINS: Record<string, ChainConfig> = {
   '1': {
     id: '1',
     name: 'Ethereum',
-    explorerUrl: 'https://etherscan.io',
+    explorerUrl: 'https://eth.blockscout.com',
     nativeCurrency: {
       name: 'Ether',
       symbol: 'ETH',
@@ -31,7 +31,7 @@ export const CHAINS: Record<string, ChainConfig> = {
   '8453': {
     id: '8453',
     name: 'Base',
-    explorerUrl: 'https://basescan.org',
+    explorerUrl: 'https://base.blockscout.com',
     nativeCurrency: {
       name: 'Ether',
       symbol: 'ETH',
@@ -41,7 +41,7 @@ export const CHAINS: Record<string, ChainConfig> = {
   '42161': {
     id: '42161',
     name: 'Arbitrum',
-    explorerUrl: 'https://arbiscan.io',
+    explorerUrl: 'https://arbitrum.blockscout.com',
     nativeCurrency: {
       name: 'Ether',
       symbol: 'ETH',
@@ -51,7 +51,7 @@ export const CHAINS: Record<string, ChainConfig> = {
   '10': {
     id: '10',
     name: 'Optimism',
-    explorerUrl: 'https://optimistic.etherscan.io',
+    explorerUrl: 'https://optimism.blockscout.com',
     nativeCurrency: {
       name: 'Ether',
       symbol: 'ETH',
@@ -61,7 +61,7 @@ export const CHAINS: Record<string, ChainConfig> = {
   '137': {
     id: '137',
     name: 'Polygon',
-    explorerUrl: 'https://polygonscan.com',
+    explorerUrl: 'https://polygon.blockscout.com',
     nativeCurrency: {
       name: 'MATIC',
       symbol: 'MATIC',

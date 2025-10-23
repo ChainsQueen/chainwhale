@@ -8,7 +8,7 @@ import { ExplorerLink } from "@/components/ui/explorer-link";
 import { ContractInfoDialog } from "@/components/features/contract/contract-info-dialog";
 import { AddressPill } from "@/components/ui/address-pill";
 import { CopyButton } from "@/components/ui/copy-button";
-import { getChainName } from "@/core/utils/wallet-utils";
+import { getChainName, getExplorerUrl } from "@/core/utils/wallet-utils";
 
 interface RecentActivitySectionProps {
   recentTransactions: unknown[];
@@ -140,7 +140,7 @@ export function RecentActivitySection({
                   {/* Right: Value and Explorer Link */}
                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 sm:gap-2 sm:text-right">
                     <ExplorerLink
-                      href={txData.hash ? `https://etherscan.io/tx/${txData.hash as string}` : undefined}
+                      href={txData.hash ? getExplorerUrl(chainId, txData.hash as string, 'tx') : undefined}
                       disabled={!txData.hash || txData.hash === ''}
                     />
                     <ValueDisplay

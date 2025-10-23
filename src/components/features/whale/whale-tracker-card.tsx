@@ -12,6 +12,7 @@ import { AddressPill } from '@/components/ui/address-pill';
 import { CopyButton } from '@/components/ui/copy-button';
 import { ArrowRight } from 'lucide-react';
 import type { WhaleTransfer } from '@/core/services/whale-service';
+import { getExplorerUrl } from '@/core/utils/wallet-utils';
 
 interface WhaleTrackerCardProps {
   transfer: WhaleTransfer;
@@ -103,7 +104,7 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
           {/* Right: Value */}
           <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 sm:gap-2 sm:text-right">
             <ExplorerLink
-              href={transfer.hash ? `https://etherscan.io/tx/${transfer.hash}` : undefined}
+              href={transfer.hash ? getExplorerUrl(transfer.chainId, transfer.hash, 'tx') : undefined}
               disabled={!transfer.hash || transfer.hash === ''}
             />
             <ValueDisplay 

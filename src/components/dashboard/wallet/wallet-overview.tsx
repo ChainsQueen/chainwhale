@@ -49,7 +49,7 @@ export function WalletOverview({ address, ensName }: WalletOverviewProps) {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-xs">View on Etherscan</p>
+              <p className="text-xs">View on Blockscout</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

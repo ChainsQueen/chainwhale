@@ -5,6 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { getExplorerUrl } from '@/core/utils/wallet-utils';
 
 /**
  * Props for TransferTypeIndicator component
@@ -76,18 +77,6 @@ export function TransferTypeIndicator({
     };
   };
 
-  const getExplorerUrl = (identifier: string, type: 'tx' | 'address' | 'token' = 'tx') => {
-    const explorers: Record<string, string> = {
-      '1': 'https://etherscan.io',
-      '8453': 'https://basescan.org',
-      '42161': 'https://arbiscan.io',
-      '10': 'https://optimistic.etherscan.io',
-      '137': 'https://polygonscan.com',
-    };
-    const baseUrl = explorers[chainId] || explorers['1'];
-    return `${baseUrl}/${type}/${identifier}`;
-  };
-
   const iconData = getTransferIcon();
 
   return (
@@ -96,7 +85,7 @@ export function TransferTypeIndicator({
         <TooltipTrigger asChild>
           {hash ? (
             <a
-              href={getExplorerUrl(hash, 'tx')}
+              href={getExplorerUrl(chainId, hash, 'tx')}
               target="_blank"
               rel="noopener noreferrer"
               className="cursor-pointer hover:opacity-70 transition-opacity"

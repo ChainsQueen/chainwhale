@@ -51,8 +51,8 @@ export function FloatingInfoCard({
   badge,
 }: FloatingInfoCardProps) {
   const positionClasses = {
-    'top-right': '-top-8 -right-8',
-    'bottom-left': '-bottom-8 -left-8',
+    'top-right': '-top-12 right-2 md:-top-8 md:-right-8',
+    'bottom-left': '-bottom-12 left-2 md:-bottom-8 md:-left-8',
   };
 
   const rotationDirection = position === 'top-right' ? [0, 5, 0] : [0, -5, 0];
@@ -70,16 +70,16 @@ export function FloatingInfoCard({
         ease: 'easeInOut',
         delay: animationDelay,
       }}
-      className={`absolute z-20 ${positionClasses[position]}`}
+      className={`absolute z-20 pointer-events-auto ${positionClasses[position]}`}
     >
-      <Card className="relative p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+      <Card className="relative p-3 md:p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
         {badge && (
           <div className="absolute top-1 left-1 z-10">
             {badge}
           </div>
         )}
         <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5 text-blue-500" />
+          <Icon className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
           <div>
             <p className="text-xs text-muted-foreground">{title}</p>
             {children}

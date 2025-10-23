@@ -89,12 +89,12 @@ export function SwimmingWhale({ whaleActivity }: { whaleActivity?: WhaleActivity
         {[...Array(4)].map((_, i) => (
           <div
             key={`sonar-${i}`}
-            className="absolute border-2 border-blue-500/40 dark:border-blue-400/40 rounded-full"
+            className="absolute border border-blue-500/40 dark:border-blue-400/40 rounded-full md:border-2"
             style={{
               top: '50%',
               left: '50%',
-              width: '100px',
-              height: '100px',
+              width: '60px',
+              height: '60px',
               transform: 'translate(-50%, -50%)',
               animation: `sonar-pulse ${4 + i * 0.5}s ease-out infinite`,
               animationDelay: `${i * 1}s`,
@@ -130,12 +130,12 @@ export function SwimmingWhale({ whaleActivity }: { whaleActivity?: WhaleActivity
         {WHALE_POSITIONS.map((whale, index) => (
           <div
             key={`pulse-${index}`}
-            className="absolute rounded-full border-2 border-cyan-500/50 dark:border-cyan-400/50"
+            className="absolute rounded-full border border-cyan-500/50 dark:border-cyan-400/50 md:border-2"
             style={{
               left: `${whale.startPos}%`,
               top: whale.topPos,
-              width: '40px',
-              height: '40px',
+              width: '25px',
+              height: '25px',
               transform: 'translate(-50%, -50%)',
               animation: `whale-detect ${3 + index * 0.3}s ease-out infinite`,
               animationDelay: `${whale.delay + 1}s`,

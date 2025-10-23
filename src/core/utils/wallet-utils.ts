@@ -141,3 +141,25 @@ export function getRiskLabel(score: number): string {
   if (score <= 6) return 'Medium';
   return 'High';
 }
+
+/**
+ * Formats USD volume for compact display with K/M suffixes
+ * Matches Blockscout formatting with 2 decimal places for K values
+ * 
+ * @param volume - USD volume amount to format
+ * @returns Formatted string with appropriate suffix
+ * 
+ * @example
+ * formatVolume(1500000) // '$1.50M'
+ * formatVolume(636880) // '$636.88K'
+ * formatVolume(450) // '$450'
+ */
+export function formatVolume(volume: number): string {
+  if (volume >= 1_000_000) {
+    return `$${(volume / 1_000_000).toFixed(2)}M`;
+  } else if (volume >= 1_000) {
+    return `$${(volume / 1_000).toFixed(2)}K`;
+  } else {
+    return `$${volume.toFixed(0)}`;
+  }
+}

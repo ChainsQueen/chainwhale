@@ -171,12 +171,10 @@ export function SingleWhale({
 
   return (
     <div
-      className="absolute animate-in fade-in"
+      className="absolute animate-in fade-in w-[80px] h-[80px] md:w-[120px] md:h-[120px] lg:w-[150px] lg:h-[150px]"
       style={{
         left: `${position}%`,
         top: topPos,
-        width: "150px",
-        height: "150px",
         transform: isFlipped ? "scaleX(-1)" : "none",
         transition: "left 0.05s linear, opacity 0.8s ease-out",
         zIndex: zIndex,
@@ -191,7 +189,7 @@ export function SingleWhale({
         <div
           className="absolute left-1/2 z-[100]"
           style={{
-            top: "15px",
+            top: "5px",
             transform: isFlipped
               ? "translateX(-50%) scaleX(-1)"
               : "translateX(-50%)",
@@ -208,29 +206,29 @@ export function SingleWhale({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`absolute -top-8 left-1/2 -translate-x-1/2 z-50 ${
+                className={`absolute -top-4 md:-top-6 left-1/2 -translate-x-1/2 z-50 ${
                   activity.tier === "largest"
                     ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                     : activity.tier === "smallest"
                     ? "bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700"
                     : "bg-gradient-to-r from-gray-500 to-slate-600 hover:from-gray-600 hover:to-slate-700"
-                } rounded-lg px-3 py-0.5 shadow-lg cursor-pointer transition-all hover:scale-105`}
+                } rounded-md md:rounded-lg px-1.5 md:px-3 py-0.5 shadow-lg cursor-pointer transition-all hover:scale-105`}
               >
-                <div className="text-white font-bold text-xs whitespace-nowrap">
+                <div className="text-white font-bold text-[9px] md:text-xs whitespace-nowrap">
                   {formatVolume(activity.volume)}
                 </div>
               </a>
             ) : (
               <div
-                className={`absolute -top-8 left-1/2 -translate-x-1/2 z-50 ${
+                className={`absolute -top-4 md:-top-6 left-1/2 -translate-x-1/2 z-50 ${
                   activity.tier === "largest"
                     ? "bg-gradient-to-r from-green-500 to-emerald-600"
                     : activity.tier === "smallest"
                     ? "bg-gradient-to-r from-blue-500 to-cyan-600"
                     : "bg-gradient-to-r from-gray-500 to-slate-600"
-                } rounded-lg px-3 py-0.5 shadow-lg`}
+                } rounded-md md:rounded-lg px-1.5 md:px-3 py-0.5 shadow-lg`}
               >
-                <div className="text-white font-bold text-xs whitespace-nowrap">
+                <div className="text-white font-bold text-[9px] md:text-xs whitespace-nowrap">
                   {formatVolume(activity.volume)}
                 </div>
               </div>
@@ -239,12 +237,12 @@ export function SingleWhale({
             <div
               className="absolute left-1/2 -translate-x-1/2"
               style={{
-                bottom: "-6px",
+                bottom: "-4px",
                 width: 0,
                 height: 0,
-                borderLeft: "6px solid transparent",
-                borderRight: "6px solid transparent",
-                borderTop: `6px solid ${getTriangleColor(activity.tier)}`,
+                borderLeft: "4px solid transparent",
+                borderRight: "4px solid transparent",
+                borderTop: `4px solid ${getTriangleColor(activity.tier)}`,
               }}
             />
           </div>

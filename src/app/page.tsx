@@ -135,11 +135,11 @@ export default function Home() {
   // Trigger celebration animation on first load and when largest transfer amount changes
   useEffect(() => {
     const currentValue = largestTransfer?.valueUsd;
-    
+
     if (currentValue) {
       // First load - trigger celebration when data first arrives
       if (prevLargestValueRef.current === null) {
-        console.log('[Home] 🎉 Initial whale data loaded!', {
+        console.log("[Home] 🎉 Initial whale data loaded!", {
           value: currentValue,
         });
         setShowCelebration(true);
@@ -147,7 +147,7 @@ export default function Home() {
       }
       // Subsequent updates - only trigger if value increased
       else if (currentValue > prevLargestValueRef.current) {
-        console.log('[Home] 🎉 New largest transfer detected!', {
+        console.log("[Home] 🎉 New largest transfer detected!", {
           previous: prevLargestValueRef.current,
           current: currentValue,
         });
@@ -155,7 +155,7 @@ export default function Home() {
         setTimeout(() => setShowCelebration(false), 2000);
       }
     }
-    
+
     // Update the ref with current value
     if (currentValue !== undefined) {
       prevLargestValueRef.current = currentValue;
@@ -216,10 +216,19 @@ export default function Home() {
               transition={{ delay: 0.5 }}
               className="flex flex-col sm:flex-row gap-3 md:gap-4"
             >
-              <Button size="lg" className="text-base md:text-lg w-full sm:w-auto" asChild>
+              <Button
+                size="lg"
+                className="text-base md:text-lg w-full sm:w-auto"
+                asChild
+              >
                 <a href="/dashboard">🚀 Dashboard</a>
               </Button>
-              <Button size="lg" variant="outline" className="text-base md:text-lg w-full sm:w-auto" asChild>
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-base md:text-lg w-full sm:w-auto"
+                asChild
+              >
                 <a href="/whales" className="flex items-center gap-2">
                   <Image
                     src="/whalelogo.png"
@@ -240,7 +249,7 @@ export default function Home() {
               className="flex flex-wrap items-center gap-4 md:gap-6 pt-2 md:pt-4 mb-8 md:mb-0"
             >
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-sm text-muted-foreground">
                   Live Tracking
                 </span>
@@ -254,11 +263,6 @@ export default function Home() {
 
           {/* Right Image - Animated Swimming Whale */}
           <div className="relative min-h-[300px] md:min-h-[500px] lg:col-span-7 pt-4 md:pt-16 overflow-visible">
-            {/* Celebration Animation - positioned above largest whale (first whale at 8% top) */}
-            <div className="absolute top-[8%] left-[35%] -translate-x-1/2 -translate-y-full z-[60] pointer-events-none">
-              <CelebrationAnimation show={showCelebration} />
-            </div>
-            
             {/* Whales in isolated background layer */}
             <div className="absolute inset-0 z-0 overflow-visible">
               <SwimmingWhale whaleActivity={whaleActivityWithTiers} />
@@ -266,20 +270,25 @@ export default function Home() {
 
             {/* Floating Info Cards */}
             <div className="absolute inset-0 pointer-events-none">
+              {/* Celebration Animation - centered on mobile, above Whale Alert card on desktop */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 md:left-auto md:right-4 md:translate-x-0 md:-top-8 -translate-y-full z-[60] pointer-events-none">
+                <CelebrationAnimation show={showCelebration} />
+              </div>
+
               <FloatingInfoCard
-                  icon={TrendingUp}
-                  title="Whale Alert (1h)"
-                  position="top-right"
-                  duration={3}
-                  badge={
-                    largestTransfer?.dataSource ? (
-                      <DataSourceBadge
-                        dataSource={largestTransfer.dataSource}
-                        size="xs"
-                      />
-                    ) : undefined
-                  }
-                >
+                icon={TrendingUp}
+                title="Whale Alert (1h)"
+                position="top-right"
+                duration={3}
+                badge={
+                  largestTransfer?.dataSource ? (
+                    <DataSourceBadge
+                      dataSource={largestTransfer.dataSource}
+                      size="xs"
+                    />
+                  ) : undefined
+                }
+              >
                 {loading && !largestTransfer ? (
                   <div className="flex flex-col gap-1">
                     <p className="text-xs text-muted-foreground">Loading...</p>
@@ -315,7 +324,7 @@ export default function Home() {
                   <p className="text-xs text-muted-foreground">No data</p>
                 )}
               </FloatingInfoCard>
-              
+
               {/* Desktop floating cards - Live Activity */}
               <FloatingInfoCard
                 icon={Activity}
@@ -327,7 +336,7 @@ export default function Home() {
                 <p className="font-semibold">5 EVM Chains</p>
               </FloatingInfoCard>
             </div>
-            
+
             {/* Mobile-only info cards - below whale container - HIDDEN, using floating cards instead */}
             <div className="hidden mt-4 space-y-3">
               {largestTransfer && (
@@ -336,7 +345,9 @@ export default function Home() {
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-blue-500" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Whale Alert (1h)</p>
+                        <p className="text-xs text-muted-foreground">
+                          Whale Alert (1h)
+                        </p>
                         <div className="flex items-center gap-2">
                           {largestTransfer.hash ? (
                             <a
@@ -372,7 +383,9 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-blue-500" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Live Activity</p>
+                    <p className="text-xs text-muted-foreground">
+                      Live Activity
+                    </p>
                     <p className="font-semibold text-sm">5 EVM Chains</p>
                   </div>
                 </div>
@@ -455,7 +468,11 @@ export default function Home() {
                 ChainWhale today.
               </p>
               <div className="flex justify-center">
-                <Button size="lg" className="text-base md:text-lg w-full sm:w-auto" asChild>
+                <Button
+                  size="lg"
+                  className="text-base md:text-lg w-full sm:w-auto"
+                  asChild
+                >
                   <a href="/whales">Start Tracking</a>
                 </Button>
               </div>

@@ -12,7 +12,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-24 items-center justify-between px-8">
+      <div className="container mx-auto flex h-16 md:h-20 items-center justify-between px-4 md:px-8">
         {/* Logo and Title */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Image
@@ -20,9 +20,9 @@ export function AppHeader() {
             alt="ChainWhale Logo"
             width={48}
             height={48}
-            className="w-12 h-12"
+            className="w-8 h-8 md:w-12 md:h-12"
           />
-          <span className="text-3xl font-bold">ChainWhale</span>
+          <span className="text-xl md:text-3xl font-bold">ChainWhale</span>
         </Link>
 
         {/* Navigation */}
@@ -60,34 +60,37 @@ export function AppHeader() {
         </nav>
 
         {/* Mobile Navigation + Theme Toggle */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           {/* Mobile Menu */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-1">
             <Button
               variant={pathname === '/' ? 'default' : 'ghost'}
-              size="icon"
+              size="sm"
+              className="h-9 w-9 p-0"
               asChild
             >
               <Link href="/">
-                <Home className="h-5 w-5" />
+                <Home className="h-4 w-4" />
               </Link>
             </Button>
             <Button
               variant={pathname === '/dashboard' ? 'default' : 'ghost'}
-              size="icon"
+              size="sm"
+              className="h-9 w-9 p-0"
               asChild
             >
               <Link href="/dashboard">
-                <LayoutDashboard className="h-5 w-5" />
+                <LayoutDashboard className="h-4 w-4" />
               </Link>
             </Button>
             <Button
               variant={pathname === '/whales' ? 'default' : 'ghost'}
-              size="icon"
+              size="sm"
+              className="h-9 w-9 p-0"
               asChild
             >
               <Link href="/whales">
-                <Activity className="h-5 w-5" />
+                <Activity className="h-4 w-4" />
               </Link>
             </Button>
           </div>

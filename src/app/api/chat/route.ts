@@ -7,6 +7,51 @@ import { WhaleService } from '@/core/services/whale-service';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+// Type definitions
+interface Transfer {
+  hash: string;
+  from: string;
+  to: string;
+  value: string;
+  valueUsd?: number;
+  timestamp?: number;
+  chainId: string;
+  chainName: string;
+  token: {
+    address: string;
+    symbol: string;
+    name?: string;
+    decimals?: string;
+  };
+}
+
+interface ContractDetail {
+  symbol: string;
+  address: string;
+  chainId: string;
+  isVerified: boolean;
+  isScam: boolean;
+  reputation?: string | undefined;
+  isProxy: boolean;
+  implementations: Array<{ address: string; name: string | undefined }>;
+  tokenType?: string;
+  tokenName?: string;
+  tokenSymbol?: string;
+  decimals?: string;
+  totalSupply?: string;
+  holders?: number;
+  price?: number;
+  marketCap?: string;
+}
+
+interface ChainGroup {
+  chain: string;
+  chainId: string;
+  transfers: Transfer[];
+  count: number;
+  contractDetails?: ContractDetail[];
+}
+
 const CHAIN_NAMES: Record<string, string> = {
   '1': 'Ethereum',
   '8453': 'Base',
@@ -16,11 +61,11 @@ const CHAIN_NAMES: Record<string, string> = {
 };
 
 const EXPLORER_URLS: Record<string, string> = {
-  '1': 'https://etherscan.io',
-  '8453': 'https://basescan.org',
-  '42161': 'https://arbiscan.io',
-  '10': 'https://optimistic.etherscan.io',
-  '137': 'https://polygonscan.com',
+  '1': 'https://eth.blockscout.com',
+  '8453': 'https://base.blockscout.com',
+  '42161': 'https://arbitrum.blockscout.com',
+  '10': 'https://optimism.blockscout.com',
+  '137': 'https://polygon.blockscout.com',
 };
 
 function getExplorerBaseUrl(chainId: string): string {
@@ -70,7 +115,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { query, chains = ['1', '8453', '42161'], apiKey: clientApiKey } = body;
+    const { 
+      query, 
+      chains = ['1', '8453', '42161', '10', '137'], 
+      apiKey: clientApiKey,
+      provider = 'openai',
+      model,
+      context // Pre-fetched context from hook
+    } = body;
 
     if (!query) {
       return NextResponse.json(
@@ -82,10 +134,14 @@ export async function POST(request: NextRequest) {
     // Check for API key from client (localStorage) or environment
     const apiKey = clientApiKey || process.env.OPENAI_API_KEY;
     
-    console.log('[Chat API] API Key check:', {
+    console.log('[Chat API] Request received:', {
       hasClientKey: !!clientApiKey,
       hasEnvKey: !!process.env.OPENAI_API_KEY,
-      clientKeyLength: clientApiKey?.length || 0
+      provider,
+      model,
+      hasContext: !!context,
+      contextTransfers: context?.transfers?.length || 0,
+      contextContracts: context?.contracts?.length || 0,
     });
     
     if (!apiKey) {
@@ -97,36 +153,117 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize services - use factory to get correct client (HTTP on Vercel, MCP locally)
-    blockscout = createBlockscoutClient();
-    await blockscout.connect();
+    // Initialize AI engine with model
+    const ai = new AIEngine({ 
+      apiKey,
+      model 
+    });
 
-    const ai = new AIEngine({ apiKey });
-    const whaleService = new WhaleService(100000, blockscout); // $100k minimum
+    let allTransfers: Transfer[] = [];
+    let contractDetails: ContractDetail[] = [];
+    
+    // Use pre-fetched context if available (from hook), otherwise fetch fresh data
+    if (context?.transfers && context.transfers.length > 0) {
+      console.log('[Chat API] ✅ Using pre-fetched context from hook');
+      allTransfers = context.transfers;
+      contractDetails = context.contracts || [];
+    } else {
+      console.log('[Chat API] ⚠️ No context provided, fetching fresh data...');
+      
+      // Fallback: Fetch data if no context provided
+      blockscout = createBlockscoutClient();
+      await blockscout.connect();
+      const whaleService = new WhaleService(100000, blockscout); // $100k minimum
 
-    // Fetch whale activity data using WhaleService
-    const blockchainData = [];
-    const allTransfers = [];
-
-    // Collect all transfers from all chains
-    for (const chainId of chains.slice(0, 3)) {
-      try {
-        const chainName = CHAIN_NAMES[chainId] || `Chain ${chainId}`;
-        console.log(`[Chat API] Fetching whale data for ${chainName}...`);
-        
-        const transfers = await whaleService.getWhaleFeed(chainId, chainName, '24h');
-        console.log(`[Chat API] Found ${transfers.length} whale transfers on ${chainName}`);
-        
-        allTransfers.push(...transfers.map(t => ({ ...t, chainId, chainName })));
-      } catch (error) {
-        console.error(`Error fetching data for chain ${chainId}:`, error);
+      for (const chainId of chains.slice(0, 5)) {
+        try {
+          const chainName = CHAIN_NAMES[chainId] || `Chain ${chainId}`;
+          console.log(`[Chat API] Fetching whale data for ${chainName}...`);
+          
+          const transfers = await whaleService.getWhaleFeed(chainId, chainName, '24h');
+          console.log(`[Chat API] Found ${transfers.length} whale transfers on ${chainName}`);
+          
+          allTransfers.push(...transfers.map(t => ({ ...t, chainId, chainName })));
+        } catch (error) {
+          console.error(`Error fetching data for chain ${chainId}:`, error);
+        }
       }
+
+      // Fetch contract security details for all unique tokens
+      console.log('[Chat API] 📋 Fetching contract security details...');
+      const uniqueTokens = new Set<string>();
+      const tokenMap = new Map<string, { symbol: string; chainId: string }>();
+      
+      allTransfers.forEach((t: Transfer) => {
+        if (t.token?.address && t.chainId) {
+          const key = `${t.chainId}-${t.token.address}`;
+          if (!uniqueTokens.has(key)) {
+            uniqueTokens.add(key);
+            tokenMap.set(key, {
+              symbol: t.token.symbol || 'Unknown',
+              chainId: t.chainId
+            });
+          }
+        }
+      });
+
+      console.log(`[Chat API] Found ${uniqueTokens.size} unique tokens, fetching details...`);
+
+      // Fetch contract details in parallel (limit to 20 to avoid overwhelming the API)
+      const contractPromises = Array.from(tokenMap.entries()).slice(0, 20).map(async ([key, data]) => {
+        try {
+          const address = key.split('-')[1];
+          if (!blockscout) return null;
+          const addressInfo = await blockscout.getAddressInfo(data.chainId, address);
+
+          if (addressInfo) {
+            return {
+              symbol: data.symbol,
+              address,
+              chainId: data.chainId,
+              
+              // Contract verification & security
+              isVerified: addressInfo.is_verified || false,
+              isScam: addressInfo.is_scam || false,
+              reputation: addressInfo.reputation,
+              
+              // Proxy contract info
+              isProxy: (addressInfo.implementations?.length || 0) > 0,
+              implementations: addressInfo.implementations?.map(impl => ({
+                address: impl.address,
+                name: impl.name,
+              })) || [],
+              
+              // Token metadata
+              tokenType: addressInfo.token?.type,
+              tokenName: addressInfo.token?.name,
+              tokenSymbol: addressInfo.token?.symbol,
+              decimals: addressInfo.token?.decimals,
+              
+              // Supply & holders
+              totalSupply: addressInfo.token?.total_supply,
+              holders: addressInfo.token?.holders,
+              
+              // Market data
+              price: addressInfo.token?.exchange_rate,
+              marketCap: addressInfo.token?.circulating_market_cap,
+            };
+          }
+          return null;
+        } catch (err) {
+          console.warn(`[Chat API] Failed to fetch contract ${key}:`, err);
+          return null;
+        }
+      });
+
+      contractDetails = (await Promise.all(contractPromises)).filter(detail => detail !== null) as ContractDetail[];
+      console.log(`[Chat API] ✅ Fetched ${contractDetails.length} contract details`);
     }
 
     console.log(`[Chat API] Processing ${allTransfers.length} total transfers`);
 
     // Format transfers and convert raw values to human-readable token amounts
-    const formattedTransfers = allTransfers.map(t => {
+    const formattedTransfers = allTransfers.map((t: Transfer) => {
       // Convert raw value to token amount (assume 18 decimals for most tokens, 6 for stablecoins)
       const decimals = ['USDT', 'USDC'].includes(t.token.symbol) ? 6 : 18;
       const tokenAmount = parseFloat(t.value) / Math.pow(10, decimals);
@@ -159,7 +296,7 @@ export async function POST(request: NextRequest) {
     };
 
     const sortedTransfers = formattedTransfers
-      .map(t => ({
+      .map((t) => ({
         ...t,
         estimatedValue: parseFloat(t.tokenAmount) * (tokenPriority[t.tokenSymbol] || 0.01),
       }))
@@ -169,9 +306,9 @@ export async function POST(request: NextRequest) {
     console.log(`[Chat API] Returning ${sortedTransfers.length} transfers sorted by estimated value`);
 
     // Group by chain for response
-    const chainGroups = chains.slice(0, 3).map((chainId: string) => {
+    const chainGroups: ChainGroup[] = chains.slice(0, 5).map((chainId: string) => {
       const chainName = CHAIN_NAMES[chainId] || `Chain ${chainId}`;
-      const chainTransfers = sortedTransfers.filter(t => t.chainId === chainId);
+      const chainTransfers = sortedTransfers.filter((t) => t.chainId === chainId);
       
       return {
         chain: chainName,
@@ -181,15 +318,38 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    blockchainData.push(...chainGroups.filter((g: { count: number }) => g.count > 0));
+    const blockchainData = chainGroups.filter((g) => g.count > 0);
     
     console.log('[Chat API] Total blockchain data collected:', {
       chains: blockchainData.length,
-      totalTransfers: blockchainData.reduce((sum, d) => sum + d.count, 0)
+      totalTransfers: blockchainData.reduce((sum, d) => sum + d.count, 0),
+      contracts: contractDetails.length
     });
 
-    // Get AI answer
-    const answer = await ai.answerQuery(query, blockchainData);
+    // Enrich blockchain data with contract security details
+    const enrichedBlockchainData = blockchainData.map((chainData) => ({
+      ...chainData,
+      // Add contract details for tokens in this chain
+      contractDetails: contractDetails.filter((c) => c.chainId === chainData.chainId),
+    }));
+
+    // Add summary as first element for AI context
+    const contextWithSummary = [
+      {
+        type: 'summary',
+        totalTransfers: blockchainData.reduce((sum, d) => sum + d.count, 0),
+        totalChains: blockchainData.length,
+        totalContracts: contractDetails.length,
+        verifiedContracts: contractDetails.filter((c) => c.isVerified).length,
+        scamContracts: contractDetails.filter((c) => c.isScam).length,
+        proxyContracts: contractDetails.filter((c) => c.isProxy).length,
+        allContracts: contractDetails, // Include all contract details for reference
+      },
+      ...enrichedBlockchainData
+    ];
+
+    // Get AI answer with enriched context
+    const answer = await ai.answerQuery(query, contextWithSummary);
 
     return NextResponse.json({ answer });
   } catch (error) {

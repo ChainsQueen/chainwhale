@@ -351,8 +351,15 @@ export class BlockscoutClient {
         
         if (item.total?.usd) {
           // Direct USD value provided by MCP
-          console.log(`[MCP Client] ✅ Found total.usd: ${item.total.usd}`);
           valueUsd = parseFloat(item.total.usd);
+          if (valueUsd > 500000) {
+            console.log(`[MCP] Large transfer (direct USD):`, {
+              symbol: item.token?.symbol,
+              directUSD: item.total.usd,
+              parsedUSD: valueUsd,
+              hash: item.hash || item.tx_hash
+            });
+          }
         } else if (item.total?.value && item.token?.exchange_rate) {
           // Calculate from token value * historical exchange rate
           // Use item.total.decimals (preferred) or fallback to item.token.decimals
@@ -363,6 +370,19 @@ export class BlockscoutClient {
             // Use string-based conversion to avoid floating-point precision loss
             const tokenAmount = this.convertTokenValue(item.total.value, decimalPlaces);
             valueUsd = tokenAmount * exchangeRate;
+            
+            // Debug logging for large transfers
+            if (valueUsd > 500000) {
+              console.log(`[MCP] Large transfer calculation:`, {
+                symbol: item.token?.symbol,
+                rawValue: item.total.value,
+                decimals: decimalPlaces,
+                tokenAmount,
+                exchangeRate,
+                calculatedUSD: valueUsd,
+                hash: item.hash || item.tx_hash
+              });
+            }
           } catch (error) {
             console.warn(`[MCP Client] Failed to calculate USD value for ${item.token?.symbol}:`, error);
           }

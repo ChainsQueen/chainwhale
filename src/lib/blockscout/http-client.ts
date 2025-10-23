@@ -349,6 +349,19 @@ export class BlockscoutHttpClient {
               // Use string-based conversion to avoid floating-point precision loss
               const tokenAmount = this.convertTokenValue(item.total.value, decimals);
               valueUsd = tokenAmount * exchangeRate;
+              
+              // Debug logging for large transfers
+              if (valueUsd > 500000) {
+                console.log(`[HTTP] Large transfer calculation:`, {
+                  symbol: item.token?.symbol,
+                  rawValue: item.total.value,
+                  decimals,
+                  tokenAmount,
+                  exchangeRate,
+                  calculatedUSD: valueUsd,
+                  hash: item.transaction_hash
+                });
+              }
             } catch (error) {
               console.warn(`[Blockscout] Failed to calculate USD value for ${item.token?.symbol}:`, error);
             }

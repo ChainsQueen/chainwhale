@@ -28,7 +28,7 @@ const TIME_RANGES = [
   { value: '7d', label: '7 Days' },
 ];
 
-const MIN_VALUES = [10000, 50000, 100000, 500000, 1000000];
+const MIN_VALUES = [100000, 250000, 500000, 1000000, 5000000];
 
 const TOKEN_FILTERS = ['USDC', 'USDT', 'WETH', 'DAI', 'WBTC'];
 

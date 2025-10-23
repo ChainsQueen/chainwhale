@@ -11,7 +11,84 @@ interface TokenToFetch {
 }
 
 /**
- * API endpoint for fetching contract security data
+ * GET handler for fetching single contract security data
+ * Used by chat hook to fetch contract details one by one
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const chainId = searchParams.get('chainId');
+    const address = searchParams.get('address');
+
+    if (!chainId || !address) {
+      return NextResponse.json(
+        { error: 'chainId and address are required' },
+        { status: 400 }
+      );
+    }
+
+    const client = createBlockscoutClient();
+    
+    try {
+      await client.connect();
+
+      const addressInfo = await client.getAddressInfo(chainId, address);
+
+      if (!addressInfo) {
+        return NextResponse.json(
+          { error: 'Contract not found' },
+          { status: 404 }
+        );
+      }
+
+      const contractData = {
+        // Basic info
+        address,
+        chainId,
+        
+        // Contract verification & security
+        is_verified: addressInfo.is_verified || false,
+        is_scam: addressInfo.is_scam || false,
+        reputation: addressInfo.reputation,
+        
+        // Proxy contract info
+        has_proxy: (addressInfo.implementations?.length || 0) > 0,
+        implementations: addressInfo.implementations?.map(impl => ({
+          address: impl.address,
+          name: impl.name,
+        })) || [],
+        
+        // Token metadata
+        token_type: addressInfo.token?.type,
+        name: addressInfo.token?.name,
+        symbol: addressInfo.token?.symbol,
+        decimals: addressInfo.token?.decimals,
+        icon_url: addressInfo.token?.icon_url,
+        
+        // Supply & holders
+        total_supply: addressInfo.token?.total_supply,
+        holders_count: addressInfo.token?.holders,
+        
+        // Market data
+        exchange_rate: addressInfo.token?.exchange_rate,
+        market_cap: addressInfo.token?.circulating_market_cap,
+      };
+
+      return NextResponse.json(contractData);
+    } finally {
+      await client.disconnect();
+    }
+  } catch (error) {
+    console.error('Error in contract-security GET API:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch contract security data' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST handler for fetching multiple contract security data
  * Used by AI insights checklist to pre-fetch contract information
  */
 export async function POST(request: NextRequest) {

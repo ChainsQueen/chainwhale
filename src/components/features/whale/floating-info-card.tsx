@@ -21,6 +21,8 @@ interface FloatingInfoCardProps {
   animationDelay?: number;
   /** Animation duration in seconds */
   duration?: number;
+  /** Optional badge to display in top-left corner */
+  badge?: ReactNode;
 }
 
 /**
@@ -46,6 +48,7 @@ export function FloatingInfoCard({
   position,
   animationDelay = 0,
   duration = 3,
+  badge,
 }: FloatingInfoCardProps) {
   const positionClasses = {
     'top-right': '-top-8 -right-8',
@@ -69,7 +72,12 @@ export function FloatingInfoCard({
       }}
       className={`absolute z-20 ${positionClasses[position]}`}
     >
-      <Card className="p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+      <Card className="relative p-4 shadow-lg border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+        {badge && (
+          <div className="absolute top-1 left-1 z-10">
+            {badge}
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-blue-500" />
           <div>

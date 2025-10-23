@@ -1,10 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { SingleWhale } from './single-whale';
 
 type Direction = 'left' | 'right';
+
+interface WhaleActivityData {
+  volume: number; // Total USD volume in last 1h
+  count: number;  // Number of transfers in last 1h
+  tier?: 'largest' | 'smallest' | 'middle'; // Color tier based on relative volume
+}
 
 /**
  * Animated swimming whale component with continuous swimming.
@@ -13,129 +19,58 @@ type Direction = 'left' | 'right';
  * - Frames 1-7: Swimming animation (loops continuously)
  * - Swims across screen, teleports back when reaching edge
  */
-// Frame sequence - only swimming frames (defined outside to prevent re-creation)
-const SWIM_FRAMES = [1, 2, 3, 4, 5, 6, 7];
-
 // Whale configuration for 6 whales (2 on row 1, 2 on row 3)
-const WHALES = [
-  { id: 1, startPos: 20, topPos: '8%', speed: 0.1, startDir: 'right' as Direction, zIndex: 1, delay: 0 },
-  { id: 2, startPos: 50, topPos: '28%', speed: 0.08, startDir: 'left' as Direction, zIndex: 2, delay: 0.2 },
-  { id: 3, startPos: 30, topPos: '48%', speed: 0.12, startDir: 'right' as Direction, zIndex: 3, delay: 0.4 },
-  { id: 4, startPos: 65, topPos: '68%', speed: 0.09, startDir: 'left' as Direction, zIndex: 4, delay: 0.6 },
-  { id: 5, startPos: 10, topPos: '48%', speed: 0.11, startDir: 'left' as Direction, zIndex: 3, delay: 0.3 },
-  { id: 6, startPos: 55, topPos: '8%', speed: 0.09, startDir: 'left' as Direction, zIndex: 1, delay: 0.1 },
+const WHALE_POSITIONS = [
+  { startPos: 20, topPos: '8%', speed: 0.1, startDir: 'right' as Direction, zIndex: 1, delay: 0 },
+  { startPos: 50, topPos: '28%', speed: 0.08, startDir: 'left' as Direction, zIndex: 2, delay: 0.2 },
+  { startPos: 30, topPos: '48%', speed: 0.12, startDir: 'right' as Direction, zIndex: 3, delay: 0.4 },
+  { startPos: 65, topPos: '68%', speed: 0.09, startDir: 'left' as Direction, zIndex: 4, delay: 0.6 },
+  { startPos: 10, topPos: '48%', speed: 0.11, startDir: 'left' as Direction, zIndex: 3, delay: 0.3 },
+  { startPos: 55, topPos: '8%', speed: 0.09, startDir: 'left' as Direction, zIndex: 1, delay: 0.1 },
 ];
 
-function SingleWhale({ startPos, topPos, speed, startDir, zIndex, delay }: { 
-  startPos: number; 
-  topPos: string; 
-  speed: number; 
-  startDir: Direction;
-  zIndex: number;
-  delay: number;
-}) {
-  const [currentFrame, setCurrentFrame] = useState(1);
-  const [position, setPosition] = useState(startPos);
-  const frameIndexRef = useRef(0);
-  const directionRef = useRef<Direction>(startDir);
-  const [isFlipped, setIsFlipped] = useState(startDir === 'right');
-  const [isTurning, setIsTurning] = useState(false);
-  const isMovingRef = useRef(true);
-  
-  
-  // Frame animation - continuous loop (only when not turning)
+/**
+ * Main component displaying multiple animated whales with activity badges
+ * 
+ * @component
+ * @param props - Component props
+ * @param props.whaleActivity - Array of whale activity data for top 6 whales
+ * 
+ * @example
+ * <SwimmingWhale
+ *   whaleActivity={[
+ *     { volume: 5200000, count: 12, tier: 'largest' },
+ *     { volume: 2800000, count: 8, tier: 'middle' },
+ *     // ... up to 6 whales
+ *   ]}
+ * />
+ */
+export function SwimmingWhale({ whaleActivity }: { whaleActivity?: WhaleActivityData[] }) {
+  // Preload all whale animation frames (only 7 frames available)
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (isTurning) return; // Don't animate frames during turn
-      frameIndexRef.current = (frameIndexRef.current + 1) % SWIM_FRAMES.length;
-      setCurrentFrame(SWIM_FRAMES[frameIndexRef.current]);
-    }, 200); // 200ms = 5 FPS for swimming
-    
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isTurning]); // Re-run when turning state changes
-  
-  // Position animation - move whale across screen
+    const frames = [1, 2, 3, 4, 5, 6, 7];
+    frames.forEach(frame => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = `/whale-${String(frame).padStart(2, '0')}.png`;
+      document.head.appendChild(link);
+    });
+  }, []);
+
+  // Debug logging
   useEffect(() => {
-    const moveInterval = setInterval(() => {
-      if (!isMovingRef.current) return; // Don't move during turn
-      
-      setPosition(prev => {
-        const newPos = directionRef.current === 'right' ? prev + speed : prev - speed;
-        
-        // Check boundaries and turn
-        if (directionRef.current === 'right' && newPos >= 70) {
-          // Reached right edge - start turn (before going off-screen)
-          isMovingRef.current = false;
-          setIsTurning(true);
-          // Keep current frame (don't change to frame 9 which doesn't exist)
-          
-          setTimeout(() => {
-            directionRef.current = 'left';
-            setIsFlipped(false); // Face left
-            setIsTurning(false);
-            frameIndexRef.current = 0; // Reset to first frame
-            setCurrentFrame(SWIM_FRAMES[0]); // Resume swimming
-            isMovingRef.current = true;
-          }, 500); // Turn duration
-          
-          return 70; // Stay at edge
-        } else if (directionRef.current === 'left' && newPos <= 10) {
-          // Reached left edge - start turn
-          isMovingRef.current = false;
-          setIsTurning(true);
-          // Keep current frame (don't change to frame 9 which doesn't exist)
-          
-          setTimeout(() => {
-            directionRef.current = 'right';
-            setIsFlipped(true); // Face right
-            setIsTurning(false);
-            frameIndexRef.current = 0; // Reset to first frame
-            setCurrentFrame(SWIM_FRAMES[0]); // Resume swimming
-            isMovingRef.current = true;
-          }, 500); // Turn duration
-          
-          return 10; // Stay at edge
-        }
-        
-        return newPos;
+    console.log('[SwimmingWhale] whaleActivity prop:', whaleActivity);
+    if (whaleActivity && whaleActivity.length > 0) {
+      console.log('[SwimmingWhale] ✅ Received', whaleActivity.length, 'whale activities');
+      whaleActivity.forEach((activity, index) => {
+        console.log(`[SwimmingWhale] Whale ${index}:`, activity);
       });
-    }, 50); // Update position every 50ms
-    
-    return () => clearInterval(moveInterval);
-  }, [speed]); // Include speed dependency
+    } else {
+      console.log('[SwimmingWhale] ❌ No whale activity data');
+    }
+  }, [whaleActivity]);
 
-  return (
-    <div
-      className="absolute animate-in fade-in"
-      style={{ 
-        left: `${position}%`,
-        top: topPos,
-        width: '150px', 
-        height: '150px',
-        transform: isFlipped ? 'scaleX(-1)' : 'none',
-        transition: 'left 0.05s linear, opacity 0.8s ease-out',
-        zIndex: zIndex,
-        animationDelay: `${delay}s`,
-        animationDuration: '0.8s',
-        animationFillMode: 'both',
-        willChange: 'transform, left', // Performance optimization
-      }}
-    >
-      <Image
-        src={`/whale-${String(currentFrame).padStart(2, '0')}.png`}
-        alt="Swimming Whale"
-        width={150}
-        height={150}
-        priority
-        className="w-full h-full object-contain"
-      />
-    </div>
-  );
-}
-
-export function SwimmingWhale() {
   return (
     <motion.div
       className="relative w-full h-full flex items-center justify-center overflow-visible"
@@ -192,9 +127,9 @@ export function SwimmingWhale() {
         />
 
         {/* Whale detection pulses */}
-        {WHALES.map((whale) => (
+        {WHALE_POSITIONS.map((whale, index) => (
           <div
-            key={`pulse-${whale.id}`}
+            key={`pulse-${index}`}
             className="absolute rounded-full border-2 border-cyan-500/50 dark:border-cyan-400/50"
             style={{
               left: `${whale.startPos}%`,
@@ -202,25 +137,42 @@ export function SwimmingWhale() {
               width: '40px',
               height: '40px',
               transform: 'translate(-50%, -50%)',
-              animation: `whale-detect ${3 + whale.id * 0.3}s ease-out infinite`,
+              animation: `whale-detect ${3 + index * 0.3}s ease-out infinite`,
               animationDelay: `${whale.delay + 1}s`,
             }}
           />
         ))}
       </div>
 
-      {/* Render 6 whales at different positions */}
-      {WHALES.map((whale) => (
-        <SingleWhale
-          key={whale.id}
-          startPos={whale.startPos}
-          topPos={whale.topPos}
-          speed={whale.speed}
-          startDir={whale.startDir}
-          zIndex={whale.zIndex}
-          delay={whale.delay}
-        />
-      ))}
+      {/* Whales layer - 6 whales with activity badges */}
+      <div className="absolute inset-0 pointer-events-none">
+        {WHALE_POSITIONS.map((whale, index) => (
+          <SingleWhale
+            key={index}
+            startPos={whale.startPos}
+            topPos={whale.topPos}
+            speed={whale.speed}
+            startDir={whale.startDir}
+            zIndex={whale.zIndex}
+            delay={whale.delay}
+            activity={whaleActivity?.[index]}
+          />
+        ))}
+      </div>
+
+      {/* CSS to hide broken image placeholders */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          img[src*="whale-"] {
+            font-size: 0 !important;
+            color: transparent !important;
+          }
+          img[src*="whale-"]::before,
+          img[src*="whale-"]::after {
+            display: none !important;
+          }
+        `
+      }} />
 
       {/* CSS Keyframes for sonar radar tracking */}
       <style>{`

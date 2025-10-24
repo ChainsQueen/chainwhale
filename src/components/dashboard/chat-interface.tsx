@@ -13,7 +13,15 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { DataSourceBadge } from "@/components/ui/data-source-badge";
-import { Bot, User, RefreshCw, Database, TrendingUp, Sparkles, AlertTriangle } from "lucide-react";
+import {
+  Bot,
+  User,
+  RefreshCw,
+  Database,
+  TrendingUp,
+  Sparkles,
+  AlertTriangle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWhaleChat } from "@/core/hooks/use-whale-chat";
 import { useApiKey } from "@/core/hooks/use-api-key";
@@ -24,7 +32,7 @@ export default function ChatInterface() {
   // Use custom hook for data fetching (same pattern as whale tracker)
   const { messages, chatData, isLoading, sendMessage, refetchData } =
     useWhaleChat();
-  
+
   // Check if AI API key is configured
   const { hasApiKey } = useApiKey();
 
@@ -37,12 +45,12 @@ export default function ChatInterface() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+    <Card className="w-full max-w-4xl mx-auto rounded-md border transition-shadow border-blue-500/20">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-               {/* Data Source Badges */}
+              {/* Data Source Badges */}
               {chatData.dataSourceStats && (
                 <>
                   {chatData.dataSourceStats.mcp > 0 && (
@@ -103,7 +111,7 @@ export default function ChatInterface() {
       <CardContent>
         <div className="space-y-4">
           {/* Chat Messages */}
-          <ScrollArea className="h-[500px] w-full rounded-md border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 p-4">
+          <ScrollArea className="h-[500px] w-full rounded-md border transition-shadow border-blue-500/20 p-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                 <Bot className="h-12 w-12 mb-4 opacity-50" />
@@ -154,8 +162,8 @@ export default function ChatInterface() {
                       <div
                         className={`rounded-lg px-4 py-2 ${
                           message.role === "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
+                            ? "dark:bg-primary dark:text-primary-foreground"
+                            : "dark:bg-muted"
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">
@@ -203,9 +211,9 @@ export default function ChatInterface() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about whale activity..."
               disabled={isLoading}
-              className="flex-1 border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5"
+              className="flex-1 rounded-md border transition-shadow border-blue-500/20"
             />
-            
+
             {/* AI Insights Button */}
             <Button
               type="button"
@@ -217,10 +225,17 @@ export default function ChatInterface() {
                 }
                 // If API key exists and input is empty, focus input
                 if (!input.trim()) {
-                  document.querySelector<HTMLInputElement>('input[placeholder="Ask about whale activity..."]')?.focus();
+                  document
+                    .querySelector<HTMLInputElement>(
+                      'input[placeholder="Ask about whale activity..."]'
+                    )
+                    ?.focus();
                 } else {
                   // If there's input, submit the form
-                  const submitEvent = new Event('submit', { bubbles: true, cancelable: true }) as unknown as React.FormEvent;
+                  const submitEvent = new Event("submit", {
+                    bubbles: true,
+                    cancelable: true,
+                  }) as unknown as React.FormEvent;
                   handleSubmit(submitEvent);
                 }
               }}
@@ -254,7 +269,8 @@ export default function ChatInterface() {
           {/* Example Questions */}
           <div className="flex flex-wrap gap-2">
             <p className="text-sm text-muted-foreground w-full">
-              Try asking (AI can analyze {chatData.transfers.length} transfers across {chatData.stats.uniqueTokens} tokens):
+              Try asking (AI can analyze {chatData.transfers.length} transfers
+              across {chatData.stats.uniqueTokens} tokens):
             </p>
             {[
               "What are the top 3 largest transfers?",
@@ -270,7 +286,7 @@ export default function ChatInterface() {
                 size="sm"
                 onClick={() => setInput(question)}
                 disabled={isLoading}
-                className="text-xs border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 hover:from-blue-500/10 hover:via-slate-500/10 hover:to-blue-500/10"
+                className="text-xs border-blue-500/20 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 hover:from-blue-500/10 hover:via-slate-500/10 hover:to-blue-500/10"
               >
                 {question}
               </Button>

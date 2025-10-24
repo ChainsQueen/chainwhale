@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ContractInfoDialog } from '@/components/features/contract/contract-info-dialog';
-import { DataSourceBadge } from '@/components/ui/data-source-badge';
-import { ChainBadge } from '@/components/ui/chain-badge';
-import { ValueDisplay } from '@/components/ui/value-display';
-import { ExplorerLink } from '@/components/ui/explorer-link';
-import { TransferTypeIndicator } from '@/components/features/whale/transfer-type-indicator';
-import { AddressPill } from '@/components/ui/address-pill';
-import { CopyButton } from '@/components/ui/copy-button';
-import { ArrowRight } from 'lucide-react';
-import type { WhaleTransfer } from '@/core/services/whale-service';
-import { getExplorerUrl } from '@/core/utils/wallet-utils';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ContractInfoDialog } from "@/components/features/contract/contract-info-dialog";
+import { DataSourceBadge } from "@/components/ui/data-source-badge";
+import { ChainBadge } from "@/components/ui/chain-badge";
+import { ValueDisplay } from "@/components/ui/value-display";
+import { ExplorerLink } from "@/components/ui/explorer-link";
+import { TransferTypeIndicator } from "@/components/features/whale/transfer-type-indicator";
+import { AddressPill } from "@/components/ui/address-pill";
+import { CopyButton } from "@/components/ui/copy-button";
+import { ArrowRight } from "lucide-react";
+import type { WhaleTransfer } from "@/core/services/whale-service";
+import { getExplorerUrl } from "@/core/utils/wallet-utils";
 
 interface WhaleTrackerCardProps {
   transfer: WhaleTransfer;
@@ -30,11 +30,11 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
     if (days > 0) return `${days}d ago`;
     if (hours > 0) return `${hours}h ago`;
     if (minutes > 0) return `${minutes}m ago`;
-    return 'just now';
+    return "just now";
   };
 
   return (
-    <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5 hover:shadow-lg transition-shadow">
+    <Card className="transition-shadow border border-blue-500/20 hover:border-blue-500/40 hover:shadow-lg">
       <CardContent className="p-3 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
           <div className="flex-1 space-y-2">
@@ -45,22 +45,32 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
                 chainId={transfer.chainId}
               />
               {transfer.timestamp && (
-                <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-muted">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-muted"
+                >
                   {getRelativeTime(transfer.timestamp)}
                 </Badge>
               )}
               <ChainBadge chainName={transfer.chainName} size="sm" />
               <DataSourceBadge dataSource={transfer.dataSource} size="sm" />
-              <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5">
+              <Badge
+                variant="outline"
+                className="text-[10px] sm:text-xs px-1.5 py-0.5"
+              >
                 {transfer.token.symbol}
               </Badge>
-              
+
               {/* Contract Info Dialog */}
               <ContractInfoDialog
                 tokenAddress={transfer.token.address}
                 tokenName={transfer.token.name}
                 tokenSymbol={transfer.token.symbol}
-                tokenDecimals={transfer.token.decimals ? parseInt(transfer.token.decimals) : undefined}
+                tokenDecimals={
+                  transfer.token.decimals
+                    ? parseInt(transfer.token.decimals)
+                    : undefined
+                }
                 chainId={transfer.chainId}
                 chainName={transfer.chainName}
                 transferHash={transfer.hash}
@@ -98,22 +108,25 @@ export function WhaleTrackerCard({ transfer }: WhaleTrackerCardProps) {
                 {transfer.token.name}
               </p>
             )}
-
           </div>
 
           {/* Right: Value */}
           <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 sm:gap-2 sm:text-right">
             <ExplorerLink
-              href={transfer.hash ? getExplorerUrl(transfer.chainId, transfer.hash, 'tx') : undefined}
-              disabled={!transfer.hash || transfer.hash === ''}
+              href={
+                transfer.hash
+                  ? getExplorerUrl(transfer.chainId, transfer.hash, "tx")
+                  : undefined
+              }
+              disabled={!transfer.hash || transfer.hash === ""}
             />
-            <ValueDisplay 
-              value={transfer.valueUsd} 
+            <ValueDisplay
+              value={transfer.valueUsd}
               tokenAmount={transfer.value}
               tokenSymbol={transfer.token.symbol}
               tokenDecimals={transfer.token.decimals}
               exchangeRate={transfer.token.exchangeRate}
-              size="md" 
+              size="md"
             />
           </div>
         </div>

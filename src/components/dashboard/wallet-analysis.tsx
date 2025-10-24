@@ -17,6 +17,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { AnimatedHover } from '@/components/ui/animated-hover';
 import { WalletOverview } from "@/components/dashboard/wallet/wallet-overview";
 import { PortfolioBreakdown } from "@/components/dashboard/wallet-overview-section";
 import { WhaleDetectionSection } from "@/components/dashboard/wallet/whale-detection-section";
@@ -91,12 +92,20 @@ export default function WalletAnalysis() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
+       <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0 }}
+          className="flex flex-col gap-3"
+        >
       {/* Title and Description */}
       <div className="space-y-2">
+         <AnimatedHover type="text">
         <h2 className="text-2xl font-bold tracking-tight">Wallet Analysis</h2>
         <p className="text-sm text-muted-foreground">
           Analyze any wallet across multiple chains with AI-powered insights
         </p>
+        </AnimatedHover>
       </div>
 
       {/* Content */}
@@ -110,7 +119,7 @@ export default function WalletAnalysis() {
                   onChange={(e) => handleAddressChange(e.target.value)}
                   placeholder="Enter wallet address (0x...) or ENS name (.eth)"
                   disabled={isLoading}
-                  className="border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5"
+                  className="hover:shadow-lg transition-shadow border-blue-500/20 hover:border-blue-500/40"
                 />
                 {!isValidAddress && address.trim() && (
                   <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -142,7 +151,7 @@ export default function WalletAnalysis() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+              <Card className="transition-shadow border border-blue-500/20 hover:border-blue-500/40">
                 <CardContent className="p-6">
                   <div className="space-y-6">
                     {/* Loading Header */}
@@ -249,7 +258,7 @@ export default function WalletAnalysis() {
               className="space-y-6"
             >
               {/* Overview Card */}
-              <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+              <Card className="transition-shadow border border-blue-500/20 hover:border-blue-500/40">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Wallet className="h-5 w-5" />
@@ -332,7 +341,7 @@ export default function WalletAnalysis() {
                 Object.values(displayAnalysis.chains).some(
                   (v) => (v as number) > 0
                 ) && (
-                  <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+                  <Card className="transition-shadow border border-blue-500/20 hover:border-blue-500/40">
                     <CardHeader>
                       <CardTitle>Chain Distribution</CardTitle>
                     </CardHeader>
@@ -343,7 +352,7 @@ export default function WalletAnalysis() {
                           .map(([chainId, value]) => (
                             <div
                               key={chainId}
-                              className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5"
+                              className="p-4 rounded-lg transition-shadow border border-blue-500/20 hover:border-blue-500/40"
                             >
                               <p className="text-sm text-muted-foreground mb-1">
                                 {getChainName(chainId)}
@@ -408,6 +417,7 @@ export default function WalletAnalysis() {
             </div>
           )}
       </div>
+    </motion.div>
     </div>
   );
 }

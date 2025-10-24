@@ -64,7 +64,7 @@ export function DataSourceCard({
         transition={{ duration: 0.4 }}
         className={className}
       >
-        <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+        <Card className="transition-shadow border border-blue-500/20 hover:border-blue-500/40">
           <CardContent className="p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               {/* Left: MCP Branding with animated sparkles */}

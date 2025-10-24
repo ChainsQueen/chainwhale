@@ -153,7 +153,7 @@ export default function WhalesPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.15 }}
             >
-              <Card className="border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+              <Card className="transition-shadow border border-blue-500/20 hover:border-blue-500/40">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-blue-500/10 rounded-lg shrink-0">

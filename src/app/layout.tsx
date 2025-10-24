@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ChainWhale - AI-Powered Blockchain Analytics",
     description: "AI-powered blockchain analytics for intelligent wallet analysis and whale tracking",
-    url: "https://chainsqueen.github.io/chainwhale",
+    url: "https://chainwhale.vercel.app/",
     siteName: "ChainWhale",
     images: [
       {

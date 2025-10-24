@@ -1,31 +1,33 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AnimatedHover } from '@/components/ui/animated-hover';
-import { Trophy, Copy, Check } from 'lucide-react';
-import type { WhaleTopWhale } from '@/core/hooks/use-whale-feed';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AnimatedHover } from "@/components/ui/animated-hover";
+import { Trophy, Copy, Check } from "lucide-react";
+import type { WhaleTopWhale } from "@/core/hooks/use-whale-feed";
 
 export interface WhaleTopLeaderboardProps {
   topWhales: WhaleTopWhale[];
 }
 
-const MEDALS = ['🥇', '🥈', '🥉'];
+const MEDALS = ["🥇", "🥈", "🥉"];
 const RANK_COLORS = [
-  'from-yellow-500 to-yellow-600', // Gold
-  'from-gray-400 to-gray-500',     // Silver
-  'from-orange-600 to-orange-700', // Bronze
+  "from-yellow-500 to-yellow-600", // Gold
+  "from-gray-400 to-gray-500", // Silver
+  "from-orange-600 to-orange-700", // Bronze
 ];
 
 /**
  * Whale top leaderboard component
- * 
+ *
  * @component
  * @example
  * <WhaleTopLeaderboard topWhales={topWhales} />
  */
 export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
-  const [copiedAddresses, setCopiedAddresses] = useState<Set<string>>(new Set());
+  const [copiedAddresses, setCopiedAddresses] = useState<Set<string>>(
+    new Set()
+  );
 
   // Format volume with K/M suffix
   const formatVolume = (volume: number): string => {
@@ -45,27 +47,27 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
         await navigator.clipboard.writeText(address);
       } else {
         // Fallback for older browsers
-        const textArea = document.createElement('textarea');
+        const textArea = document.createElement("textarea");
         textArea.value = address;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
         document.body.appendChild(textArea);
         textArea.select();
-        document.execCommand('copy');
+        document.execCommand("copy");
         document.body.removeChild(textArea);
       }
       // Add address to copied set
-      setCopiedAddresses(prev => new Set(prev).add(address));
+      setCopiedAddresses((prev) => new Set(prev).add(address));
       // Remove after 2 seconds
       setTimeout(() => {
-        setCopiedAddresses(prev => {
+        setCopiedAddresses((prev) => {
           const newSet = new Set(prev);
           newSet.delete(address);
           return newSet;
         });
       }, 2000);
     } catch (error) {
-      console.error('Failed to copy address:', error);
+      console.error("Failed to copy address:", error);
     }
   };
 
@@ -89,11 +91,12 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
         </AnimatedHover>
         <AnimatedHover type="label">
           <p className="text-xs text-muted-foreground">
-            Addresses with highest outgoing transfer volume in selected time range
+            Addresses with highest outgoing transfer volume in selected time
+            range
           </p>
         </AnimatedHover>
       </div>
-      
+
       {/* Top Whales as Stat Cards - Dynamic grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {topWhales.slice(0, 3).map((whale, index) => (
@@ -104,18 +107,18 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
             transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
           >
             <AnimatedHover type="card">
-              <Card className="h-full border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+              <Card className="h-full transition-shadow border border-blue-500/20 hover:border-blue-500/40">
                 <CardContent className="p-4 space-y-3">
                   {/* Rank Badge with Medal */}
                   <div className="flex items-center justify-between">
-                    <Badge 
-                      variant="default" 
+                    <Badge
+                      variant="default"
                       className={`bg-gradient-to-r ${RANK_COLORS[index]} text-white font-bold px-3 py-1 text-base`}
                     >
                       {MEDALS[index]} #{index + 1}
                     </Badge>
                   </div>
-                  
+
                   {/* Address with Copy Button */}
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
@@ -146,7 +149,7 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Volume */}
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
@@ -156,14 +159,14 @@ export function WhaleTopLeaderboard({ topWhales }: WhaleTopLeaderboardProps) {
                       {formatVolume(whale.volume)}
                     </p>
                   </div>
-                  
+
                   {/* Transfer Count */}
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
                       Sent
                     </p>
                     <p className="text-sm font-semibold">
-                      {whale.count} transfer{whale.count !== 1 ? 's' : ''}
+                      {whale.count} transfer{whale.count !== 1 ? "s" : ""}
                     </p>
                   </div>
                 </CardContent>

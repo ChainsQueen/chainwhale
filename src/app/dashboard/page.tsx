@@ -36,16 +36,16 @@ function DashboardContent() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
-            <TabsTrigger value="chat" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-3 lg:w-[600px] bg-card">
+            <TabsTrigger value="chat" className="flex items-center gap-2 bg-card">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Chat</span>
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="flex items-center gap-2">
+            <TabsTrigger value="wallet" className="flex items-center gap-2 bg-card">
               <Wallet className="h-4 w-4" />
               <span className="hidden sm:inline">Wallet Analysis</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
+            <TabsTrigger value="settings" className="flex items-center gap-2 bg-card">
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>

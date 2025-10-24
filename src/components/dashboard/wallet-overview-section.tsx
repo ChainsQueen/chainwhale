@@ -31,11 +31,11 @@ export function PortfolioBreakdown({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {ethBalance > 0 && (
         <>
-          <div className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+          <div className="p-4 rounded-lg transition-shadow border border-blue-500/20 hover:border-blue-500/40">
             <p className="text-xs text-muted-foreground mb-1">ETH BALANCE</p>
             <p className="text-lg font-bold">{ethBalance.toFixed(2)} ETH</p>
           </div>
-          <div className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+          <div className="p-4 rounded-lg transition-shadow border border-blue-500/20 hover:border-blue-500/40">
             <p className="text-xs text-muted-foreground mb-1">ETH VALUE</p>
             <p className="text-lg font-bold text-primary">
               {ethBalance.toFixed(2)} ETH
@@ -60,7 +60,7 @@ export function PortfolioBreakdown({
         </div>
       )}
       {totalValue > 0 && (
-        <div className="p-4 rounded-lg border border-blue-500/30 bg-gradient-to-r from-blue-500/5 via-slate-500/5 to-blue-500/5">
+        <div className="p-4 rounded-lg transition-shadow border border-blue-500/20 hover:border-blue-500/40">
           <p className="text-xs text-muted-foreground mb-1">MULTICHAIN INFO</p>
           <p className="text-lg font-bold text-primary">
             {formatUsdValue(totalValue)}

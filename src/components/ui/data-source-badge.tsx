@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
 
 /**
  * Props for DataSourceBadge component
@@ -39,12 +38,10 @@ export function DataSourceBadge({ dataSource, size = 'md' }: DataSourceBadgeProp
   if (!dataSource) return null;
   
   const sizeClasses = size === 'xs' ? 'text-[9px] px-1 py-0' : size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1';
-  const showIcon = size !== 'xs';
   
   if (dataSource === 'mcp') {
     return (
       <Badge variant="default" className={`${sizeClasses} bg-gradient-to-r from-purple-500 to-blue-500`}>
-        {showIcon && <Sparkles className="w-2.5 h-2.5 mr-0.5" />}
         MCP
       </Badge>
     );
@@ -53,7 +50,6 @@ export function DataSourceBadge({ dataSource, size = 'md' }: DataSourceBadgeProp
   if (dataSource === 'hybrid') {
     return (
       <Badge variant="default" className={`${sizeClasses} bg-gradient-to-r from-purple-500 via-blue-500 to-slate-500`}>
-        {showIcon && <Sparkles className="w-2.5 h-2.5 mr-0.5" />}
         HYBRID
       </Badge>
     );

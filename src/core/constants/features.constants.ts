@@ -20,7 +20,7 @@ export const FEATURES: Feature[] = [
     icon: Activity,
     title: "Real-Time Whale Feed",
     description:
-      "Monitor large transfers ($10K+) as they happen across 5 EVM chains",
+      "Monitor large transfers ($100K+) as they happen across 5 EVM chains",
     points: [
       "Track transfers from known whale addresses",
       "Ethereum, Base, Arbitrum, Optimism, Polygon",

@@ -30,7 +30,7 @@ export default function Home() {
   const { transfers, loading } = useWhaleFeed({
     selectedChains: ["1"], // Only Ethereum for speed
     timeRange: "1h",
-    minValue: 10000,
+    minValue: 100000,
     tokenFilter: "",
   });
 
@@ -181,7 +181,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Badge className="mb-4 bg-blue-500/10 text-blue-600 border-blue-500/30 hover:bg-blue-500/20">
+              <Badge className="mb-4 p-1.5 bg-blue-500/10 text-blue-600 border-blue-500/30 hover:bg-blue-500/20">
                 <Sparkles className="w-3 h-3 mr-1" />
                 AI-Powered Blockchain Analytics
               </Badge>
@@ -205,7 +205,7 @@ export default function Home() {
               transition={{ delay: 0.4 }}
               className="text-base md:text-lg lg:text-xl text-muted-foreground"
             >
-              Monitor large transfers ($10K+) in real-time across Ethereum,
+              Monitor large transfers ($100K+) in real-time across Ethereum,
               Base, Arbitrum, Optimism, and Polygon. Get AI-powered insights
               with comprehensive contract security analysis.
             </motion.p>

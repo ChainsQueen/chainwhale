@@ -44,13 +44,13 @@ export function createBlockscoutClient(): IBlockscoutClient {
   console.log('forceHttp:', forceHttp);
   console.log('mcpFirst:', mcpFirst);
   
-  // Force HTTP when explicitly requested
+  // Force HTTP when explicitly requested (highest priority)
   if (forceHttp) {
     console.log('🌐 Using Blockscout HTTP client (REST API mode)');
     return new BlockscoutHttpClient() as unknown as IBlockscoutClient;
   }
   
-  // Prefer MCP-first hybrid client for prize qualification
+  // Prefer MCP-first hybrid client for prize qualification (takes precedence over legacy behavior)
   if (mcpFirst) {
     console.log('🤝 Using Blockscout Hybrid client (MCP-first with HTTP fallback)');
     return new HybridBlockscoutClient() as unknown as IBlockscoutClient;

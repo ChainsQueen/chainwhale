@@ -131,7 +131,7 @@ export function WhaleFiltersComponent({
       {/* Token Filter */}
       <div>
         <AnimatedHover type="label">
-          <h3 className="text-xs sm:text-sm font-medium mb-2">Token Filter</h3>
+          <h3 className="text-xs sm:text-sm font-medium mb-2">Token</h3>
         </AnimatedHover>
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
           <AnimatedHover key="all-tokens" type="filter">

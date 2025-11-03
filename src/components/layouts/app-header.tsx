@@ -37,6 +37,16 @@ export function AppHeader() {
               Home
             </Link>
           </Button>
+           <Button
+            variant={pathname === '/whales' ? 'default' : 'ghost'}
+            size="lg"
+            asChild
+          >
+            <Link href="/whales" className="flex items-center gap-2 text-base">
+              <Activity className="h-5 w-5" />
+              Whale Tracker
+            </Link>
+          </Button>
           <Button
             variant={pathname === '/dashboard' ? 'default' : 'ghost'}
             size="lg"
@@ -45,16 +55,6 @@ export function AppHeader() {
             <Link href="/dashboard" className="flex items-center gap-2 text-base">
               <LayoutDashboard className="h-5 w-5" />
               Dashboard
-            </Link>
-          </Button>
-          <Button
-            variant={pathname === '/whales' ? 'default' : 'ghost'}
-            size="lg"
-            asChild
-          >
-            <Link href="/whales" className="flex items-center gap-2 text-base">
-              <Activity className="h-5 w-5" />
-              Whale Tracker
             </Link>
           </Button>
         </nav>

@@ -70,8 +70,23 @@ export class WhaleService {
   ): Promise<WhaleTransfer[]> {
     try {
       await this.client.connect();
-      
-      // Fetch all whale addresses in parallel for better performance
+
+      // Check if HTTP MCP is available for direct whale transfers
+      const httpMcpAvailable = this.checkHttpMcpAvailable();
+
+      if (httpMcpAvailable) {
+        console.log(`[WhaleService] HTTP MCP available, fetching whale transfers directly from MCP server...`);
+        try {
+          // Use HTTP MCP for direct whale transfers
+          const mcpTransfers = await this.getMcpWhaleTransfers(chainId, chainName);
+          await this.client.disconnect();
+          return mcpTransfers;
+        } catch (error) {
+          console.warn(`[WhaleService] HTTP MCP failed, falling back to individual address queries:`, error);
+        }
+      }
+
+      // Fallback: Fetch all whale addresses in parallel for better performance
       const transferPromises = this.WHALE_ADDRESSES.map(async (whaleAddress) => {
         try {
           const allTransfers: TokenTransfer[] = [];
@@ -127,27 +142,45 @@ export class WhaleService {
   }
 
   /**
-   * Execute promises in batches to limit concurrency
-   * Prevents overwhelming external APIs with too many simultaneous requests
+   * Check if HTTP MCP client is available
    */
-  private async batchPromises<T>(
-    promises: Promise<T>[],
-    batchSize: number
-  ): Promise<T[]> {
-    const results: T[] = [];
-    
-    for (let i = 0; i < promises.length; i += batchSize) {
-      const batch = promises.slice(i, i + batchSize);
-      const batchResults = await Promise.all(batch);
-      results.push(...batchResults);
-      
-      // Small delay between batches to be nice to the API
-      if (i + batchSize < promises.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+  private checkHttpMcpAvailable(): boolean {
+    // This is a simple check - we assume if the client is a HybridBlockscoutClient with MCP configured, it's available
+    // We can't directly access the internal state, so we'll try the MCP call and see if it works
+    return true; // We'll handle errors in the calling method
+  }
+
+  /**
+   * Get whale transfers directly from MCP server
+   */
+  private async getMcpWhaleTransfers(chainId: string, chainName: string): Promise<WhaleTransfer[]> {
+    // Since we can't directly access the HttpMcpClient, we'll use a simple HTTP call
+    // This is a workaround - ideally the client interface would expose MCP methods
+    try {
+      const mcpUrl = process.env.MCP_URL || process.env.BLOCKSCOUT_MCP_URL || process.env.MCP_SERVER_URL;
+      if (!mcpUrl) {
+        throw new Error('No MCP server URL configured');
       }
+
+      const response = await fetch(`${mcpUrl}/api/whale/transfers/${chainId}?minValue=${this.minWhaleValue}&limit=50`);
+      if (!response.ok) {
+        throw new Error(`MCP server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      const transfers = data.data?.transfers || [];
+
+      // Convert to WhaleTransfer format and add metadata
+      return transfers.map((transfer: any) => ({
+        ...transfer,
+        chainId,
+        chainName,
+        dataSource: 'mcp' as const
+      }));
+    } catch (error) {
+      console.error('[WhaleService] Failed to fetch from MCP server:', error);
+      throw error;
     }
-    
-    return results;
   }
 
   /**

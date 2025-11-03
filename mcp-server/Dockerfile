@@ -1,24 +1,26 @@
-# Blockscout MCP Server with HTTP API Wrapper
-# This allows the MCP server to be deployed as a standalone Railway service
+# Use an official Node.js runtime as a parent image
+FROM node:18-slim
 
-FROM ghcr.io/blockscout/mcp-server:latest
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# Copy requirements first for better caching
-COPY requirements.txt /app/requirements.txt
+# Install pnpm
+RUN npm install -g pnpm
 
-# Install FastAPI and Uvicorn for HTTP server
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Copy package.json and pnpm-lock.yaml to the working directory
+COPY package.json pnpm-lock.yaml ./
 
-# Copy the HTTP wrapper
-COPY server.py /app/server.py
+# Install any needed packages
+RUN pnpm install
 
-WORKDIR /app
+# Copy the rest of the application's source code
+COPY . .
 
-# Railway provides PORT environment variable
-ENV PORT=8080
+# Compile TypeScript to JavaScript
+RUN pnpm run build
 
-# Expose port for Railway
-EXPOSE $PORT
+# Make port 8080 available to the world outside this container
+EXPOSE 8080
 
-# Start the HTTP server using Railway's PORT variable
-CMD uvicorn server:app --host 0.0.0.0 --port ${PORT:-8080}
+# Run the app when the container launches
+CMD ["pnpm", "start"]

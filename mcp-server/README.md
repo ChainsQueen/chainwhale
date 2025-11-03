@@ -1,167 +1,284 @@
-# Blockscout MCP Server - Railway Deployment
+# ChainWhale MCP HTTP Server
 
-This directory contains a standalone HTTP API wrapper for the Blockscout MCP server, designed to be deployed as a separate Railway service.
+HTTP wrapper service for Blockscout MCP server functionality, designed to run on Railway. This service provides REST API endpoints that replicate the Blockscout MCP server's whale tracking and contract analysis capabilities.
 
-## Why This Exists
+## 🚀 Features
 
-Railway doesn't support Docker-in-Docker, so we can't run the MCP server directly in the main ChainWhale app. This wrapper:
-- Runs the MCP server in its own Railway service
-- Exposes HTTP endpoints for the main app to call
-- Handles MCP protocol internally
+- **Whale Transfer Tracking**: Monitor large token transfers across 5 EVM chains
+- **Contract Security Analysis**: Get comprehensive contract information and security data
+- **Multi-Chain Support**: Ethereum, Base, Arbitrum, Optimism, Polygon
+- **Railway Optimized**: Designed for Railway deployment with health checks and auto-scaling
+- **TypeScript**: Full TypeScript support with proper type definitions
 
-## Architecture
+## 🏗️ Architecture
 
-```
-┌─────────────────────┐         ┌──────────────────────┐
-│  ChainWhale App     │         │  MCP Server Service  │
-│  (Next.js)          │ ◄─────► │  (Python + FastAPI)  │
-│  Railway Service #1 │  HTTP   │  Railway Service #2  │
-└─────────────────────┘         └──────────────────────┘
-```
+This service provides HTTP REST endpoints that wrap Blockscout's v2 API, offering the same data as the official MCP server but accessible via standard HTTP requests.
 
-## Deployment Steps
+### Supported Chains
 
-### 1. Deploy MCP Service to Railway
+- **Ethereum** (Chain ID: 1) - `https://eth.blockscout.com`
+- **Base** (Chain ID: 8453) - `https://base.blockscout.com`
+- **Arbitrum** (Chain ID: 42161) - `https://arbitrum.blockscout.com`
+- **Optimism** (Chain ID: 10) - `https://optimism.blockscout.com`
+- **Polygon** (Chain ID: 137) - `https://polygon.blockscout.com`
 
-```bash
-# Navigate to this directory
-cd mcp-server
+## 📡 API Endpoints
 
-# Initialize Railway project
-railway init
+### Whale Transfers
 
-# Deploy
-railway up
+#### Get transfers for specific chain
+```http
+GET /api/whale/transfers/:chainId?minValue=100000&limit=50&offset=0
 ```
 
-### 2. Get Service URL
+**Parameters:**
+- `chainId`: Chain ID (1, 8453, 42161, 10, 137)
+- `minValue`: Minimum USD value (default: 100000)
+- `limit`: Maximum transfers to return (default: 50)
+- `offset`: Pagination offset (optional)
 
-After deployment, Railway will provide a URL like:
-```
-https://mcp-server-production-xxxx.up.railway.app
-```
-
-### 3. Configure ChainWhale App
-
-In your main ChainWhale Railway service, add environment variable:
-```
-MCP_SERVER_URL=https://mcp-server-production-xxxx.up.railway.app
+#### Get transfers across all chains
+```http
+GET /api/whale/transfers?minValue=100000&limit=50
 ```
 
-### 4. Update ChainWhale Client
-
-The client code needs to be updated to use HTTP connection when `MCP_SERVER_URL` is set.
-
-See: `/docs/MCP_DEPLOYMENT_OPTIONS.md` for implementation details.
-
-## API Endpoints
-
-### Health Check
-```bash
-GET /health
-```
-
-Response:
+**Response:**
 ```json
 {
-  "status": "healthy",
-  "service": "mcp-server"
-}
-```
-
-### Get Address Info
-```bash
-POST /mcp/address-info
-Content-Type: application/json
-
-{
-  "chain_id": "1",
-  "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-}
-```
-
-### Get Token Transfers
-```bash
-POST /mcp/token-transfers
-Content-Type: application/json
-
-{
-  "chain_id": "1",
-  "address": "0x...",
-  "age_from": "2024-01-01T00:00:00Z",
-  "age_to": "2024-01-02T00:00:00Z"
-}
-```
-
-### Generic MCP Tool Call
-```bash
-POST /mcp/call
-Content-Type: application/json
-
-{
-  "tool": "get_address_info",
-  "arguments": {
-    "chain_id": "1",
-    "address": "0x..."
+  "success": true,
+  "data": {
+    "transfers": [...],
+    "totalTransfers": 150,
+    "chainStats": {
+      "1": 45,
+      "8453": 32,
+      "42161": 28,
+      "10": 25,
+      "137": 20
+    }
+  },
+  "metadata": {
+    "chains": 5,
+    "minValue": 100000,
+    "fetchedAt": "2024-01-01T12:00:00.000Z"
   }
 }
 ```
 
-## Testing Locally
+### Contract Information
 
-```bash
-# Build the Docker image
-docker build -t mcp-server .
-
-# Run the container
-docker run -p 8080:8080 mcp-server
-
-# Test the health endpoint
-curl http://localhost:8080/health
-
-# Test address info
-curl -X POST http://localhost:8080/mcp/address-info \
-  -H "Content-Type: application/json" \
-  -d '{
-    "chain_id": "1",
-    "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-  }'
+#### Get single contract info
+```http
+GET /api/contract/info/:chainId/:address
 ```
 
-## Cost Considerations
+#### Get multiple contracts (batch)
+```http
+POST /api/contract/batch
+Content-Type: application/json
 
-Running a separate Railway service will incur additional costs:
-- **Hobby Plan**: $5/month per service
-- **Pro Plan**: Usage-based pricing
+{
+  "contracts": [
+    { "chainId": "1", "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7" },
+    { "chainId": "8453", "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" }
+  ]
+}
+```
 
-**Recommendation**: Only deploy this if you need MCP-specific features. The HTTP-only mode in ChainWhale works perfectly without this service.
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "contracts": [
+      {
+        "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        "chain_id": "1",
+        "is_verified": true,
+        "is_scam": false,
+        "token_type": "ERC-20",
+        "name": "Tether USD",
+        "symbol": "USDT",
+        "decimals": 6,
+        "total_supply": "1000000000000000",
+        "holders_count": 10641594,
+        "exchange_rate": 1.0,
+        "market_cap": 181962846734
+      }
+    ],
+    "totalFetched": 2
+  }
+}
+```
 
-## Monitoring
+### Health Check
 
-Railway provides built-in monitoring:
-- View logs: `railway logs`
-- Check metrics: Railway dashboard → Metrics tab
-- Set up alerts: Railway dashboard → Settings → Notifications
+```http
+GET /health
+```
 
-## Troubleshooting
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00.000Z",
+  "version": "1.0.0"
+}
+```
 
-### Service Won't Start
-- Check Railway logs: `railway logs`
-- Verify Dockerfile builds locally: `docker build -t mcp-server .`
-- Ensure port 8080 is exposed
+## 🚂 Railway Deployment
 
-### Connection Timeout
-- Verify MCP_SERVER_URL is correct in ChainWhale app
-- Check Railway service is running
-- Test health endpoint: `curl https://your-service.railway.app/health`
+### Prerequisites
 
-### MCP Tool Errors
-- Check MCP server logs in Railway dashboard
-- Verify Blockscout API is accessible
-- Test with curl to isolate issue
+1. **Railway Account**: Sign up at [railway.app](https://railway.app)
+2. **Railway CLI**: Install the Railway CLI
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
 
-## Alternative: Stick with HTTP-Only
+### Step 1: Prepare the Project
 
-**Remember**: The HTTP client in ChainWhale provides identical data to MCP. Consider whether the added complexity and cost of running a separate service is worth it for your use case.
+```bash
+cd /path/to/chainwhale/mcp-server
 
-See `/docs/MCP_DEPLOYMENT_OPTIONS.md` for a detailed comparison.
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Test locally (optional)
+npm run dev
+```
+
+### Step 2: Deploy to Railway
+
+```bash
+# Initialize Railway project
+railway init
+
+# Choose "Empty Project" when prompted
+# Name your project (e.g., "chainwhale-mcp-server")
+
+# Deploy
+railway up
+
+# Get the deployment URL
+railway domain
+```
+
+### Step 3: Configure Environment Variables (Optional)
+
+The service works without additional environment variables, but you can configure:
+
+```bash
+# Set custom port (Railway sets PORT automatically)
+railway variables set PORT=3000
+
+# Add any Blockscout API keys if needed in the future
+railway variables set BLOCKSCOUT_API_KEY=your_key_here
+```
+
+### Step 4: Verify Deployment
+
+```bash
+# Check health endpoint
+curl https://your-railway-url.up.railway.app/health
+
+# Test whale transfers endpoint
+curl "https://your-railway-url.up.railway.app/api/whale/transfers?minValue=100000&limit=10"
+```
+
+## 🔧 Development
+
+### Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
+### Project Structure
+
+```
+mcp-server/
+├── src/
+│   ├── routes/
+│   │   ├── whale-routes.ts      # Whale transfer endpoints
+│   │   └── contract-routes.ts   # Contract info endpoints
+│   ├── services/
+│   │   └── blockscout-service.ts # Blockscout API client
+│   └── server.ts                # Express server setup
+├── package.json
+├── tsconfig.json
+├── railway.json
+└── README.md
+```
+
+### Adding New Endpoints
+
+1. Create route handler in `src/routes/`
+2. Add service method in `src/services/blockscout-service.ts`
+3. Register routes in `src/server.ts`
+
+## 📊 Integration with ChainWhale
+
+To use this MCP server with the main ChainWhale application:
+
+1. Deploy this service to Railway
+2. Get the Railway URL (e.g., `https://chainwhale-mcp-server.up.railway.app`)
+3. Update ChainWhale's environment variables:
+   ```bash
+   railway variables set MCP_SERVER_URL=https://chainwhale-mcp-server.up.railway.app
+   ```
+4. Modify ChainWhale's `src/lib/blockscout/hybrid-client.ts` to use HTTP endpoints instead of MCP protocol
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+**Port Issues:**
+- Railway automatically assigns a `PORT` environment variable
+- The service defaults to `process.env.PORT || 3000`
+
+**Timeout Errors:**
+- Blockscout API calls have 30-second timeout
+- Large requests may need pagination
+
+**Rate Limiting:**
+- Blockscout has rate limits - implement exponential backoff if needed
+
+### Logs
+
+View Railway logs:
+```bash
+railway logs
+```
+
+### Monitoring
+
+The service includes:
+- Health check endpoint: `/health`
+- Structured error responses
+- Request logging via Express middleware
+
+## 🤝 Contributing
+
+1. Follow the existing TypeScript patterns
+2. Add proper error handling
+3. Update this README for new endpoints
+4. Test locally before deploying
+
+## 📄 License
+
+MIT License - see LICENSE file for details.

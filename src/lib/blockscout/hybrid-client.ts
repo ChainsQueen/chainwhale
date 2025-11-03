@@ -47,7 +47,8 @@ export class HybridBlockscoutClient {
   private mcp = new BlockscoutClient();
   private http = new BlockscoutHttpClient();
   private httpMcp: HttpMcpClient | null = null;
-  private connected = false;
+  private localMcpConnected = false;
+  private httpMcpAvailable = false;
 
   async connect(): Promise<void> {
     console.log('🔍 HybridBlockscoutClient.connect() called!');
@@ -65,7 +66,7 @@ export class HybridBlockscoutClient {
     if (mcpServerUrl) {
       console.log('HybridClient: HTTP MCP server URL configured:', mcpServerUrl);
       this.httpMcp = new HttpMcpClient(mcpServerUrl);
-      this.connected = true;
+      this.httpMcpAvailable = true;
       console.log('✅ HybridClient: HTTP MCP client ready - will use HTTP MCP server');
       return;
     }
@@ -73,12 +74,12 @@ export class HybridBlockscoutClient {
     console.log('HybridClient: Attempting to connect to local MCP...');
     try {
       await this.mcp.connect();
-      this.connected = true;
+      this.localMcpConnected = true;
       console.log('✅ HybridClient: Local MCP connected successfully - will use MCP-first approach');
     } catch (error) {
       console.error('❌ HybridClient: Local MCP connection failed:', error instanceof Error ? error.message : error);
       console.warn('⚠️  HybridClient: Will use HTTP-only mode (no MCP data)');
-      this.connected = false;
+      this.localMcpConnected = false;
     }
     // Always ensure HTTP client is ready
     await this.http.connect();
@@ -89,7 +90,9 @@ export class HybridBlockscoutClient {
     try {
       await this.mcp.disconnect();
     } finally {
-      this.connected = false;
+      this.localMcpConnected = false;
+      this.httpMcpAvailable = false;
+      this.httpMcp = null;
     }
   }
 
@@ -102,7 +105,7 @@ export class HybridBlockscoutClient {
     }
 
     try {
-      if (this.connected) return await this.mcp.getAddressInfo(chainId, address);
+      if (this.localMcpConnected) return await this.mcp.getAddressInfo(chainId, address);
       return await this.http.getAddressInfo(chainId, address);
     } catch (e) {
       console.warn('HybridClient.getAddressInfo: MCP failed, using HTTP:', e instanceof Error ? e.message : e);
@@ -137,8 +140,14 @@ export class HybridBlockscoutClient {
       }
     }
 
+    // Try HTTP MCP first if available (for address-specific queries)
+    if (this.httpMcp && address) {
+      // HTTP MCP doesn't have address-specific transfer methods, so skip to local MCP
+      console.log(`HybridClient: HTTP MCP available but doesn't support address-specific queries, trying local MCP...`);
+    }
+
     // Try local MCP first when available
-    if (this.connected) {
+    if (this.localMcpConnected) {
       console.log(`HybridClient: Local MCP is connected, attempting to fetch transfers for chain ${chainId}...`);
       try {
         const res = await this.mcp.getTokenTransfers(chainId, address, ageFrom, ageTo, token, cursor);
@@ -208,7 +217,7 @@ export class HybridBlockscoutClient {
 
   async getTokensByAddress(chainId: string, address: string): Promise<Record<string, unknown>[]> {
     try {
-      if (this.connected) return await this.mcp.getTokensByAddress(chainId, address);
+      if (this.localMcpConnected) return await this.mcp.getTokensByAddress(chainId, address);
       return await this.http.getTokensByAddress(chainId, address);
     } catch (e) {
       console.warn('HybridClient.getTokensByAddress: MCP failed, using HTTP:', e instanceof Error ? e.message : e);
@@ -218,7 +227,7 @@ export class HybridBlockscoutClient {
 
   async getChainsList(): Promise<Chain[]> {
     try {
-      if (this.connected) return await this.mcp.getChainsList();
+      if (this.localMcpConnected) return await this.mcp.getChainsList();
       return await this.http.getChainsList();
     } catch (e) {
       console.warn('HybridClient.getChainsList: MCP failed, using HTTP:', e instanceof Error ? e.message : e);

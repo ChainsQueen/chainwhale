@@ -74,7 +74,7 @@ export class WhaleService {
       // Check if HTTP MCP is available for direct whale transfers
       const httpMcpAvailable = this.checkHttpMcpAvailable();
 
-      if (httpMcpAvailable && false) { // Temporarily disabled until MCP server is fixed
+      if (httpMcpAvailable) {
         console.log(`[WhaleService] HTTP MCP available, fetching whale transfers directly from MCP server...`);
         try {
           // Use HTTP MCP for direct whale transfers

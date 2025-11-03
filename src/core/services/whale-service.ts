@@ -142,6 +142,30 @@ export class WhaleService {
   }
 
   /**
+   * Execute promises in batches to limit concurrency
+   * Prevents overwhelming external APIs with too many simultaneous requests
+   */
+  private async batchPromises<T>(
+    promises: Promise<T>[],
+    batchSize: number
+  ): Promise<T[]> {
+    const results: T[] = [];
+    
+    for (let i = 0; i < promises.length; i += batchSize) {
+      const batch = promises.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch);
+      results.push(...batchResults);
+      
+      // Small delay between batches to be nice to the API
+      if (i + batchSize < promises.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    return results;
+  }
+
+  /**
    * Check if HTTP MCP client is available
    */
   private checkHttpMcpAvailable(): boolean {
@@ -167,12 +191,12 @@ export class WhaleService {
         throw new Error(`MCP server returned ${response.status}`);
       }
 
-      const data = await response.json();
+      const data: { data?: { transfers?: unknown[] } } = await response.json();
       const transfers = data.data?.transfers || [];
 
       // Convert to WhaleTransfer format and add metadata
-      return transfers.map((transfer: any) => ({
-        ...transfer,
+      return transfers.map((transfer: unknown) => ({
+        ...(transfer as Omit<WhaleTransfer, 'chainId' | 'chainName' | 'dataSource'>),
         chainId,
         chainName,
         dataSource: 'mcp' as const

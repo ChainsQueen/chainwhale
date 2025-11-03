@@ -50,8 +50,16 @@ export class HybridBlockscoutClient {
   private connected = false;
 
   async connect(): Promise<void> {
+    // Debug: Log all environment variables related to MCP
+    console.log('HybridClient: Checking environment variables...');
+    console.log('MCP_URL:', process.env.MCP_URL);
+    console.log('BLOCKSCOUT_MCP_URL:', process.env.BLOCKSCOUT_MCP_URL);
+    console.log('MCP_SERVER_URL:', process.env.MCP_SERVER_URL);
+
     // Check if HTTP MCP server URL is configured
     const mcpServerUrl = process.env.MCP_URL || process.env.BLOCKSCOUT_MCP_URL || process.env.MCP_SERVER_URL;
+    console.log('HybridClient: Resolved MCP server URL:', mcpServerUrl);
+
     if (mcpServerUrl) {
       console.log('HybridClient: HTTP MCP server URL configured:', mcpServerUrl);
       this.httpMcp = new HttpMcpClient(mcpServerUrl);

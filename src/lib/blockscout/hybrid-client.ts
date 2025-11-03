@@ -50,6 +50,8 @@ export class HybridBlockscoutClient {
   private connected = false;
 
   async connect(): Promise<void> {
+    console.log('🔍 HybridBlockscoutClient.connect() called!');
+
     // Debug: Log all environment variables related to MCP
     console.log('HybridClient: Checking environment variables...');
     console.log('MCP_URL:', process.env.MCP_URL);

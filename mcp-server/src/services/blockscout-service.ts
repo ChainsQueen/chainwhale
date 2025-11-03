@@ -115,7 +115,13 @@ export class BlockscoutService {
               console.log(`Processing transfer: ${item.transaction_hash}, value: ${item.total?.usd_value}`);
 
               // Check if transfer value meets minimum threshold
-              if (item.total?.usd_value && parseFloat(item.total.usd_value) >= minValue) {
+              // Be more flexible with usd_value checking
+              const usdValue = item.total?.usd_value;
+              const meetsMinValue = usdValue && parseFloat(usdValue) >= minValue;
+
+              console.log(`Transfer ${item.transaction_hash}: usd_value=${usdValue}, meetsMinValue=${meetsMinValue}, minValue=${minValue}`);
+
+              if (meetsMinValue) {
                 console.log(`Adding whale transfer: ${item.transaction_hash} with value ${item.total.usd_value}`);
                 allTransfers.push({
                   hash: item.transaction_hash || item.tx_hash,

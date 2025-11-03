@@ -79,59 +79,69 @@ export class BlockscoutService {
   ): Promise<WhaleTransfersResponse> {
     const client = this.getClient(chainId);
 
+    // Known whale addresses (same as WhaleService)
+    const whaleAddresses = [
+      '0x28C6c06298d514Db089934071355E5743bf21d60', // Binance
+      '0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549', // Binance 2
+      '0xDFd5293D8e347dFe59E90eFd55b2956a1343963d', // Binance 3
+      '0xF977814e90dA44bFA03b6295A0616a897441aceC', // Binance 8
+      '0x001866Ae5B3de6cAa5a51543FD9fB64f524F5478', // Coinbase
+      '0x71660c4005BA85c37ccec55d0C4493E66Fe775d3', // Coinbase 2
+      '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // Vitalik
+      '0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf', // Polygon Bridge
+      '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503', // Large holder
+    ];
+
     try {
-      const params: Record<string, string | number> = {
-        'filter': 'to',
-        'type': 'ERC-20',
-        'q': minValue.toString()
-      };
+      const allTransfers: WhaleTransfer[] = [];
 
-      if (offset) {
-        params.offset = offset;
-      }
-
-      const response = await client.get('/tokens', { params });
-
-      // Transform Blockscout response to our format
-      const transfers: WhaleTransfer[] = [];
-
-      if (response.data.items) {
-        for (const item of response.data.items.slice(0, limit)) {
-          // Get transfer details for this token
-          const transfersResponse = await client.get(`/tokens/${item.address}/transfers`, {
-            params: { limit: 10 }
+      // Get transfers for each whale address
+      for (const whaleAddress of whaleAddresses) {
+        try {
+          // Get token transfers for this whale address
+          const response = await client.get(`/addresses/${whaleAddress}/token-transfers`, {
+            params: {
+              type: 'ERC-20',
+              limit: 10, // Limit per address to avoid too much data
+            }
           });
 
-          if (transfersResponse.data.items) {
-            for (const transfer of transfersResponse.data.items) {
-              if (parseFloat(transfer.total.value || '0') >= minValue) {
-                transfers.push({
-                  hash: transfer.transaction_hash || transfer.tx_hash,
-                  timestamp: transfer.timestamp,
-                  from: transfer.from?.hash || transfer.from,
-                  to: transfer.to?.hash || transfer.to,
-                  value: transfer.total?.value || transfer.value,
+          if (response.data.items) {
+            for (const item of response.data.items.slice(0, 5)) { // Limit to 5 transfers per address
+              // Check if transfer value meets minimum threshold
+              if (item.total?.usd_value && parseFloat(item.total.usd_value) >= minValue) {
+                allTransfers.push({
+                  hash: item.transaction_hash || item.tx_hash,
+                  timestamp: item.timestamp,
+                  from: item.from?.hash || item.from,
+                  to: item.to?.hash || item.to,
+                  value: item.total?.value || item.value,
                   token: {
-                    address: item.address,
-                    symbol: item.symbol || 'UNKNOWN',
-                    decimals: item.decimals || 18,
-                    name: item.name
+                    address: item.token?.address_hash || '',
+                    symbol: item.token?.symbol || 'UNKNOWN',
+                    decimals: item.token?.decimals || 18,
+                    name: item.token?.name
                   },
-                  usd_value: transfer.total?.usd_value,
+                  usd_value: item.total?.usd_value ? parseFloat(item.total.usd_value) : undefined,
                   chain_id: chainId
                 });
               }
             }
           }
+        } catch (error) {
+          console.error(`Error fetching transfers for whale ${whaleAddress}:`, error);
+          // Continue with other addresses
         }
       }
 
+      // Sort by USD value descending and limit results
+      const sortedTransfers = allTransfers
+        .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0))
+        .slice(0, limit);
+
       return {
-        transfers,
-        pagination: response.data.next_page_params ? {
-          has_more: true,
-          next_page_params: response.data.next_page_params
-        } : { has_more: false }
+        transfers: sortedTransfers,
+        pagination: { has_more: false } // No pagination for whale transfers
       };
 
     } catch (error) {

@@ -98,6 +98,8 @@ export class BlockscoutService {
       // Get transfers for each whale address
       for (const whaleAddress of whaleAddresses) {
         try {
+          console.log(`Fetching transfers for whale: ${whaleAddress}`);
+
           // Get token transfers for this whale address
           const response = await client.get(`/addresses/${whaleAddress}/token-transfers`, {
             params: {
@@ -106,10 +108,15 @@ export class BlockscoutService {
             }
           });
 
+          console.log(`Got ${response.data.items?.length || 0} transfers for ${whaleAddress}`);
+
           if (response.data.items) {
             for (const item of response.data.items.slice(0, 5)) { // Limit to 5 transfers per address
+              console.log(`Processing transfer: ${item.transaction_hash}, value: ${item.total?.usd_value}`);
+
               // Check if transfer value meets minimum threshold
               if (item.total?.usd_value && parseFloat(item.total.usd_value) >= minValue) {
+                console.log(`Adding whale transfer: ${item.transaction_hash} with value ${item.total.usd_value}`);
                 allTransfers.push({
                   hash: item.transaction_hash || item.tx_hash,
                   timestamp: item.timestamp,
